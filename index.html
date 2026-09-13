@@ -406,6 +406,24 @@
   .pm-body tr.sum td { border-top: 1px solid var(--line-strong); color: var(--ink); }
   .pm-body tr.sum td.p { color: var(--accent); }
   .pm-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .toasts { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 60; display: grid; gap: 10px; pointer-events: none; width: min(560px, calc(100% - 32px)); }
+  .toast { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; background: var(--raised); border: 2px solid var(--good); border-radius: 14px; padding: 12px 16px; box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 0 30px color-mix(in srgb, var(--good) 35%, transparent); animation: toastIn .45s cubic-bezier(.2,1.2,.3,1) both; }
+  .toast.big { border-color: var(--tc, var(--accent)); box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 0 40px color-mix(in srgb, var(--tc, var(--accent)) 55%, transparent); }
+  .toast.neg { border-color: var(--live); box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 0 30px rgba(255,90,95,.35); animation: toastIn .45s both, shake .5s .45s; }
+  .toast.out { animation: toastOut .35s ease-in both; }
+  .toast .abbr { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 16px; color: #fff; }
+  .toast .kicker { font-family: var(--display); font-weight: 800; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--good); }
+  .toast.big .kicker { color: var(--tc, var(--accent)); }
+  .toast.neg .kicker { color: var(--live); }
+  .toast .name { font-family: var(--display); font-weight: 700; font-size: 24px; text-transform: uppercase; line-height: 1; }
+  .toast .what { font-size: 13px; color: var(--ink-2); margin-top: 3px; }
+  .toast .pts { font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1; color: var(--good); }
+  .toast.neg .pts { color: var(--live); }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(-24px) scale(.96); } to { opacity: 1; transform: none; } }
+  @keyframes toastOut { to { opacity: 0; transform: translateY(-16px); } }
+  @keyframes shake { 0%,100% { transform: none; } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+  #confetti { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 55; pointer-events: none; }
+  @media (prefers-reduced-motion: reduce) { .toast, .toast.neg, .toast.out { animation: none; } }
   .pm-x { text-decoration: none; color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
   .pm-x:hover { background: var(--accent); color: #0c1119; }
   @media (max-width: 640px) { .pm-head { grid-template-columns: auto 1fr auto; } .pm-head .pm-x, .pm-head .pm-close { grid-column: span 1; } }
@@ -530,6 +548,9 @@
     <p class="foot-note settings">Scores and drives from ESPN, fantasy from Sleeper. League <code id="cfgLeague"></code> · team <code id="cfgTeam"></code> · refreshes every 10s while games are live.</p>
   </main>
 </div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<canvas id="confetti" hidden></canvas>
 
 <div class="modal" id="pmodal" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
@@ -753,7 +774,11 @@ async function loadMatchup() {
     }
   }
   sl.lastPts = { ...pp }; store.set("lsb-fxlast-" + wk, sl.lastPts);
+  const before = sl.events.length ? sl.events[0] : null;
   sl.events = events.slice(0, 60); store.set(key, sl.events);
+  // anything newer than what we had last poll, starters only, is a fresh scoring play worth a flourish
+  const fresh = []; for (const e of sl.events) { if (before && e.t <= before.t) break; if (!before && !sl.hadEvents) break; if ((mine?.starters || []).includes(e.pid)) fresh.push(e); }
+  sl.hadEvents = true; sl.fresh = fresh.slice(0, 3);
 }
 async function loadProjections() {
   const sl = S.sleeper; if (sl.proj && Date.now() - sl.projT < 3600e3) return;
@@ -828,6 +853,33 @@ async function openPlayer(pid) {
   } catch (e) { el("#pmBody").innerHTML = `<div class="empty">Couldn't load the stat line (${esc(e.message)}).</div>`; }
 }
 function closePlayer() { el("#pmodal").hidden = true; }
+
+/* ---- flourish for a fresh scoring play ---- */
+function celebrate(e) {
+  const p = S.sleeper.players?.[e.pid] || [e.name, e.slot, e.team];
+  const team = toEspn(p[2] || ""), tc = chartColor(team);
+  const big = e.d >= 6, neg = e.d < 0;
+  const t = document.createElement("div");
+  t.className = "toast " + (neg ? "neg" : big ? "big" : ""); t.style.setProperty("--tc", tc);
+  t.innerHTML = `<span class="abbr" style="background:${T(team)[2]}">${esc(team)}</span>
+    <div><div class="kicker">${neg ? "Ouch" : big ? "Touchdown!" : "Points"}</div><div class="name">${esc(p[0])}</div>${e.what ? `<div class="what">${esc(e.what)}</div>` : ""}</div>
+    <span class="pts">${e.d > 0 ? "+" : ""}${e.d.toFixed(2)}</span>`;
+  el("#toasts").prepend(t);
+  setTimeout(() => { t.classList.add("out"); setTimeout(() => t.remove(), 400); }, big ? 9000 : 6000);
+  if (big && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti(tc);
+}
+function confetti(color) {
+  const c = el("#confetti"), ctx = c.getContext("2d"); c.hidden = false;
+  c.width = innerWidth; c.height = innerHeight;
+  const cols = [color, "#ffffff", "#5b9cff", "#ffd166"], N = 160, ps = [];
+  for (let i = 0; i < N; i++) ps.push({ x: c.width/2 + (Math.random()-.5)*200, y: c.height*0.35, vx: (Math.random()-.5)*14, vy: -Math.random()*14 - 4, w: 6+Math.random()*6, h: 8+Math.random()*8, r: Math.random()*Math.PI, vr: (Math.random()-.5)*.3, col: cols[i%cols.length] });
+  const t0 = performance.now();
+  (function frame(now) {
+    const t = (now - t0)/1000; ctx.clearRect(0,0,c.width,c.height);
+    for (const q of ps) { q.vy += .35; q.x += q.vx; q.y += q.vy; q.vx *= .99; q.r += q.vr; ctx.save(); ctx.translate(q.x,q.y); ctx.rotate(q.r); ctx.globalAlpha = Math.max(0, 1 - t/2.6); ctx.fillStyle = q.col; ctx.fillRect(-q.w/2,-q.h/2,q.w,q.h); ctx.restore(); }
+    if (t < 2.8) requestAnimationFrame(frame); else { ctx.clearRect(0,0,c.width,c.height); c.hidden = true; }
+  })(t0);
+}
 function gameForTeam(ab) { const e = toEspn(ab); return S.events.find(g => g.home === e || g.away === e); }
 
 /* =====================================================================
@@ -1148,6 +1200,7 @@ async function sleeperLoop() {
     await loadMatchup();
     loadProjections().then(renderFantasy);
     renderFantasy(); setErr(false);
+    (S.sleeper.fresh || []).forEach(celebrate); S.sleeper.fresh = [];
   } catch (e) { console.warn("sleeper", e); el("#fxHead").innerHTML = `<div class="empty">Couldn't reach Sleeper (${esc(e.message)}). Retrying.</div>`; }
   slTimer = setTimeout(sleeperLoop, CFG.pollSleeper);
 }
