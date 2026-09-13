@@ -521,7 +521,7 @@
       </aside>
     </section>
 
-    <p class="foot-note settings">Scores and drives from ESPN, fantasy from Sleeper. League <code id="cfgLeague"></code> · team <code id="cfgTeam"></code> · refreshes every 20s while games are live.</p>
+    <p class="foot-note settings">Scores and drives from ESPN, fantasy from Sleeper. League <code id="cfgLeague"></code> · team <code id="cfgTeam"></code> · refreshes every 10s while games are live.</p>
   </main>
 </div>
 
@@ -552,7 +552,7 @@ const CFG = {
   username: "gonzowiththewind",
   fav: "DAL",
   division: ["DAL","PHI","WSH","NYG"],  // ESPN abbreviations
-  pollLive: 20000, pollIdle: 90000, pollSleeper: 30000,
+  pollLive: 10000, pollIdle: 90000, pollSleeper: 30000,
 };
 const qs = new URLSearchParams(location.search);
 if (qs.get("league")) CFG.leagueId = qs.get("league");
@@ -614,6 +614,12 @@ function normGame(ev) {
   const sit = c.situation || {};
   const possId = sit.possession;
   const poss = possId ? (possId === home.id ? home.team.abbreviation : possId === away.id ? away.team.abbreviation : null) : null;
+  // red zone worked out from the ball spot rather than ESPN's flag, which lingers after a score
+  const dd = sit.shortDownDistanceText || sit.downDistanceText || "";
+  const spotM = (sit.possessionText || "").match(/^([A-Z]{2,4})\s+(\d+)$/);
+  let rz = !!sit.isRedZone;
+  if (spotM && poss) rz = spotM[1] !== poss && +spotM[2] <= 20 && !!dd;
+  else if (!dd) rz = false;
   const rec = t => (t.records || []).find(r => r.type === "total" || r.name === "overall")?.summary || (t.records||[])[0]?.summary || "";
   const net = (c.broadcasts?.[0]?.names?.[0]) || c.geoBroadcasts?.[0]?.media?.shortName || "";
   const odds = c.odds?.[0];
@@ -628,7 +634,7 @@ function normGame(ev) {
     awayId: away.id, homeId: home.id,
     as: state === "pre" ? undefined : +away.score, hs: state === "pre" ? undefined : +home.score,
     awayRec: rec(away), homeRec: rec(home),
-    poss, rz: !!sit.isRedZone, dd: sit.shortDownDistanceText || sit.downDistanceText || "", spot: (sit.downDistanceText||"").includes(" at ") && !(sit.shortDownDistanceText) ? "" : (sit.possessionText || ""), lastPlay: sit.lastPlay?.text || "",
+    poss, rz, dd: sit.shortDownDistanceText || sit.downDistanceText || "", spot: (sit.downDistanceText||"").includes(" at ") && !(sit.shortDownDistanceText) ? "" : (sit.possessionText || ""), lastPlay: sit.lastPlay?.text || "",
     net, spread: odds ? [odds.details, odds.overUnder ? "O/U " + odds.overUnder : ""].filter(Boolean).join(" · ") : "",
     venue: c.venue?.fullName || "", period: st.period, clock: st.displayClock,
     away_lines: (away.linescores||[]).map(l => l.value ?? l.displayValue), home_lines: (home.linescores||[]).map(l => l.value ?? l.displayValue),
