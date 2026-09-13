@@ -414,7 +414,13 @@
   body.v-scores .wrap { gap: 10px; }
   body.v-scores .topbar { padding-bottom: 8px; }
   .board.fill { display: grid; gap: 12px; align-content: stretch; }
-  .board.fill .bg { container-type: size; min-height: 0; min-width: 0; grid-template-rows: 1fr 1fr auto auto; padding: 4cqh 4cqw 3cqh; gap: 0; }
+  .board.fill .bg { container-type: size; min-height: 0; min-width: 0; grid-template-rows: 1fr 1fr auto auto auto; padding: 4cqh 4cqw 3cqh; gap: 0; }
+  .bg.rz, .g.rz { --rzc: var(--redzone); border: 2px solid var(--rzc); box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 0 22px color-mix(in srgb, var(--rzc) 55%, transparent), inset 0 0 40px color-mix(in srgb, var(--rzc) 10%, transparent); }
+  .bg.rz .foot .rz { color: var(--rzc); filter: brightness(1.35); }
+  .bg .mine.opp::before { content: "Opponent"; color: var(--live); }
+  .bg .mine.opp { border-top: 1px dashed var(--line); }
+  .bg .mine.opp .mp { background: rgba(255,90,95,.12); border-color: rgba(255,90,95,.35); }
+  .bg .mine.opp .mp b { color: var(--live); }
   .bg .mine { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; border-top: 1px solid var(--line); padding-top: 8px; margin-bottom: 4px; }
   .bg .mine::before { content: "My players"; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-right: 2px; }
   .bg .mp { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink); background: var(--accent-soft); border: 1px solid rgba(91,156,255,.35); border-radius: 999px; padding: 3px 10px 3px 6px; }
@@ -951,10 +957,10 @@ function renderDrive(g) {
     <ul class="plays">${plays.map((p,i)=>`<li class="${i===0?'hl':''}"><span>${esc(p.start?.shortDownDistanceText || p.start?.downDistanceText || "")}</span><span>${esc(p.text)}</span></li>`).join("") || `<li><span></span><span>Drive starting</span></li>`}</ul>`;
 }
 
-function myPlayersIn(g) {
-  const sl = S.sleeper; if (!sl.mine || !sl.players) return [];
-  const pp = sl.mine.players_points || {};
-  return (sl.mine.starters || []).map(pid => ({ pid, p: sl.players[pid] })).filter(x => x.p && (toEspn(x.p[2]) === g.home || toEspn(x.p[2]) === g.away))
+function myPlayersIn(g, side) {
+  const sl = S.sleeper, m = side === "opp" ? sl.oppM : sl.mine; if (!m || !sl.players) return [];
+  const pp = m.players_points || {};
+  return (m.starters || []).map(pid => ({ pid, p: sl.players[pid] })).filter(x => x.p && (toEspn(x.p[2]) === g.home || toEspn(x.p[2]) === g.away))
     .map(x => ({ name: x.p[0], pos: x.p[1], team: toEspn(x.p[2]), pts: +(pp[x.pid] || 0) }));
 }
 function gameCard(g, big) {
@@ -968,9 +974,11 @@ function gameCard(g, big) {
     return `<div class="row">${mark(ab,"abbr")}${inner}<span class="sc ${trail?'trail':''} ${win?'win':''}">${up ? (big ? (ab===g.away ? esc(g.status) : "") : "") : s}</span></div>`;
   };
   const foot = `<div class="foot"><span class="st">${up ? (big ? slotOf(g) : esc(g.status)) : esc(g.status)}</span>${g.rz?'<span class="rz">Red zone</span>':''}${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}${g.net ? `<span class="net">${esc(g.net)}</span>` : ""}</div>`;
-  const mine = big ? myPlayersIn(g) : [];
-  const mineRow = mine.length ? `<div class="mine">${mine.map(m => `<span class="mp"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("")}</div>` : "";
-  return `<article class="${cls}" ${big ? "" : `data-id="${g.id}" role="button" tabindex="0" title="Show this game up top"`}>${row(g.away,g.as,g.hs,g.awayRec)}${row(g.home,g.hs,g.as,g.homeRec)}${mineRow}${foot}</article>`;
+  const mine = big ? myPlayersIn(g) : [], theirs = big ? myPlayersIn(g, "opp") : [];
+  const chips = arr => arr.map(m => `<span class="mp"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
+  const mineRow = (mine.length ? `<div class="mine">${chips(mine)}</div>` : "") + (theirs.length ? `<div class="mine opp">${chips(theirs)}</div>` : "");
+  const rzc = g.rz && g.poss ? chartColor(g.poss) : "";
+  return `<article class="${cls} ${g.rz ? "rz" : ""}" ${rzc ? `style="--rzc:${rzc}"` : ""} ${big ? "" : `data-id="${g.id}" role="button" tabindex="0" title="Show this game up top"`}>${row(g.away,g.as,g.hs,g.awayRec)}${row(g.home,g.hs,g.as,g.homeRec)}${mineRow}${foot}</article>`;
 }
 
 function renderSlots() {
