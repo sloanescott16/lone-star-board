@@ -1092,12 +1092,12 @@ function renderFantasy() {
     .map(pid => { const p = sl.players?.[pid] || [pid,"",""]; const g = gameForTeam(p[2]); const line = sl.stats ? statLine(pid) : "";
       return `<li data-pid="${esc(pid)}"><span class="when">${g ? esc(g.status) : ""}</span><span class="what"><b>${esc(p[0])}</b>${line ? `<span class="line">${esc(line)}</span>` : ""}</span><span class="pts tot">${(+pp[pid]).toFixed(2)}</span></li>`; }).join("");
   el("#fxFeed").innerHTML =
-    (ev.length ? ev.slice(0, 20).map(e => `<li data-pid="${esc(e.pid)}"><span class="when">${esc(e.when || fmtCT(e.t,{hour:"numeric",minute:"2-digit"}))}</span><span class="what"><b>${esc(e.name)}</b>${e.what ? `<span class="line">${esc(e.what)}</span>` : ""}</span><span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span></li>`).join("")
+    (ev.length ? ev.slice(0, 20).map(e => `<li data-pid="${esc(e.pid)}"><span class="when">${fmtCT(e.t,{hour:"numeric",minute:"2-digit"})}${e.when ? `<small>${esc(e.when)}</small>` : ""}</span><span class="what"><b>${esc(e.name)}</b>${e.what ? `<span class="line">${esc(e.what)}</span>` : ""}</span><span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span></li>`).join("")
       : `<li class="empty">Live changes land here as your starters score</li>`) +
     (sofar ? `<li class="sofar-head">Scoring so far</li>${sofar}` : "");
   // ticker
   const items = (ev.length ? ev.slice(0, 20) : starters.filter(pid => pp[pid]).map(pid => ({ name: (sl.players?.[pid]||[pid])[0], slot: (sl.players?.[pid]||[])[1], team: (sl.players?.[pid]||[])[2], d: 0, total: pp[pid]||0, what: sl.stats ? statLine(pid, 3) : "" })))
-    .map(e => `<span class="tk"><span class="who">${esc(e.name)}</span><span class="pos">${esc(e.slot||"")}${e.team ? " · " + esc(e.team) : ""}</span>${e.what ? `<span>${esc(e.what)}</span>` : ""}${e.d ? `<span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span>` : ""}<span class="tot">${(+e.total||0).toFixed(2)} total</span></span>`).join("");
+    .map(e => `<span class="tk">${e.t ? `<span class="ts">${fmtCT(e.t,{hour:"numeric",minute:"2-digit"})}${e.when ? " · " + esc(e.when) : ""}</span>` : ""}<span class="who">${esc(e.name)}</span><span class="pos">${esc(e.slot||"")}${e.team ? " · " + esc(e.team) : ""}</span>${e.what ? `<span>${esc(e.what)}</span>` : ""}${e.d ? `<span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span>` : ""}<span class="tot">${(+e.total||0).toFixed(2)} total</span></span>`).join("");
   const reel = el("#reel"); reel.innerHTML = items + items;
   requestAnimationFrame(() => { reel.style.animationDuration = Math.max(30, (reel.scrollWidth / 2) / 45) + "s"; });   // steady 45 px/s whatever the length
   if (document.body.classList.contains("v-scores")) renderBoard();
