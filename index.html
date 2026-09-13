@@ -397,7 +397,10 @@
   .pm-body table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .pm-body td { padding: 8px 6px; border-top: 1px solid var(--line); }
   .pm-body td:first-child { padding-left: 0; color: var(--ink-2); }
-  .pm-body td.v { text-align: right; color: var(--muted); }
+  .pm-body th { font-size: 11px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 4px 6px; }
+  .pm-body th.n { text-align: right; }
+  .pm-body td.c { text-align: right; font-family: var(--display); font-weight: 800; font-size: 22px; color: var(--ink); width: 80px; }
+  .pm-body td.e { text-align: right; color: var(--muted); font-size: 12px; width: 70px; }
   .pm-body td.p { text-align: right; font-family: var(--display); font-weight: 700; font-size: 18px; width: 70px; }
   .pm-body td.p.neg { color: var(--live); }
   .pm-body tr.sum td { border-top: 1px solid var(--line-strong); color: var(--ink); }
@@ -768,6 +771,8 @@ const STAT_LABEL = { pass_yd:"Passing yards", pass_td:"Passing TD", pass_int:"In
   sack:"Sacks", int:"Interceptions", fum_rec:"Fumble recoveries", ff:"Forced fumbles", def_td:"Defensive TD", safe:"Safeties", blk_kick:"Blocked kicks", def_st_td:"Special teams TD", def_st_ff:"ST forced fumble", def_st_fum_rec:"ST fumble recovery", st_td:"Return TD", st_ff:"ST forced fumble", st_fum_rec:"ST fumble recovery", def_2pt:"2-pt return", def_pass_def:"Passes defended", tkl:"Tackles", tkl_loss:"Tackles for loss", qb_hit:"QB hits",
   pts_allow_0:"0 points allowed", pts_allow_1_6:"1-6 points allowed", pts_allow_7_13:"7-13 points allowed", pts_allow_14_20:"14-20 points allowed", pts_allow_21_27:"21-27 points allowed", pts_allow_28_34:"28-34 points allowed", pts_allow_35p:"35+ points allowed",
   yds_allow_0_100:"0-100 yards allowed", yds_allow_100_199:"100-199 yards allowed", yds_allow_200_299:"200-299 yards allowed", yds_allow_300_349:"300-349 yards allowed", yds_allow_350_399:"350-399 yards allowed", yds_allow_400_449:"400-449 yards allowed", yds_allow_450_499:"450-499 yards allowed", yds_allow_500_549:"500-549 yards allowed", yds_allow_550p:"550+ yards allowed",
+  rec_td_40p:"40+ yd receiving TD", rec_td_50p:"50+ yd receiving TD", rush_td_40p:"40+ yd rushing TD", rush_td_50p:"50+ yd rushing TD", pass_td_40p:"40+ yd passing TD", pass_td_50p:"50+ yd passing TD",
+  bonus_rush_rec_yd_100:"100+ rush + rec yd bonus", bonus_rush_rec_yd_200:"200+ rush + rec yd bonus", bonus_rec_rb:"RB reception bonus", bonus_rec_wr:"WR reception bonus", bonus_fd_rb:"RB first down", bonus_fd_wr:"WR first down", bonus_fd_te:"TE first down", bonus_fd_qb:"QB first down", rush_fd:"Rushing first down", rec_fd:"Receiving first down", pass_fd:"Passing first down", rec_40p:"40+ yd reception", rush_40p:"40+ yd rush", pass_cmp_40p:"40+ yd completion", rec_0_4:"Rec 0-4 yd", rec_5_9:"Rec 5-9 yd", rec_10_19:"Rec 10-19 yd", rec_20_29:"Rec 20-29 yd", rec_30_39:"Rec 30-39 yd",
   kr_yd:"Kick return yards", pr_yd:"Punt return yards", idp_tkl:"Tackles", idp_sack:"Sacks", idp_int:"Interceptions" };
 const SHORT = { pass_yd:"pass yd", pass_td:"pass TD", pass_int:"INT", rush_yd:"rush yd", rush_td:"rush TD", rec:"rec", rec_yd:"rec yd", rec_td:"rec TD", fum_lost:"fum lost", xpm:"XP", fgm:"FG", fgm_0_19:"FG", fgm_20_29:"FG", fgm_30_39:"FG", fgm_40_49:"FG 40+", fgm_50p:"FG 50+", fgmiss:"FG miss", sack:"sack", int:"INT", fum_rec:"fum rec", def_td:"def TD", safe:"safety", blk_kick:"blk", ff:"FF", bonus_rec_te:"TE bonus", pass_2pt:"2pt", rush_2pt:"2pt", rec_2pt:"2pt", def_st_td:"ST TD", st_td:"ST TD" };
 function statLine(pid, max = 5) {
@@ -814,9 +819,10 @@ async function openPlayer(pid) {
     await loadWeekStats();
     const rows = breakdown(pid);
     const sum = rows.reduce((a,r) => a + r.pts, 0);
-    el("#pmBody").innerHTML = rows.length ? `<table><tbody>` +
-      rows.map(r => `<tr><td>${esc(statLabel(r.k))}</td><td class="v">${Number.isInteger(r.v) ? r.v : r.v.toFixed(1)} × ${r.per > 0 ? "+" : ""}${+r.per.toFixed(3)}</td><td class="p ${r.pts<0?'neg':''}">${r.pts>0?'+':''}${r.pts.toFixed(2)}</td></tr>`).join("") +
-      `<tr class="sum"><td>Total</td><td class="v"></td><td class="p">${sum.toFixed(2)}</td></tr></tbody></table>` +
+    const fmtN = v => Number.isInteger(v) ? v : +v.toFixed(1);
+    el("#pmBody").innerHTML = rows.length ? `<table><thead><tr><th>Stat</th><th class="n">Count</th><th class="n">Each</th><th class="n">Pts</th></tr></thead><tbody>` +
+      rows.map(r => `<tr><td>${esc(statLabel(r.k))}</td><td class="c">${fmtN(r.v)}</td><td class="e">${r.per > 0 ? "+" : ""}${+r.per.toFixed(3)}</td><td class="p ${r.pts<0?'neg':''}">${r.pts>0?'+':''}${r.pts.toFixed(2)}</td></tr>`).join("") +
+      `<tr class="sum"><td>Total</td><td class="c"></td><td class="e"></td><td class="p">${sum.toFixed(2)}</td></tr></tbody></table>` +
       (Math.abs(sum - pts) > 0.05 ? `<div class="pm-note">Sleeper shows ${pts.toFixed(2)}; stat feed can lag the live score by a play or two.</div>` : "")
       : `<div class="empty">No stats yet${g && g.state === "pre" ? ", game hasn't started" : ""}.</div>`;
   } catch (e) { el("#pmBody").innerHTML = `<div class="empty">Couldn't load the stat line (${esc(e.message)}).</div>`; }
