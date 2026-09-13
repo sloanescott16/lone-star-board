@@ -1096,7 +1096,7 @@ function renderFantasy() {
       : `<li class="empty">Live changes land here as your starters score</li>`) +
     (sofar ? `<li class="sofar-head">Scoring so far</li>${sofar}` : "");
   // ticker
-  const items = (ev.length ? ev.slice(0, 20) : starters.filter(pid => pp[pid]).map(pid => ({ name: (sl.players?.[pid]||[pid])[0], slot: (sl.players?.[pid]||[])[1], team: (sl.players?.[pid]||[])[2], d: 0, total: pp[pid]||0, what: sl.stats ? statLine(pid, 3) : "" })))
+  const items = (ev.length ? ev.slice(0, 5) : starters.filter(pid => pp[pid]).map(pid => ({ name: (sl.players?.[pid]||[pid])[0], slot: (sl.players?.[pid]||[])[1], team: (sl.players?.[pid]||[])[2], d: 0, total: pp[pid]||0, what: sl.stats ? statLine(pid, 3) : "" })))
     .map(e => `<span class="tk">${e.t ? `<span class="ts">${fmtCT(e.t,{hour:"numeric",minute:"2-digit"})}${e.when ? " · " + esc(e.when) : ""}</span>` : ""}<span class="who">${esc(e.name)}</span><span class="pos">${esc(e.slot||"")}${e.team ? " · " + esc(e.team) : ""}</span>${e.what ? `<span>${esc(e.what)}</span>` : ""}${e.d ? `<span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span>` : ""}<span class="tot">${(+e.total||0).toFixed(2)} total</span></span>`).join("");
   const reel = el("#reel"); reel.innerHTML = items + items;
   requestAnimationFrame(() => { reel.style.animationDuration = Math.max(30, (reel.scrollWidth / 2) / 45) + "s"; });   // steady 45 px/s whatever the length
