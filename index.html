@@ -387,8 +387,8 @@
   .roster tbody tr[data-pid]:hover td { background: rgba(91,156,255,.06); }
   .modal { position: fixed; inset: 0; z-index: 50; background: rgba(6,9,14,.7); display: grid; place-items: center; padding: 16px; }
   .modal[hidden] { display: none; }
-  .sheet { width: min(560px, 100%); max-height: 90vh; overflow: auto; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 14px; padding: 18px 20px; }
-  .pm-head { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 14px; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 8px; }
+  .sheet { width: min(680px, 100%); max-height: 90vh; overflow: auto; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 14px; padding: 18px 20px; }
+  .pm-head { display: grid; grid-template-columns: auto 1fr auto auto auto; align-items: center; gap: 14px; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 8px; }
   .pm-head .abbr { width: 40px; height: 40px; border-radius: 9px; display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 15px; color: #fff; }
   .pm-name { font-family: var(--display); font-weight: 700; font-size: 24px; text-transform: uppercase; line-height: 1; }
   .pm-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
@@ -403,6 +403,9 @@
   .pm-body tr.sum td { border-top: 1px solid var(--line-strong); color: var(--ink); }
   .pm-body tr.sum td.p { color: var(--accent); }
   .pm-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .pm-x { text-decoration: none; color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
+  .pm-x:hover { background: var(--accent); color: #0c1119; }
+  @media (max-width: 640px) { .pm-head { grid-template-columns: auto 1fr auto; } .pm-head .pm-x, .pm-head .pm-close { grid-column: span 1; } }
   .seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line-strong); border-radius: 999px; margin-left: 10px; }
   .seg button { font: inherit; font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); background: transparent; border: 0; border-radius: 999px; padding: 3px 10px; cursor: pointer; }
   .seg button.on { background: var(--accent); color: #0c1119; }
@@ -531,6 +534,7 @@
       <span class="abbr" id="pmMark"></span>
       <div><div class="pm-name" id="pmTitle"></div><div class="pm-sub" id="pmSub"></div></div>
       <div class="pm-total"><span id="pmPts">–</span><small>pts</small></div>
+      <a class="btn pm-x" id="pmX" href="#" target="_blank" rel="noopener noreferrer" title="Latest posts about this player on X">Search X</a>
       <button class="btn pm-close" id="pmClose" type="button" aria-label="Close">Close</button>
     </div>
     <div id="pmBody" class="pm-body"><div class="empty">Loading stats</div></div>
@@ -804,6 +808,7 @@ async function openPlayer(pid) {
   el("#pmMark").textContent = toEspn(p[2] || "FA"); el("#pmMark").style.background = T(p[2] || "FA")[2];
   el("#pmTitle").textContent = p[0]; el("#pmSub").textContent = `${p[1]} · ${toEspn(p[2])}${g ? " · " + (g.state === "pre" ? "Kickoff " + fmtCT(g.date,{weekday:"short",hour:"numeric",minute:"2-digit"}) : `${g.away} ${g.as} · ${g.home} ${g.hs} · ${g.status}`) : " · Bye"}`;
   el("#pmPts").textContent = pts.toFixed(2);
+  el("#pmX").href = "https://x.com/search?f=live&src=typed_query&q=" + encodeURIComponent(p[0]);
   el("#pmBody").innerHTML = `<div class="empty">Loading stats</div>`;
   try {
     await loadWeekStats();
