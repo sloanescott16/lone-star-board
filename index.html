@@ -409,6 +409,25 @@
   .pm-body tr.sum td { border-top: 1px solid var(--line-strong); color: var(--ink); }
   .pm-body tr.sum td.p { color: var(--accent); }
   .pm-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .fsheet { width: min(760px, 100%); padding: 26px 30px 20px; text-align: center; border-width: 2px; animation: toastIn .5s cubic-bezier(.2,1.2,.3,1) both; }
+  .f-kicker { font-family: var(--display); font-weight: 800; font-size: 20px; letter-spacing: .3em; text-transform: uppercase; color: var(--live); margin-bottom: 14px; }
+  .f-teams { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; }
+  .f-team { display: grid; justify-items: center; gap: 8px; }
+  .f-team .mark { width: 76px; height: 76px; font-size: 28px; border-radius: 16px; }
+  .f-team .nm { font-family: var(--display); font-weight: 700; font-size: 30px; text-transform: uppercase; line-height: 1; }
+  .f-team .rec { font-size: 13px; color: var(--muted); }
+  .f-team.lose .nm, .f-team.lose .sc { color: var(--muted); }
+  .f-team .sc { font-family: var(--display); font-weight: 800; font-size: 96px; line-height: .9; }
+  .f-team.win .sc { color: var(--ink); }
+  .f-team .tag { font-family: var(--display); font-weight: 800; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--good); }
+  .f-vs { font-family: var(--display); font-size: 18px; color: var(--muted); letter-spacing: .1em; }
+  .f-players { margin-top: 18px; display: grid; gap: 8px; text-align: left; }
+  .f-players .mine { border-top: 1px solid var(--line); padding-top: 10px; }
+  .f-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; gap: 12px; }
+  .f-note { font-size: 12px; color: var(--muted); }
+  .bg.final.held { opacity: .85; }
+  .bg.final.held .foot .st { color: var(--ink-2); }
+  @media (max-width: 640px) { .f-team .sc { font-size: 64px; } .f-team .nm { font-size: 22px; } .f-team .mark { width: 56px; height: 56px; font-size: 20px; } }
   .toasts { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 60; display: grid; gap: 10px; pointer-events: none; width: min(560px, calc(100% - 32px)); }
   .toast { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; background: var(--raised); border: 2px solid var(--good); border-radius: 14px; padding: 12px 16px; box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 0 30px color-mix(in srgb, var(--good) 35%, transparent); animation: toastIn .45s cubic-bezier(.2,1.2,.3,1) both; }
   .toast.big { border-color: var(--tc, var(--accent)); box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 0 40px color-mix(in srgb, var(--tc, var(--accent)) 55%, transparent); }
@@ -555,6 +574,14 @@
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <canvas id="confetti" hidden></canvas>
 
+<div class="modal final" id="fmodal" hidden>
+  <div class="sheet fsheet" role="dialog" aria-modal="true" aria-label="Final score">
+    <div class="f-kicker">Final</div>
+    <div id="fBody"></div>
+    <div class="f-foot"><span class="f-note" id="fNote"></span><button class="btn" id="fClose" type="button">Close</button></div>
+  </div>
+</div>
+
 <div class="modal" id="pmodal" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
     <div class="pm-head">
@@ -685,6 +712,11 @@ async function loadScoreboard() {
   const d = await getJSON("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard");
   S.week = d.week?.number; S.season = d.season?.year;
   S.events = (d.events || []).map(normGame).sort((a,b) => a.date - b.date);
+  S.prevState = S.prevState || {}; S.finishedAt = S.finishedAt || {}; S.finals = S.finals || [];
+  for (const g of S.events) {
+    if (S.prevState[g.id] === "in" && g.state === "post") { S.finishedAt[g.id] = Date.now(); S.finals.push(g.id); }
+    S.prevState[g.id] = g.state;
+  }
   el("#weekLabel").textContent = `Week ${S.week ?? ""} · ${fmtCT(Date.now(), { weekday:"short", month:"short", day:"numeric" })}`;
   // featured: favourite team's game, else first live, else next up
   const pick = S.pickId && S.events.find(g => g.id === S.pickId);
@@ -870,6 +902,24 @@ async function openPlayer(pid) {
 }
 function closePlayer() { el("#pmodal").hidden = true; }
 
+/* ---- big final-score pop-up when a game ends ---- */
+function showFinal(id) {
+  const g = S.events.find(x => x.id === id); if (!g) return;
+  const aw = g.as > g.hs, hw = g.hs > g.as;
+  const team = (ab, sc, rec, win, lose) => `<div class="f-team ${win?'win':''} ${lose?'lose':''}">${mark(ab)}<div class="nm">${esc(T(ab)[1])}</div><div class="sc">${sc}</div><div class="rec">${esc(rec)}</div>${win ? '<div class="tag">Winner</div>' : ''}</div>`;
+  const chips = arr => arr.map(m => `<span class="mp" data-pid="${esc(m.pid)}" role="button"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
+  const mine = myPlayersIn(g), theirs = myPlayersIn(g, "opp");
+  el("#fBody").innerHTML = `
+    <div class="f-teams">${team(g.away, g.as, g.awayRec, aw, hw)}<div class="f-vs">${aw || hw ? "beat" : "tied"}</div>${team(g.home, g.hs, g.homeRec, hw, aw)}</div>
+    ${mine.length || theirs.length ? `<div class="f-players bg">${mine.length ? `<div class="mine">${chips(mine)}</div>` : ""}${theirs.length ? `<div class="mine opp">${chips(theirs)}</div>` : ""}</div>` : ""}`;
+  el("#fNote").textContent = `${esc(g.status)} · ${g.venue || ""}`;
+  const m = el("#fmodal"); m.hidden = false;
+  clearTimeout(S.finalTimer); S.finalTimer = setTimeout(closeFinal, 60000);
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) confetti(chartColor(aw ? g.away : g.home));
+}
+function closeFinal() { el("#fmodal").hidden = true; if (S.finals.length) setTimeout(() => showFinal(S.finals.shift()), 400); }
+function pumpFinals() { if (S.finals.length && el("#fmodal").hidden) showFinal(S.finals.shift()); }
+
 /* ---- flourish for a fresh scoring play ---- */
 function celebrate(e) {
   const p = S.sleeper.players?.[e.pid] || [e.name, e.slot, e.team];
@@ -1051,7 +1101,7 @@ function myPlayersIn(g, side) {
 }
 function gameCard(g, big) {
   const up = g.state === "pre", fin = g.state === "post", isFav = g.home === CFG.fav || g.away === CFG.fav;
-  const cls = [big ? "bg" : "g", g.live?"live":"", isFav?"dal":"", up?"upcoming":"", fin?"final":"", !big && S.featured && S.featured.id === g.id ? "picked" : ""].join(" ");
+  const cls = [big ? "bg" : "g", g.live?"live":"", isFav?"dal":"", up?"upcoming":"", fin?"final":"", fin && big ? "held" : "", !big && S.featured && S.featured.id === g.id ? "picked" : ""].join(" ");
   const row = (ab, s, other, rec) => {
     const trail = !up && s < other, win = fin && s > other;
     const inner = big
@@ -1105,7 +1155,7 @@ function renderFeed() {
 function renderBoard() {
   const live = S.events.filter(g=>g.live).length, fin = S.events.filter(g=>g.state==="post").length;
   el("#boardSub").textContent = `${S.events.length} games · ${live} live · ${fin} final · ${S.events.length-live-fin} to come`;
-  const liveGames = S.events.filter(g => g.live);
+  const liveGames = S.events.filter(g => g.live || (g.state === "post" && S.finishedAt?.[g.id] && Date.now() - S.finishedAt[g.id] < 180000));
   const next = S.events.find(g => g.state === "pre");
   el("#board").innerHTML = liveGames.map(g => gameCard(g,true)).join("")
     || `<div class="empty">No games in progress${next ? `. Next kickoff: ${esc(T(next.away)[1])} at ${esc(T(next.home)[1])}, ${fmtCT(next.date,{weekday:"short",hour:"numeric",minute:"2-digit"})} CT` : ""}.</div>`;
@@ -1203,7 +1253,7 @@ async function espnLoop() {
   try {
     await loadScoreboard();
     try { await loadSummary(); } catch (e) { console.warn("summary", e); }
-    renderAll(); S.lastOk = Date.now(); setErr(false);
+    renderAll(); S.lastOk = Date.now(); setErr(false); pumpFinals();
   } catch (e) { console.warn("scoreboard", e); setErr(true); }
   const anyLive = S.events.some(g => g.live);
   espnTimer = setTimeout(espnLoop, anyLive ? CFG.pollLive : CFG.pollIdle);
@@ -1245,11 +1295,12 @@ async function pickGame(id) {
 document.addEventListener("click", e => {
   const prow = e.target.closest("#roster tr[data-pid], #fxFeed li[data-pid], .bg .mp[data-pid], .tk[data-pid]"); if (prow && prow.dataset.pid) return openPlayer(prow.dataset.pid);
   const seg = e.target.closest("#fxSeg button"); if (seg) { S.sleeper.view = seg.dataset.side; return renderFantasy(); }
-  if (e.target.closest("#pmClose") || (e.target.id === "pmmodal") || e.target === el("#pmodal")) return closePlayer();
+  if (e.target.closest("#pmClose") || e.target === el("#pmodal")) return closePlayer();
+  if (e.target.closest("#fClose") || e.target === el("#fmodal")) return closeFinal();
   const card = e.target.closest("#slots .g[data-id]"); if (card) return pickGame(card.dataset.id);
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape") closePlayer(); if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) pickGame(e.target.dataset.id); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) pickGame(e.target.dataset.id); });
 el("#fsBtn").addEventListener("click", () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); });
 document.addEventListener("fullscreenchange", () => { el("#fsBtn").textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; setTimeout(fitBoard, 50); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { espnLoop(); sleeperLoop(); } });
