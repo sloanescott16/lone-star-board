@@ -362,7 +362,7 @@
   .chip.err { color: var(--warn); border-color: rgba(242,184,75,.45); display: none; }
   .chip.src { color: var(--muted); }
   .empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
-  .lines { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .lines { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
   .ln { display: grid; gap: 2px; }
   .ln .k { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
   .ln .v { font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1.1; }
@@ -370,6 +370,7 @@
   .ln .sub { font-size: 12px; color: var(--ink-2); }
   .g .lm { font-size: 11.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px; line-height: 1.35; }
   .g .lm .spread { color: var(--muted); }
+  .lines.two { grid-template-columns: repeat(2, 1fr); }
   @media (max-width: 640px) { .lines { grid-template-columns: repeat(2, 1fr); } }
   .lastplay { font-size: 13px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 10px; }
   .lastplay b { color: var(--ink); font-weight: 600; }
@@ -689,9 +690,7 @@ function normGame(ev) {
   else if (!dd) rz = false;
   const rec = t => (t.records || []).find(r => r.type === "total" || r.name === "overall")?.summary || (t.records||[])[0]?.summary || "";
   const net = (c.broadcasts?.[0]?.names?.[0]) || c.geoBroadcasts?.[0]?.media?.shortName || "";
-  const o = c.odds?.[0];
-  const mlA = o?.awayTeamOdds?.moneyLine, mlH = o?.homeTeamOdds?.moneyLine;
-  let odds = o ? { details: o.details || "", ou: o.overUnder, spread: o.spread, mlA, mlH, sA: o.awayTeamOdds?.spreadOdds, sH: o.homeTeamOdds?.spreadOdds, prov: o.provider?.name || "" } : null;
+  let odds = parseOdds(c.odds?.[0]);
   // freeze the pregame line as the closing line once the game starts
   const ok = "lsb-line-" + ev.id, saved = store.get(ok, null);
   if (state === "pre" && odds) store.set(ok, odds); else if (saved) odds = saved;
@@ -965,20 +964,32 @@ function gameForTeam(ab) { const e = toEspn(ab); return S.events.find(g => g.hom
 /* =====================================================================
    RENDER: home
    ===================================================================== */
+// ESPN ships odds in a few shapes depending on the endpoint and vintage; take whatever is there, preferring the closing number
+function parseOdds(o) {
+  if (!o) return null;
+  const pick = (...v) => v.find(x => x != null && x !== "");
+  const num = v => { if (v == null || v === "") return null; if (typeof v === "number") return v; const n = parseFloat(String(v).replace(/[^\d.+-]/g, "")); return isNaN(n) ? null : n; };
+  const side = (t, k) => pick(o[t]?.moneyLine, o.moneyline?.[k]?.close?.odds, o.moneyline?.[k]?.current?.odds, o[t]?.close?.moneyLine?.american, o[t]?.current?.moneyLine?.american);
+  const so = (t, k) => pick(o[t]?.spreadOdds, o.pointSpread?.[k]?.close?.odds, o.pointSpread?.[k]?.current?.odds, o[t]?.close?.pointSpread?.american, o[t]?.current?.pointSpread?.american);
+  const ou = pick(o.overUnder, o.total?.over?.close?.line, o.total?.over?.current?.line);
+  return { details: o.details || "", ou: num(ou), spread: num(o.spread), mlA: num(side("awayTeamOdds","away")), mlH: num(side("homeTeamOdds","home")), sA: num(so("awayTeamOdds","away")), sH: num(so("homeTeamOdds","home")) };
+}
 const fmtML = v => v == null ? "–" : (v > 0 ? "+" : "") + v;
 function linesHTML(g, compact) {
   const o = g.odds; if (!o) return "";
   if (compact) return `<span class="spread">${esc(o.details || "PK")}${o.mlA != null ? ` · ML ${esc(g.away)} ${fmtML(o.mlA)} / ${esc(g.home)} ${fmtML(o.mlH)}` : ""}${o.ou ? ` · O/U ${o.ou}` : ""}</span>`;
-  return `<div class="lines">
-    <div class="ln"><span class="k">Spread</span><span class="v">${esc(o.details || "Pick")}</span>${o.sA != null ? `<span class="sub">${esc(g.away)} ${fmtML(o.sA)} · ${esc(g.home)} ${fmtML(o.sH)}</span>` : ""}</div>
-    <div class="ln"><span class="k">Moneyline</span><span class="v">${esc(g.away)} ${fmtML(o.mlA)}</span><span class="sub">${esc(g.home)} ${fmtML(o.mlH)}</span></div>
+  const hasML = o.mlA != null && o.mlH != null;
+  const fav = o.mlA != null && o.mlH != null ? (o.mlA < o.mlH ? g.away : g.home) : null;
+  return `<div class="lines ${hasML ? "" : "two"}">
+    <div class="ln"><span class="k">Spread</span><span class="v">${esc(o.details || "Pick")}</span><span class="sub">${o.sA != null ? `${esc(g.away)} ${fmtML(o.sA)} · ${esc(g.home)} ${fmtML(o.sH)}` : (g.state === "pre" ? "Closing line" : "Closing line")}</span></div>
+    ${hasML ? `<div class="ln"><span class="k">Moneyline</span><span class="v">${esc(fav)} ${fmtML(fav === g.away ? o.mlA : o.mlH)}</span><span class="sub">${esc(fav === g.away ? g.home : g.away)} ${fmtML(fav === g.away ? o.mlH : o.mlA)}</span></div>` : ""}
     <div class="ln"><span class="k">Over / Under</span><span class="v">${o.ou ?? "–"}</span><span class="sub">${g.state === "pre" ? "" : (g.as + g.hs) + " scored so far"}</span></div>
-    <div class="ln"><span class="k">${g.state === "pre" ? "Line" : "Closing line"}</span><span class="v small">${esc(o.prov || "ESPN")}</span></div>
   </div>`;
 }
 function renderHero(g) {
   if (!g) { el("#hero").innerHTML = `<div class="empty">No games on the board</div>`; return; }
   const sum = S.summary;
+  if (sum?.pickcenter?.length && (!g.odds || g.odds.mlA == null)) { const pc = parseOdds(sum.pickcenter[0]); if (pc) { g.odds = { ...(g.odds || {}), ...Object.fromEntries(Object.entries(pc).filter(([k,v]) => v != null && v !== "")) }; if (g.state === "pre") store.set("lsb-line-" + g.id, g.odds); } }
   const lead = (g.hs ?? 0) >= (g.as ?? 0);
   const team = (ab, side, rec, poss) => `
     <div class="team ${side} ${poss?'has-ball':''}">
