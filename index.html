@@ -310,9 +310,10 @@
   .flash { animation: flash 2.4s ease-out 1; }
   @keyframes flash { 0% { background: rgba(56,199,122,.28); } 100% { background: transparent; } }
   .fxfeed { list-style: none; margin: 0; padding: 0; display: grid; }
-  .fxfeed li { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .fxfeed li { display: grid; grid-template-columns: 78px 1fr auto; gap: 10px; align-items: baseline; padding: 9px 0; border-top: 1px solid var(--line); font-size: 13px; }
   .fxfeed li:first-child { border-top: 0; padding-top: 0; }
-  .fxfeed .when { color: var(--muted); font-size: 12px; }
+  .fxfeed .when { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .fxfeed .when small { display: block; font-size: 11px; opacity: .8; }
   .fxfeed .what b { font-weight: 600; color: var(--ink); }
   .fxfeed .what { color: var(--ink-2); }
   .fxfeed .pts { font-family: var(--display); font-weight: 800; font-size: 18px; color: var(--good); }
@@ -755,22 +756,34 @@ async function loadMatchup() {
     const r = sl.rosters.find(x => x.roster_id === opp.roster_id), u = r && sl.users.find(x => x.user_id === r.owner_id);
     sl.opp = { name: u?.metadata?.team_name || u?.display_name || "Opponent", owner: u?.display_name || "" };
   }
-  // ticker events from point deltas
+  // ticker events: driven by the stat line itself, so the points and the description always describe the same play
   const key = "lsb-fxevents-" + wk, events = store.get(key, []);
   const pp = mine?.players_points || {};
-  const prevStats = sl.stats ? JSON.parse(JSON.stringify(sl.stats)) : null;
   try { await loadWeekStats(); } catch (e) { console.warn("stats", e); }
-  const last = Object.keys(sl.lastPts).length ? sl.lastPts : store.get("lsb-fxlast-" + wk, {});
-  if (Object.keys(last).length) {
-    for (const [pid, pts] of Object.entries(pp)) {
-      const d = Math.round((pts - (last[pid] || 0)) * 100) / 100;
-      const dup = events.find(e => e.pid === pid && Math.abs(e.total - pts) < 0.005);
-      if (Math.abs(d) >= 0.05 && !dup) {
+  const roster = [...new Set([...(mine?.players || []), ...(opp?.players || [])])];
+  const snapKey = "lsb-fxsnap-" + wk, snap = sl.snap || store.get(snapKey, null);   // last seen stat lines for roster players
+  if (sl.stats) {
+    const next = {};
+    for (const pid of roster) next[pid] = sl.stats[pid] || {};
+    if (snap) {
+      for (const pid of roster) {
+        const prev = snap[pid] || {}, cur = next[pid];
+        const d = Math.round((breakdown(pid).reduce((a,r)=>a+r.pts,0) - breakdownFrom(pid, prev).reduce((a,r)=>a+r.pts,0)) * 100) / 100;
+        if (Math.abs(d) < 0.05) continue;
+        const what = statDiff(pid, prev);
+        const dup = events.find(e => e.pid === pid && e.what === what && Date.now() - e.t < 120000);
+        if (dup) continue;
         const p = sl.players?.[pid]; const g = p && gameForTeam(p[2]);
-        const last = p ? p[0].split(" ").pop() : "";
-        const what = (prevStats && statDiff(pid, prevStats[pid])) || (g?.lastPlay && last && g.lastPlay.includes(last) ? g.lastPlay : "");
-        events.unshift({ t: Date.now(), pid, name: p ? p[0] : pid, slot: p ? p[1] : "", team: p ? p[2] : "", d, total: pts, when: g ? g.status : "", what });
+        events.unshift({ t: Date.now(), pid, name: p ? p[0] : pid, slot: p ? p[1] : "", team: p ? p[2] : "", d, total: +(pp[pid] ?? opp?.players_points?.[pid] ?? 0), when: g ? g.status : "", what });
       }
+    }
+    sl.snap = next; store.set(snapKey, next);
+  } else if (Object.keys(sl.lastPts).length) {
+    // no stat feed: fall back to bare point swings
+    for (const [pid, pts] of Object.entries(pp)) {
+      const d = Math.round((pts - (sl.lastPts[pid] || 0)) * 100) / 100;
+      if (Math.abs(d) >= 0.05) { const p = sl.players?.[pid]; const g = p && gameForTeam(p[2]);
+        events.unshift({ t: Date.now(), pid, name: p ? p[0] : pid, slot: p ? p[1] : "", team: p ? p[2] : "", d, total: pts, when: g ? g.status : "", what: "" }); }
     }
   }
   sl.lastPts = { ...pp }; store.set("lsb-fxlast-" + wk, sl.lastPts);
@@ -817,12 +830,13 @@ function statDiff(pid, before) {
 const statLabel = k => STAT_LABEL[k] || k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 async function loadWeekStats() {
   const sl = S.sleeper;
-  if (sl.stats && Date.now() - sl.statsT < 45000) return sl.stats;
+  if (sl.stats && Date.now() - sl.statsT < 20000) return sl.stats;
   sl.stats = await getJSON(`${SL}/stats/nfl/regular/${sl.season}/${sl.week}`); sl.statsT = Date.now();
   return sl.stats;
 }
-function breakdown(pid) {
-  const sl = S.sleeper, st = sl.stats?.[pid] || {}, sc = sl.league?.scoring_settings || {};
+function breakdown(pid) { return breakdownFrom(pid, S.sleeper.stats?.[pid] || {}); }
+function breakdownFrom(pid, st) {
+  const sl = S.sleeper, sc = sl.league?.scoring_settings || {};
   const rows = [];
   for (const [k, per] of Object.entries(sc)) {
     const v = st[k]; if (!v || !per) continue;
