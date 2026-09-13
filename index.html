@@ -808,7 +808,7 @@ async function openPlayer(pid) {
   el("#pmMark").textContent = toEspn(p[2] || "FA"); el("#pmMark").style.background = T(p[2] || "FA")[2];
   el("#pmTitle").textContent = p[0]; el("#pmSub").textContent = `${p[1]} · ${toEspn(p[2])}${g ? " · " + (g.state === "pre" ? "Kickoff " + fmtCT(g.date,{weekday:"short",hour:"numeric",minute:"2-digit"}) : `${g.away} ${g.as} · ${g.home} ${g.hs} · ${g.status}`) : " · Bye"}`;
   el("#pmPts").textContent = pts.toFixed(2);
-  el("#pmX").href = "https://x.com/search?f=live&src=typed_query&q=" + encodeURIComponent(p[0]);
+  el("#pmX").href = "https://x.com/search?src=typed_query&q=" + encodeURIComponent(p[0]);
   el("#pmBody").innerHTML = `<div class="empty">Loading stats</div>`;
   try {
     await loadWeekStats();
