@@ -362,6 +362,15 @@
   .chip.err { color: var(--warn); border-color: rgba(242,184,75,.45); display: none; }
   .chip.src { color: var(--muted); }
   .empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+  .lines { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .ln { display: grid; gap: 2px; }
+  .ln .k { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .ln .v { font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1.1; }
+  .ln .v.small { font-size: 15px; color: var(--ink-2); font-weight: 600; }
+  .ln .sub { font-size: 12px; color: var(--ink-2); }
+  .g .lm { font-size: 11.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px; line-height: 1.35; }
+  .g .lm .spread { color: var(--muted); }
+  @media (max-width: 640px) { .lines { grid-template-columns: repeat(2, 1fr); } }
   .lastplay { font-size: 13px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 10px; }
   .lastplay b { color: var(--ink); font-weight: 600; }
   .bg .foot .lp { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
@@ -680,7 +689,12 @@ function normGame(ev) {
   else if (!dd) rz = false;
   const rec = t => (t.records || []).find(r => r.type === "total" || r.name === "overall")?.summary || (t.records||[])[0]?.summary || "";
   const net = (c.broadcasts?.[0]?.names?.[0]) || c.geoBroadcasts?.[0]?.media?.shortName || "";
-  const odds = c.odds?.[0];
+  const o = c.odds?.[0];
+  const mlA = o?.awayTeamOdds?.moneyLine, mlH = o?.homeTeamOdds?.moneyLine;
+  let odds = o ? { details: o.details || "", ou: o.overUnder, spread: o.spread, mlA, mlH, sA: o.awayTeamOdds?.spreadOdds, sH: o.homeTeamOdds?.spreadOdds, prov: o.provider?.name || "" } : null;
+  // freeze the pregame line as the closing line once the game starts
+  const ok = "lsb-line-" + ev.id, saved = store.get(ok, null);
+  if (state === "pre" && odds) store.set(ok, odds); else if (saved) odds = saved;
   let status;
   if (state === "pre") status = fmtCT(ev.date, { weekday:"short", hour:"numeric", minute:"2-digit" }).replace(",", "");
   else if (state === "post") status = type.shortDetail; // Final / Final/OT
@@ -693,7 +707,7 @@ function normGame(ev) {
     as: state === "pre" ? undefined : +away.score, hs: state === "pre" ? undefined : +home.score,
     awayRec: rec(away), homeRec: rec(home),
     poss, rz, dd: sit.shortDownDistanceText || sit.downDistanceText || "", spot: (sit.downDistanceText||"").includes(" at ") && !(sit.shortDownDistanceText) ? "" : (sit.possessionText || ""), lastPlay: sit.lastPlay?.text || "",
-    net, spread: odds ? [odds.details, odds.overUnder ? "O/U " + odds.overUnder : ""].filter(Boolean).join(" · ") : "",
+    net, odds, spread: odds ? [odds.details, odds.ou ? "O/U " + odds.ou : ""].filter(Boolean).join(" · ") : "",
     venue: c.venue?.fullName || "", period: st.period, clock: st.displayClock,
     away_lines: (away.linescores||[]).map(l => l.value ?? l.displayValue), home_lines: (home.linescores||[]).map(l => l.value ?? l.displayValue),
   };
@@ -951,6 +965,17 @@ function gameForTeam(ab) { const e = toEspn(ab); return S.events.find(g => g.hom
 /* =====================================================================
    RENDER: home
    ===================================================================== */
+const fmtML = v => v == null ? "–" : (v > 0 ? "+" : "") + v;
+function linesHTML(g, compact) {
+  const o = g.odds; if (!o) return "";
+  if (compact) return `<span class="spread">${esc(o.details || "PK")}${o.mlA != null ? ` · ML ${esc(g.away)} ${fmtML(o.mlA)} / ${esc(g.home)} ${fmtML(o.mlH)}` : ""}${o.ou ? ` · O/U ${o.ou}` : ""}</span>`;
+  return `<div class="lines">
+    <div class="ln"><span class="k">Spread</span><span class="v">${esc(o.details || "Pick")}</span>${o.sA != null ? `<span class="sub">${esc(g.away)} ${fmtML(o.sA)} · ${esc(g.home)} ${fmtML(o.sH)}</span>` : ""}</div>
+    <div class="ln"><span class="k">Moneyline</span><span class="v">${esc(g.away)} ${fmtML(o.mlA)}</span><span class="sub">${esc(g.home)} ${fmtML(o.mlH)}</span></div>
+    <div class="ln"><span class="k">Over / Under</span><span class="v">${o.ou ?? "–"}</span><span class="sub">${g.state === "pre" ? "" : (g.as + g.hs) + " scored so far"}</span></div>
+    <div class="ln"><span class="k">${g.state === "pre" ? "Line" : "Closing line"}</span><span class="v small">${esc(o.prov || "ESPN")}</span></div>
+  </div>`;
+}
 function renderHero(g) {
   if (!g) { el("#hero").innerHTML = `<div class="empty">No games on the board</div>`; return; }
   const sum = S.summary;
@@ -1009,6 +1034,7 @@ function renderHero(g) {
     </div>
     ${pre ? "" : `<div class="linescore"><table><thead><tr><th></th>${heads}<th>T</th></tr></thead><tbody>${line(g.away,g.as)}${line(g.home,g.hs)}</tbody></table></div>`}
     ${stats}
+    ${linesHTML(g, false)}
     ${g.lastPlay ? `<div class="lastplay"><b>Last play</b> ${esc(g.lastPlay)}</div>` : ""}`;
 }
 
@@ -1109,12 +1135,13 @@ function gameCard(g, big) {
       : `<span class="nm">${esc(T(ab)[1])}${g.poss===ab?'<span class="poss" title="possession"></span>':''} <small>${esc(rec)}</small></span>`;
     return `<div class="row">${mark(ab,"abbr")}${inner}<span class="sc ${trail?'trail':''} ${win?'win':''}">${up ? (big ? (ab===g.away ? esc(g.status) : "") : "") : s}</span></div>`;
   };
-  const foot = `<div class="foot"><span class="st">${up ? (big ? slotOf(g) : esc(g.status)) : esc(g.status)}</span>${g.rz?'<span class="rz">Red zone</span>':''}${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}${g.net ? `<span class="net">${esc(g.net)}</span>` : ""}</div>`;
+  const foot = `<div class="foot"><span class="st">${up ? (big ? slotOf(g) : esc(g.status)) : esc(g.status)}</span>${g.rz?'<span class="rz">Red zone</span>':''}${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${big && g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}${g.net ? `<span class="net">${esc(g.net)}</span>` : ""}</div>`;
+  const lm = !big && g.odds ? `<div class="lm">${linesHTML(g, true)}</div>` : "";
   const mine = big ? myPlayersIn(g) : [], theirs = big ? myPlayersIn(g, "opp") : [];
   const chips = arr => arr.map(m => `<span class="mp" data-pid="${esc(m.pid)}" role="button" title="Points breakdown"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
   const mineRow = (mine.length ? `<div class="mine">${chips(mine)}</div>` : "") + (theirs.length ? `<div class="mine opp">${chips(theirs)}</div>` : "");
   const rzc = g.rz && g.poss ? chartColor(g.poss) : "";
-  return `<article class="${cls} ${g.rz ? "rz" : ""}" ${rzc ? `style="--rzc:${rzc}"` : ""} ${big ? "" : `data-id="${g.id}" role="button" tabindex="0" title="Show this game up top"`}>${row(g.away,g.as,g.hs,g.awayRec)}${row(g.home,g.hs,g.as,g.homeRec)}${mineRow}${foot}</article>`;
+  return `<article class="${cls} ${g.rz ? "rz" : ""}" ${rzc ? `style="--rzc:${rzc}"` : ""} ${big ? "" : `data-id="${g.id}" role="button" tabindex="0" title="Show this game up top"`}>${row(g.away,g.as,g.hs,g.awayRec)}${row(g.home,g.hs,g.as,g.homeRec)}${mineRow}${lm}${foot}</article>`;
 }
 
 function renderSlots() {
