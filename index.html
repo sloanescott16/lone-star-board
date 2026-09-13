@@ -382,7 +382,8 @@
   .wp-head.gf .n { font-family: var(--display); font-size: 40px; font-weight: 800; line-height: 1; }
   .wp-head.gf .mid { font-size: 12px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
   .wp-delta { font-size: 12px; color: var(--muted); text-align: right; margin-bottom: 4px; }
-  .roster tbody tr[data-pid] { cursor: pointer; }
+  .roster tbody tr[data-pid], .fxfeed li[data-pid] { cursor: pointer; }
+  .fxfeed li[data-pid]:hover .what b { color: var(--accent); }
   .roster tbody tr[data-pid]:hover td { background: rgba(91,156,255,.06); }
   .modal { position: fixed; inset: 0; z-index: 50; background: rgba(6,9,14,.7); display: grid; place-items: center; padding: 16px; }
   .modal[hidden] { display: none; }
@@ -402,6 +403,12 @@
   .pm-body tr.sum td { border-top: 1px solid var(--line-strong); color: var(--ink); }
   .pm-body tr.sum td.p { color: var(--accent); }
   .pm-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .seg { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line-strong); border-radius: 999px; margin-left: 10px; }
+  .seg button { font: inherit; font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); background: transparent; border: 0; border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+  .seg button.on { background: var(--accent); color: #0c1119; }
+  .fxfeed .sofar-head td, .fxfeed li.sofar-head { display: block; padding: 12px 0 4px; border-top: 0; font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .fxfeed li .line { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .fxfeed li .pts.tot { color: var(--ink); }
   /* scoreboard fills the viewport: grid sized by JS, type scaled to the card by container units */
   body.v-scores { padding-bottom: 0; overflow: hidden; }
   body.v-scores .wrap { gap: 10px; }
@@ -463,7 +470,9 @@
     <section class="fx-head" id="fxHead"><div class="empty">Loading your Sleeper matchup</div></section>
     <div class="fx-body">
       <section class="panel roster">
-        <h2>Lineup <small id="fxNote">Sleeper</small></h2>
+        <h2>Lineup
+          <span class="seg" id="fxSeg"><button type="button" class="on" data-side="me">Mine</button><button type="button" data-side="opp">Opponent</button></span>
+          <small id="fxNote">Sleeper</small></h2>
         <table id="roster"></table>
       </section>
       <section class="panel">
@@ -708,6 +717,8 @@ async function loadMatchup() {
   // ticker events from point deltas
   const key = "lsb-fxevents-" + wk, events = store.get(key, []);
   const pp = mine?.players_points || {};
+  const prevStats = sl.stats ? JSON.parse(JSON.stringify(sl.stats)) : null;
+  try { await loadWeekStats(); } catch (e) { console.warn("stats", e); }
   const last = Object.keys(sl.lastPts).length ? sl.lastPts : store.get("lsb-fxlast-" + wk, {});
   if (Object.keys(last).length) {
     for (const [pid, pts] of Object.entries(pp)) {
@@ -715,7 +726,8 @@ async function loadMatchup() {
       const dup = events.find(e => e.pid === pid && Math.abs(e.total - pts) < 0.005);
       if (Math.abs(d) >= 0.05 && !dup) {
         const p = sl.players?.[pid]; const g = p && gameForTeam(p[2]);
-        const last = p ? p[0].split(" ").pop() : ""; const what = g?.lastPlay && last && g.lastPlay.includes(last) ? g.lastPlay : "";
+        const last = p ? p[0].split(" ").pop() : "";
+        const what = (prevStats && statDiff(pid, prevStats[pid])) || (g?.lastPlay && last && g.lastPlay.includes(last) ? g.lastPlay : "");
         events.unshift({ t: Date.now(), pid, name: p ? p[0] : pid, slot: p ? p[1] : "", team: p ? p[2] : "", d, total: pts, when: g ? g.status : "", what });
       }
     }
@@ -740,10 +752,25 @@ const STAT_LABEL = { pass_yd:"Passing yards", pass_td:"Passing TD", pass_int:"In
   pts_allow_0:"0 points allowed", pts_allow_1_6:"1-6 points allowed", pts_allow_7_13:"7-13 points allowed", pts_allow_14_20:"14-20 points allowed", pts_allow_21_27:"21-27 points allowed", pts_allow_28_34:"28-34 points allowed", pts_allow_35p:"35+ points allowed",
   yds_allow_0_100:"0-100 yards allowed", yds_allow_100_199:"100-199 yards allowed", yds_allow_200_299:"200-299 yards allowed", yds_allow_300_349:"300-349 yards allowed", yds_allow_350_399:"350-399 yards allowed", yds_allow_400_449:"400-449 yards allowed", yds_allow_450_499:"450-499 yards allowed", yds_allow_500_549:"500-549 yards allowed", yds_allow_550p:"550+ yards allowed",
   kr_yd:"Kick return yards", pr_yd:"Punt return yards", idp_tkl:"Tackles", idp_sack:"Sacks", idp_int:"Interceptions" };
+const SHORT = { pass_yd:"pass yd", pass_td:"pass TD", pass_int:"INT", rush_yd:"rush yd", rush_td:"rush TD", rec:"rec", rec_yd:"rec yd", rec_td:"rec TD", fum_lost:"fum lost", xpm:"XP", fgm:"FG", fgm_0_19:"FG", fgm_20_29:"FG", fgm_30_39:"FG", fgm_40_49:"FG 40+", fgm_50p:"FG 50+", fgmiss:"FG miss", sack:"sack", int:"INT", fum_rec:"fum rec", def_td:"def TD", safe:"safety", blk_kick:"blk", ff:"FF", bonus_rec_te:"TE bonus", pass_2pt:"2pt", rush_2pt:"2pt", rec_2pt:"2pt", def_st_td:"ST TD", st_td:"ST TD" };
+function statLine(pid, max = 5) {
+  const rows = breakdown(pid);
+  return rows.slice(0, max).map(r => {
+    if (/^pts_allow/.test(r.k)) return statLabel(r.k).toLowerCase();
+    if (/^yds_allow/.test(r.k)) return statLabel(r.k).toLowerCase();
+    const n = Number.isInteger(r.v) ? r.v : r.v.toFixed(1);
+    return `${n} ${SHORT[r.k] || statLabel(r.k).toLowerCase()}`;
+  }).join(" · ");
+}
+function statDiff(pid, before) {
+  const now = S.sleeper.stats?.[pid] || {}, sc = S.sleeper.league?.scoring_settings || {}, out = [];
+  for (const k of Object.keys(sc)) { const d = (now[k] || 0) - ((before || {})[k] || 0); if (d && sc[k]) out.push(`${d > 0 ? "+" : ""}${Number.isInteger(d) ? d : d.toFixed(1)} ${SHORT[k] || statLabel(k).toLowerCase()}`); }
+  return out.slice(0, 4).join(", ");
+}
 const statLabel = k => STAT_LABEL[k] || k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 async function loadWeekStats() {
   const sl = S.sleeper;
-  if (sl.stats && Date.now() - sl.statsT < 30000) return sl.stats;
+  if (sl.stats && Date.now() - sl.statsT < 45000) return sl.stats;
   sl.stats = await getJSON(`${SL}/stats/nfl/regular/${sl.season}/${sl.week}`); sl.statsT = Date.now();
   return sl.stats;
 }
@@ -759,7 +786,7 @@ function breakdown(pid) {
 }
 async function openPlayer(pid) {
   const sl = S.sleeper, p = sl.players?.[pid] || [pid, "", ""], g = gameForTeam(p[2]);
-  const pts = +(sl.mine?.players_points?.[pid] || 0);
+  const pts = +((sl.mine?.players_points?.[pid] ?? sl.oppM?.players_points?.[pid]) || 0);
   const m = el("#pmodal"); m.hidden = false;
   el("#pmMark").textContent = toEspn(p[2] || "FA"); el("#pmMark").style.background = T(p[2] || "FA")[2];
   el("#pmTitle").textContent = p[0]; el("#pmSub").textContent = `${p[1]} · ${toEspn(p[2])}${g ? " · " + (g.state === "pre" ? "Kickoff " + fmtCT(g.date,{weekday:"short",hour:"numeric",minute:"2-digit"}) : `${g.away} ${g.as} · ${g.home} ${g.hs} · ${g.status}`) : " · Bye"}`;
@@ -1020,19 +1047,29 @@ function renderFantasy() {
     <div class="fx-team opp"><span class="lbl">Opponent</span><span class="tn">${esc(sl.opp?.name || "Bye week")}</span><span class="own">${esc(sl.opp?.owner || "")}</span></div>`;
   if (!mine) { el("#roster").innerHTML = `<tbody><tr><td class="empty">No matchup this week</td></tr></tbody>`; return; }
   const starters = mine.starters || [], pp = mine.players_points || {};
-  const bench = (mine.players || []).filter(pid => !starters.includes(pid));
-  el("#fxNote").textContent = `Sleeper · ${sl.scoringKey === "pts_ppr" ? "PPR" : sl.scoringKey === "pts_half_ppr" ? "Half PPR" : "Standard"}`;
+  const side = sl.view === "opp" && opp ? opp : mine;
+  const sStarters = side.starters || [], spp = side.players_points || {};
+  const bench = (side.players || []).filter(pid => !sStarters.includes(pid));
+  document.querySelectorAll("#fxSeg button").forEach(b => b.classList.toggle("on", (b.dataset.side === "opp") === (side === opp && side !== mine)));
+  el("#fxSeg").style.display = opp ? "" : "none";
+  el("#fxNote").textContent = `${side === mine ? sl.me.name : (sl.opp?.name || "Opponent")} · ${sl.scoringKey === "pts_ppr" ? "PPR" : sl.scoringKey === "pts_half_ppr" ? "Half PPR" : "Standard"}`;
   el("#roster").innerHTML = `<thead><tr><th></th><th>Player</th><th>Game</th><th style="text-align:right">Pts</th></tr></thead><tbody>` +
-    starters.map((pid,i) => playerRow(pid, sl.positions[i] || "FLEX", pp[pid], false)).join("") +
-    (bench.length ? `<tr class="bench-head"><td colspan="4"><span>Bench</span></td></tr>` + bench.sort((a,b)=>(pp[b]||0)-(pp[a]||0)).map(pid => playerRow(pid, "BN", pp[pid], true)).join("") : "") + `</tbody>`;
+    sStarters.map((pid,i) => playerRow(pid, sl.positions[i] || "FLEX", spp[pid], false)).join("") +
+    (bench.length ? `<tr class="bench-head"><td colspan="4"><span>Bench</span></td></tr>` + bench.sort((a,b)=>(spp[b]||0)-(spp[a]||0)).map(pid => playerRow(pid, "BN", spp[pid], true)).join("") : "") + `</tbody>`;
   const ev = sl.events.filter(e => starters.includes(e.pid));   // starters only, bench stays off the ticker
-  el("#fxFeed").innerHTML = ev.slice(0, 25).map(e => `<li><span class="when">${esc(e.when || fmtCT(e.t,{hour:"numeric",minute:"2-digit"}))}</span><span class="what"><b>${esc(e.name)}</b>${e.what ? " · " + esc(e.what) : ""}</span><span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span></li>`).join("")
-    || `<li class="empty">Points changes will appear here as they land</li>`;
+  const sofar = starters.filter(pid => (pp[pid] || 0) !== 0).sort((a,b) => (pp[b]||0) - (pp[a]||0))
+    .map(pid => { const p = sl.players?.[pid] || [pid,"",""]; const g = gameForTeam(p[2]); const line = sl.stats ? statLine(pid) : "";
+      return `<li data-pid="${esc(pid)}"><span class="when">${g ? esc(g.status) : ""}</span><span class="what"><b>${esc(p[0])}</b>${line ? `<span class="line">${esc(line)}</span>` : ""}</span><span class="pts tot">${(+pp[pid]).toFixed(2)}</span></li>`; }).join("");
+  el("#fxFeed").innerHTML =
+    (ev.length ? ev.slice(0, 20).map(e => `<li data-pid="${esc(e.pid)}"><span class="when">${esc(e.when || fmtCT(e.t,{hour:"numeric",minute:"2-digit"}))}</span><span class="what"><b>${esc(e.name)}</b>${e.what ? `<span class="line">${esc(e.what)}</span>` : ""}</span><span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span></li>`).join("")
+      : `<li class="empty">Live changes land here as your starters score</li>`) +
+    (sofar ? `<li class="sofar-head">Scoring so far</li>${sofar}` : "");
   // ticker
-  const items = (ev.length ? ev.slice(0, 20) : starters.map(pid => ({ name: (sl.players?.[pid]||[pid])[0], slot: (sl.players?.[pid]||[])[1], team: (sl.players?.[pid]||[])[2], d: 0, total: pp[pid]||0, what: "" })))
+  const items = (ev.length ? ev.slice(0, 20) : starters.filter(pid => pp[pid]).map(pid => ({ name: (sl.players?.[pid]||[pid])[0], slot: (sl.players?.[pid]||[])[1], team: (sl.players?.[pid]||[])[2], d: 0, total: pp[pid]||0, what: sl.stats ? statLine(pid, 3) : "" })))
     .map(e => `<span class="tk"><span class="who">${esc(e.name)}</span><span class="pos">${esc(e.slot||"")}${e.team ? " · " + esc(e.team) : ""}</span>${e.what ? `<span>${esc(e.what)}</span>` : ""}${e.d ? `<span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span>` : ""}<span class="tot">${(+e.total||0).toFixed(2)} total</span></span>`).join("");
   el("#reel").innerHTML = items + items;
   if (document.body.classList.contains("v-scores")) renderBoard();
+  const tkOpp = (sl.opp?.name || "Opp").split(" ")[0];
   el("#tkTag").innerHTML = `<span class="tn">${esc(sl.me.name)}</span><span class="tsc">${myPts.toFixed(1)} <span class="op">· ${opPts.toFixed(1)}</span></span>`;
 }
 
@@ -1104,7 +1141,8 @@ async function pickGame(id) {
   renderAll();
 }
 document.addEventListener("click", e => {
-  const prow = e.target.closest("#roster tr[data-pid]"); if (prow) return openPlayer(prow.dataset.pid);
+  const prow = e.target.closest("#roster tr[data-pid], #fxFeed li[data-pid]"); if (prow) return openPlayer(prow.dataset.pid);
+  const seg = e.target.closest("#fxSeg button"); if (seg) { S.sleeper.view = seg.dataset.side; return renderFantasy(); }
   if (e.target.closest("#pmClose") || (e.target.id === "pmmodal") || e.target === el("#pmodal")) return closePlayer();
   const card = e.target.closest("#slots .g[data-id]"); if (card) return pickGame(card.dataset.id);
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
