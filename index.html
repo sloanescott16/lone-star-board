@@ -1098,7 +1098,8 @@ function renderFantasy() {
   // ticker
   const items = (ev.length ? ev.slice(0, 20) : starters.filter(pid => pp[pid]).map(pid => ({ name: (sl.players?.[pid]||[pid])[0], slot: (sl.players?.[pid]||[])[1], team: (sl.players?.[pid]||[])[2], d: 0, total: pp[pid]||0, what: sl.stats ? statLine(pid, 3) : "" })))
     .map(e => `<span class="tk"><span class="who">${esc(e.name)}</span><span class="pos">${esc(e.slot||"")}${e.team ? " · " + esc(e.team) : ""}</span>${e.what ? `<span>${esc(e.what)}</span>` : ""}${e.d ? `<span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span>` : ""}<span class="tot">${(+e.total||0).toFixed(2)} total</span></span>`).join("");
-  el("#reel").innerHTML = items + items;
+  const reel = el("#reel"); reel.innerHTML = items + items;
+  requestAnimationFrame(() => { reel.style.animationDuration = Math.max(30, (reel.scrollWidth / 2) / 45) + "s"; });   // steady 45 px/s whatever the length
   if (document.body.classList.contains("v-scores")) renderBoard();
   const tkOpp = (sl.opp?.name || "Opp").split(" ")[0];
   el("#tkTag").innerHTML = `<span class="tn">${esc(sl.me.name)}</span><span class="tsc">${myPts.toFixed(1)} <span class="op">· ${opPts.toFixed(1)}</span></span>`;
