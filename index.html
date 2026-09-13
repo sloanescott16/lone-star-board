@@ -1056,15 +1056,20 @@ function renderFantasy() {
   const mine = sl.mine, opp = sl.oppM;
   const myPts = mine?.points ?? 0, opPts = opp?.points ?? 0, lead = myPts >= opPts;
   const projOf = m => m ? (m.starters||[]).reduce((a,pid)=> a + (+(sl.proj?.[pid]) || 0), 0) : 0;
+  const tally = m => {
+    const t = { done:0, live:0, up:0 };
+    for (const pid of (m?.starters || [])) { const p = sl.players?.[pid]; const g = p && gameForTeam(p[2]); t[!g ? "done" : g.live ? "live" : g.state === "post" ? "done" : "up"]++; }
+    return `<span class="tally"><b class="d">${t.done}</b> done <span class="sep">·</span> <b class="l">${t.live}</b> playing <span class="sep">·</span> <b class="u">${t.up}</b> to play</span>`;
+  };
   const myProj = projOf(mine), opProj = projOf(opp);
   el("#fxHead").innerHTML = `
-    <div class="fx-team"><span class="lbl">My team</span><span class="tn">${esc(sl.me.name)}</span><span class="own">${esc(sl.me.owner)} · Week ${sl.week}${sl.league?.name ? " · " + esc(sl.league.name) : ""}</span></div>
+    <div class="fx-team"><span class="lbl">My team</span><span class="tn">${esc(sl.me.name)}</span><span class="own">${esc(sl.me.owner)} · Week ${sl.week}${sl.league?.name ? " · " + esc(sl.league.name) : ""}</span>${tally(mine)}</div>
     <div class="fx-score">
       <span class="n ${lead?'':'trail'}">${myPts.toFixed(2)}</span>
       <div class="mid"><b>VS</b>${sl.proj && Object.keys(sl.proj).length ? `<span class="proj">proj <b>${myProj.toFixed(1)}</b> · <b>${opProj.toFixed(1)}</b></span>` : ""}</div>
       <span class="n ${lead?'trail':''}">${opPts.toFixed(2)}</span>
     </div>
-    <div class="fx-team opp"><span class="lbl">Opponent</span><span class="tn">${esc(sl.opp?.name || "Bye week")}</span><span class="own">${esc(sl.opp?.owner || "")}</span></div>`;
+    <div class="fx-team opp"><span class="lbl">Opponent</span><span class="tn">${esc(sl.opp?.name || "Bye week")}</span><span class="own">${esc(sl.opp?.owner || "")}</span>${opp ? tally(opp) : ""}</div>`;
   if (!mine) { el("#roster").innerHTML = `<tbody><tr><td class="empty">No matchup this week</td></tr></tbody>`; return; }
   const starters = mine.starters || [], pp = mine.players_points || {};
   const side = sl.view === "opp" && opp ? opp : mine;
