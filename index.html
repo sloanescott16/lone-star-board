@@ -466,6 +466,7 @@
     <div class="board-head">
       <h2>Live now</h2>
       <span class="sub" id="boardSub"></span>
+      <span class="clock fsclock" id="fsClock"></span>
       <button class="btn" id="fsBtn" type="button">Full screen</button>
     </div>
     <div class="board" id="board"><div class="empty">Loading scores</div></div>
@@ -1130,6 +1131,7 @@ async function sleeperLoop() {
 function setErr(on) { el("#errChip").style.display = on ? "" : "none"; }
 function tick() {
   el("#clock").textContent = fmtCT(Date.now(), { hour:"numeric", minute:"2-digit" }) + " CT";
+  el("#fsClock").textContent = el("#clock").textContent;
   const s = S.lastOk ? Math.round((Date.now() - S.lastOk)/1000) : null;
   el("#updated").textContent = s == null ? "Loading" : s < 5 ? "Updated just now" : `Updated ${s}s ago`;
 }
