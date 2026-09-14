@@ -371,6 +371,7 @@
   .g .lm { font-size: 11.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px; line-height: 1.35; }
   .g .lm .spread { color: var(--muted); }
   .ln .sub .hit { color: var(--good); font-weight: 600; }
+  .ln .sub .miss { color: var(--live); font-weight: 600; }
   .ln .sub .push { color: var(--muted); font-weight: 600; }
   .ln .pl { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 3px; }
   .ln .pl li { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: baseline; font-size: 13px; cursor: pointer; }
@@ -473,7 +474,7 @@
   .seg button.on { background: var(--accent); color: #0c1119; }
   .fxfeed .sofar-head td, .fxfeed li.sofar-head { display: block; padding: 12px 0 4px; border-top: 0; font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
   .fxfeed li .line { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .fxfeed.scroll { max-height: 250px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+  .fxfeed.scroll { max-height: 350px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
   .sofar-h { margin-top: 18px !important; }
   .sofar { list-style: none; margin: 0; padding: 0; }
   .sofar > li { border-top: 1px solid var(--line); }
@@ -500,6 +501,8 @@
   body.v-scores { padding-bottom: 0; overflow: hidden; }
   body.v-scores .wrap { gap: 10px; }
   body.v-scores .topbar { padding-bottom: 8px; }
+  body.v-scores #fsTop { display: none; }
+  #fsTop { margin-left: 10px; }
   .board.fill { display: grid; gap: 12px; align-content: stretch; }
   .board.fill .bg { container-type: size; min-height: 0; min-width: 0; grid-template-rows: 1fr 1fr auto auto auto; padding: 4cqh 4cqw 3cqh; gap: 0; }
   .bg.rz, .g.rz { --rzc: var(--redzone); border: 2px solid var(--rzc); box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 0 22px color-mix(in srgb, var(--rzc) 55%, transparent), inset 0 0 40px color-mix(in srgb, var(--rzc) 10%, transparent); }
@@ -546,6 +549,7 @@
     <div class="spacer"></div>
     <span class="clock" id="clock"></span>
     <span class="updated" id="updated">Loading</span>
+    <button class="btn fsb" id="fsTop" type="button" title="Full screen">Full screen</button>
   </header>
 
   <!-- ================= SCOREBOARD ================= -->
@@ -554,7 +558,7 @@
       <h2>Live now</h2>
       <span class="sub" id="boardSub"></span>
       <span class="clock fsclock" id="fsClock"></span>
-      <button class="btn" id="fsBtn" type="button">Full screen</button>
+      <button class="btn fsb" id="fsBtn" type="button">Full screen</button>
     </div>
     <div class="board" id="board"><div class="empty">Loading scores</div></div>
   </main>
@@ -1040,10 +1044,10 @@ function linesHTML(g, compact) {
       const st = toEspn(m[1]), num = Math.abs(parseFloat(m[2]));
       const stScore = st === g.home ? g.hs : g.as, otScore = st === g.home ? g.as : g.hs, other = st === g.home ? g.away : g.home;
       const margin = stScore - otScore;
-      spreadSub = margin > num ? `<b class="hit">${esc(st)} covered</b>` : margin === num ? `<b class="push">Push</b>` : `<b class="hit">${esc(other)} covered</b>`;
+      spreadSub = margin > num ? `<b class="hit">${esc(st)} covered</b>` : margin === num ? `<b class="push">Push</b>` : `<b class="miss">${esc(other)} covered</b>`;
     } else if (/pick|pk|even/i.test(o.details || "")) spreadSub = g.hs === g.as ? `<b class="push">Push</b>` : `<b class="hit">${esc(g.hs > g.as ? g.home : g.away)} covered</b>`;
-    if (hasML) { const w = g.hs > g.as ? g.home : g.as > g.hs ? g.away : null; mlSub = w ? (w === fav ? `<b class="hit">${esc(w)} won</b>` : `<b class="hit">${esc(w)} won · ${fmtML(w === g.away ? o.mlA : o.mlH)}</b>`) : `<b class="push">Tie</b>`; }
-    if (o.ou != null) ouSub = total > o.ou ? `<b class="hit">Over · ${total}</b>` : total < o.ou ? `<b class="hit">Under · ${total}</b>` : `<b class="push">Push · ${total}</b>`;
+    if (hasML) { const w = g.hs > g.as ? g.home : g.as > g.hs ? g.away : null; mlSub = w ? (w === fav ? `<b class="hit">${esc(w)} won</b>` : `<b class="miss">${esc(w)} won · ${fmtML(w === g.away ? o.mlA : o.mlH)}</b>`) : `<b class="push">Tie</b>`; }
+    if (o.ou != null) ouSub = total > o.ou ? `<b class="hit">Over · ${total}</b>` : total < o.ou ? `<b class="miss">Under · ${total}</b>` : `<b class="push">Push · ${total}</b>`;
   }
   // fantasy starters (mine and the opponent's) in this game
   const inGame = [...myPlayersIn(g, "mine").map(x => ({ ...x, who: "mine" })), ...myPlayersIn(g, "opp").map(x => ({ ...x, who: "opp" }))];
@@ -1423,8 +1427,8 @@ document.addEventListener("click", e => {
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape") { closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) pickGame(e.target.dataset.id); });
-el("#fsBtn").addEventListener("click", () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); });
-document.addEventListener("fullscreenchange", () => { el("#fsBtn").textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"; setTimeout(fitBoard, 50); });
+document.querySelectorAll(".fsb").forEach(b => b.addEventListener("click", () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); }));
+document.addEventListener("fullscreenchange", () => { document.querySelectorAll(".fsb").forEach(b => b.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"); setTimeout(fitBoard, 50); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { espnLoop(); sleeperLoop(); } });
 el("#cfgLeague").textContent = CFG.leagueId; el("#cfgTeam").textContent = CFG.teamName;
 route(); tick(); setInterval(tick, 1000);
