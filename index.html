@@ -360,6 +360,15 @@
 
 <style>
   .chip.err { color: var(--warn); border-color: rgba(242,184,75,.45); display: none; }
+  .wk { display: inline-flex; align-items: center; gap: 2px; padding: 2px 3px; }
+  .wk select { font: inherit; font-family: var(--display); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: transparent; border: 0; padding: 2px 2px; cursor: pointer; appearance: none; text-align: center; }
+  .wk select:focus-visible { outline: 2px solid var(--accent); border-radius: 6px; }
+  .wk select option { background: var(--surface); color: var(--ink); }
+  .wkb { font: inherit; font-family: var(--display); font-weight: 700; font-size: 14px; line-height: 1; color: var(--ink-2); background: transparent; border: 1px solid var(--line-strong); border-radius: 7px; padding: 2px 7px; cursor: pointer; }
+  .wkb:hover { color: var(--ink); border-color: var(--ink-2); }
+  .wkb[disabled] { opacity: .35; cursor: default; }
+  .wkb.now { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #0c1119; background: var(--accent); border-color: var(--accent); margin-left: 4px; }
+  body.past .wk select { color: var(--warn); }
   .chip.src { color: var(--muted); }
   .empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
   .lines { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
@@ -537,6 +546,12 @@
   <header class="topbar">
     <div class="brand">
       <h1><span class="star">&#9733;</span> Command Center</h1>
+      <span class="week wk" id="weekBox">
+        <button class="wkb" id="wkPrev" type="button" title="Previous week" aria-label="Previous week">&#8249;</button>
+        <select id="weekSel" aria-label="Week"></select>
+        <button class="wkb" id="wkNext" type="button" title="Next week" aria-label="Next week">&#8250;</button>
+        <button class="wkb now" id="wkNow" type="button" hidden>Now</button>
+      </span>
       <span class="week" id="weekLabel">NFL</span>
     </div>
     <nav class="nav" id="nav">
@@ -708,8 +723,11 @@ const S = {
   week: null, season: null, events: [], featured: null, summary: null,
   scoreFeed: [], lastScores: {},           // derived scoring events across all games
   sleeper: { league:null, me:null, opp:null, players:null, proj:null, positions:[], week:null, lastPts:{}, events:[] },
-  lastOk: 0, err: false,
+  lastOk: 0, err: false, viewWeek: null, curWeek: null,
 };
+const WKMAX = 18;
+const fxWeek = () => S.viewWeek ?? S.sleeper.week;
+const offWeek = () => S.viewWeek != null;
 const el = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const mark = (ab, cls="mark") => `<span class="${cls}" style="background:${T(ab)[2]}">${esc(toEspn(ab))}</span>`;
@@ -775,15 +793,18 @@ function slotOf(g) {
 }
 
 async function loadScoreboard() {
-  const d = await getJSON("https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard");
-  S.week = d.week?.number; S.season = d.season?.year;
+  const base = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard";
+  const yr = S.season || new Date().getFullYear();
+  const d = await getJSON(offWeek() ? `${base}?seasontype=2&week=${S.viewWeek}&dates=${yr}` : base);
+  S.week = offWeek() ? S.viewWeek : d.week?.number; S.season = d.season?.year || S.season;
+  if (!offWeek()) S.curWeek = S.week;
   S.events = (d.events || []).map(normGame).sort((a,b) => a.date - b.date);
   S.prevState = S.prevState || {}; S.finishedAt = S.finishedAt || {}; S.finals = S.finals || [];
   for (const g of S.events) {
     if (S.prevState[g.id] === "in" && g.state === "post") { S.finishedAt[g.id] = Date.now(); S.finals.push(g.id); }
     S.prevState[g.id] = g.state;
   }
-  el("#weekLabel").textContent = `Week ${S.week ?? ""} · ${fmtCT(Date.now(), { weekday:"short", month:"short", day:"numeric" })}`;
+  renderWeekBox();
   // featured: favourite team's game, else first live, else next up
   const pick = S.pickId && S.events.find(g => g.id === S.pickId);
   S.favGame = S.events.find(g => g.home === CFG.fav || g.away === CFG.fav) || null;
@@ -794,6 +815,7 @@ async function loadScoreboard() {
 
 function deriveScoreFeed() {
   const feed = store.get("lsb-scorefeed-" + S.week, []);
+  if (offWeek()) { S.scoreFeed = feed.slice(0, 40); return; }   // past/future weeks: no derived score changes
   for (const g of S.events) {
     const key = g.id, prev = S.lastScores[key] || store.get("lsb-last-" + key, null);
     if (prev && g.state !== "pre" && (g.as !== prev.as || g.hs !== prev.hs)) {
@@ -848,7 +870,7 @@ async function loadSleeperStatic() {
   }
 }
 async function loadMatchup() {
-  const sl = S.sleeper; const wk = sl.week;
+  const sl = S.sleeper; const wk = fxWeek();
   const ms = await getJSON(`${SL}/league/${CFG.leagueId}/matchups/${wk}`);
   const mine = ms.find(m => m.roster_id === sl.me.roster.roster_id);
   const opp = mine ? ms.find(m => m.matchup_id === mine.matchup_id && m.roster_id !== mine.roster_id) : null;
@@ -895,13 +917,13 @@ async function loadMatchup() {
   sl.hadEvents = true; sl.fresh = fresh.slice(0, 3);
 }
 async function loadProjections() {
-  const sl = S.sleeper; if (sl.proj && Date.now() - sl.projT < 3600e3) return;
+  const sl = S.sleeper, wk = fxWeek(); if (sl.proj && sl.projWk === wk && Date.now() - sl.projT < 3600e3) return;
   try {
-    const url = `https://api.sleeper.com/projections/nfl/${sl.season}/${sl.week}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`;
+    const url = `https://api.sleeper.com/projections/nfl/${sl.season}/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`;
     const rows = await getJSON(url); const m = {};
     for (const r of rows) m[r.player_id] = r.stats?.[sl.scoringKey] ?? r.stats?.pts_ppr;
-    sl.proj = m; sl.projT = Date.now();
-  } catch (e) { sl.proj = sl.proj || {}; sl.projT = Date.now(); }
+    sl.proj = m; sl.projT = Date.now(); sl.projWk = wk;
+  } catch (e) { sl.proj = sl.proj || {}; sl.projT = Date.now(); sl.projWk = wk; }
 }
 const STAT_LABEL = { pass_yd:"Passing yards", pass_td:"Passing TD", pass_int:"Interception thrown", pass_2pt:"2-pt pass", pass_cmp:"Completions", pass_att:"Pass attempts", pass_inc:"Incompletions", pass_sack:"Sacked",
   rush_yd:"Rushing yards", rush_td:"Rushing TD", rush_att:"Rush attempts", rush_2pt:"2-pt rush", rec:"Receptions", rec_yd:"Receiving yards", rec_td:"Receiving TD", rec_2pt:"2-pt reception", rec_tgt:"Targets",
@@ -931,8 +953,9 @@ function statDiff(pid, before) {
 const statLabel = k => STAT_LABEL[k] || k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 async function loadWeekStats() {
   const sl = S.sleeper;
-  if (sl.stats && Date.now() - sl.statsT < 20000) return sl.stats;
-  sl.stats = await getJSON(`${SL}/stats/nfl/regular/${sl.season}/${sl.week}`); sl.statsT = Date.now();
+  const wk = fxWeek();
+  if (sl.stats && sl.statsWk === wk && Date.now() - sl.statsT < 20000) return sl.stats;
+  sl.stats = await getJSON(`${SL}/stats/nfl/regular/${sl.season}/${wk}`); sl.statsT = Date.now(); sl.statsWk = wk;
   return sl.stats;
 }
 function breakdown(pid) { return breakdownFrom(pid, S.sleeper.stats?.[pid] || {}); }
@@ -1300,10 +1323,10 @@ function renderFeed() {
 function renderBoard() {
   const live = S.events.filter(g=>g.live).length, fin = S.events.filter(g=>g.state==="post").length;
   el("#boardSub").textContent = `${S.events.length} games · ${live} live · ${fin} final · ${S.events.length-live-fin} to come`;
-  const liveGames = S.events.filter(g => g.live || (g.state === "post" && S.finishedAt?.[g.id] && Date.now() - S.finishedAt[g.id] < 180000));
+  const liveGames = offWeek() ? S.events.slice() : S.events.filter(g => g.live || (g.state === "post" && S.finishedAt?.[g.id] && Date.now() - S.finishedAt[g.id] < 180000));
   const next = S.events.find(g => g.state === "pre");
   el("#board").innerHTML = liveGames.map(g => gameCard(g,true)).join("")
-    || `<div class="empty">No games in progress${next ? `. Next kickoff: ${esc(T(next.away)[1])} at ${esc(T(next.home)[1])}, ${fmtCT(next.date,{weekday:"short",hour:"numeric",minute:"2-digit"})} CT` : ""}.</div>`;
+    || `<div class="empty">${offWeek() ? `Nothing scheduled for Week ${S.viewWeek}` : "No games in progress"}${!offWeek() && next ? `. Next kickoff: ${esc(T(next.away)[1])} at ${esc(T(next.home)[1])}, ${fmtCT(next.date,{weekday:"short",hour:"numeric",minute:"2-digit"})} CT` : ""}.</div>`;
   fitBoard();
   el("#liveChip").style.display = live ? "" : "none"; el("#liveCount").textContent = live ? `${live} live` : "Live";
 }
@@ -1332,7 +1355,7 @@ function renderFantasy() {
   };
   const myProj = projOf(mine), opProj = projOf(opp);
   el("#fxHead").innerHTML = `
-    <div class="fx-team"><span class="lbl">My team</span><span class="tn">${esc(sl.me.name)}</span><span class="own">${esc(sl.me.owner)} · Week ${sl.week}${sl.league?.name ? " · " + esc(sl.league.name) : ""}</span>${tally(mine)}</div>
+    <div class="fx-team"><span class="lbl">My team</span><span class="tn">${esc(sl.me.name)}</span><span class="own">${esc(sl.me.owner)} · Week ${fxWeek()}${sl.league?.name ? " · " + esc(sl.league.name) : ""}</span>${tally(mine)}</div>
     <div class="fx-score">
       <span class="n ${lead?'':'trail'}">${myPts.toFixed(2)}</span>
       <div class="mid"><b>VS</b>${sl.proj && Object.keys(sl.proj).length ? `<span class="proj">proj <b>${myProj.toFixed(1)}</b> · <b>${opProj.toFixed(1)}</b></span>` : ""}</div>
@@ -1426,6 +1449,32 @@ async function sleeperLoop() {
   slTimer = setTimeout(sleeperLoop, CFG.pollSleeper);
 }
 function setErr(on) { el("#errChip").style.display = on ? "" : "none"; }
+function renderWeekBox() {
+  const cur = S.curWeek || S.week || 1, shown = S.week || cur, sel = el("#weekSel");
+  if (sel.options.length !== WKMAX) sel.innerHTML = Array.from({length: WKMAX}, (_, i) => `<option value="${i+1}">Week ${i+1}</option>`).join("");
+  sel.value = String(shown);
+  el("#wkPrev").disabled = shown <= 1; el("#wkNext").disabled = shown >= WKMAX;
+  el("#wkNow").hidden = !offWeek();
+  document.body.classList.toggle("past", offWeek());
+  el("#weekLabel").textContent = offWeek()
+    ? (S.events[0] ? fmtCT(S.events[0].date, { month:"short", day:"numeric" }) + " – " + fmtCT(S.events[S.events.length-1].date, { month:"short", day:"numeric" }) : "")
+    : fmtCT(Date.now(), { weekday:"short", month:"short", day:"numeric" });
+}
+// jump the whole board (scores, featured game, fantasy matchup) to another week; null returns to the live one
+function setWeek(w) {
+  const cur = S.curWeek || S.week || 1;
+  if (w != null) w = Math.max(1, Math.min(WKMAX, w));
+  const next = (w == null || w === cur) ? null : w;
+  if (next === S.viewWeek) return;
+  S.viewWeek = next;
+  S.pickId = null; S.featured = null; S.summary = null; S.lastScores = {}; S.scoreFeed = [];
+  const sl = S.sleeper;
+  sl.mine = null; sl.oppM = null; sl.opp = null; sl.events = []; sl.lastPts = {}; sl.snap = null; sl.hadEvents = false; sl.fresh = [];
+  sl.stats = null; sl.statsT = 0; sl.proj = null; sl.projT = 0; sl.view = "me";
+  el("#hero").innerHTML = `<div class="empty">Loading Week ${next ?? cur}</div>`;
+  renderWeekBox();
+  espnLoop(); sleeperLoop();
+}
 function tick() {
   el("#clock").textContent = fmtCT(Date.now(), { hour:"numeric", minute:"2-digit" }) + " CT";
   el("#fsClock").textContent = el("#clock").textContent;
@@ -1440,6 +1489,10 @@ function route() {
   if (known === "scores" && S.events.length) renderBoard(); else fitBoard();
 }
 window.addEventListener("hashchange", route);
+el("#weekSel").addEventListener("change", e => setWeek(+e.target.value));
+el("#wkPrev").addEventListener("click", () => setWeek((S.week || S.curWeek || 1) - 1));
+el("#wkNext").addEventListener("click", () => setWeek((S.week || S.curWeek || 1) + 1));
+el("#wkNow").addEventListener("click", () => setWeek(null));
 async function pickGame(id) {
   S.pickId = id; S.summary = null;
   const g = S.events.find(x => x.id === id); if (g) S.featured = g;
@@ -1462,6 +1515,7 @@ document.querySelectorAll(".fsb").forEach(b => b.addEventListener("click", () =>
 document.addEventListener("fullscreenchange", () => { document.querySelectorAll(".fsb").forEach(b => b.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"); setTimeout(fitBoard, 50); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { espnLoop(); sleeperLoop(); } });
 el("#cfgLeague").textContent = CFG.leagueId; el("#cfgTeam").textContent = CFG.teamName;
+renderWeekBox();
 route(); tick(); setInterval(tick, 1000);
 espnLoop(); sleeperLoop();
 </script>
