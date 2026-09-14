@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230c1119%27/%3E%3Ctext x=%2716%27 y=%2723%27 font-size=%2720%27 text-anchor=%27middle%27 fill=%27%235b9cff%27%3E%E2%98%85%3C/text%3E%3C/svg%3E">
 <title>Command Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&family=Graduate&display=swap">
 <style>
   :root {
     --ground: #0c1119;
@@ -588,6 +588,8 @@
   body.lg-cfb .settings .fx { display: none; }
   /* Saturday wears scarlet and black */
   body.lg-cfb {
+    --display: "Graduate", "Barlow Condensed", Impact, sans-serif;
+    font-synthesis: none;
     --ground: #08080a;
     --surface: #151216;
     --raised: #1f1a1e;
@@ -629,7 +631,8 @@
   .bg .nm .tn, .g .nm .tn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   .bg .nm small, .g .nm small { flex: none; white-space: nowrap; }
   .bg .foot .rz, .bg .foot .dd, .g .foot .rz, .g .foot .st, .bg .foot .st { white-space: nowrap; }
-  body.lg-cfb .bg .nm { font-size: 22px; }
+  body.lg-cfb .bg .nm { font-size: 20px; letter-spacing: -.01em; }
+  body.lg-cfb .brand h1, body.lg-cfb .team .name, body.lg-cfb .bg .nm, body.lg-cfb .f-team .nm { letter-spacing: .01em; }
   body.lg-cfb .board.fill .bg .nm { font-size: clamp(14px, min(11cqh, 6.4cqw), 66px); }
   body.lg-cfb .board.fill .bg .sc { font-size: clamp(30px, min(32cqh, 19cqw), 190px); }
 </style>
