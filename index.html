@@ -370,8 +370,17 @@
   .ln .sub { font-size: 12px; color: var(--ink-2); }
   .g .lm { font-size: 11.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px; line-height: 1.35; }
   .g .lm .spread { color: var(--muted); }
-  .lines.two { grid-template-columns: repeat(2, 1fr); }
-  @media (max-width: 640px) { .lines { grid-template-columns: repeat(2, 1fr); } }
+  .ln .sub .hit { color: var(--good); font-weight: 600; }
+  .ln .sub .push { color: var(--muted); font-weight: 600; }
+  .ln .pl { list-style: none; margin: 2px 0 0; padding: 0; display: grid; gap: 3px; }
+  .ln .pl li { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: baseline; font-size: 13px; cursor: pointer; }
+  .ln .pl li:hover .nm { color: var(--accent); }
+  .ln .pl .nm { color: var(--ink); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ln .pl .tg { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .ln .pl li.mine .tg { color: var(--accent); }
+  .ln .pl .pt { font-family: var(--display); font-weight: 700; font-size: 14px; }
+  .ln .pl li.opp .pt { color: var(--ink-2); }
+  @media (max-width: 640px) { .lines { grid-template-columns: repeat(2, 1fr) !important; } }
   .lastplay { font-size: 13px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 10px; }
   .lastplay b { color: var(--ink); font-weight: 600; }
   .bg .foot .lp { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
@@ -1021,12 +1030,33 @@ function linesHTML(g, compact) {
   const o = g.odds; if (!o) return "";
   if (compact) return `<span class="spread">${esc(o.details || "PK")}${o.mlA != null ? ` · ML ${esc(g.away)} ${fmtML(o.mlA)} / ${esc(g.home)} ${fmtML(o.mlH)}` : ""}${o.ou ? ` · O/U ${o.ou}` : ""}</span>`;
   const hasML = o.mlA != null && o.mlH != null;
-  const fav = o.mlA != null && o.mlH != null ? (o.mlA < o.mlH ? g.away : g.home) : null;
-  return `<div class="lines ${hasML ? "" : "two"}">
-    <div class="ln"><span class="k">Spread</span><span class="v">${esc(o.details || "Pick")}</span><span class="sub">${g.state === "pre" ? "Current line" : "Closing line"}</span></div>
-    ${hasML ? `<div class="ln"><span class="k">Moneyline</span><span class="v">${esc(fav)} ${fmtML(fav === g.away ? o.mlA : o.mlH)}</span><span class="sub">${esc(fav === g.away ? g.home : g.away)} ${fmtML(fav === g.away ? o.mlH : o.mlA)}</span></div>` : ""}
-    <div class="ln"><span class="k">Over / Under</span><span class="v">${o.ou ?? "–"}</span><span class="sub">${g.state === "pre" ? "" : (g.as + g.hs) + " scored so far"}</span></div>
-  </div>`;
+  const fav = hasML ? (o.mlA < o.mlH ? g.away : g.home) : null;
+  const fin = g.state === "post", total = (g.as ?? 0) + (g.hs ?? 0);
+  // once the game is over, say how each line landed instead of describing the line
+  let spreadSub = "", mlSub = hasML ? `${esc(fav === g.away ? g.home : g.away)} ${fmtML(fav === g.away ? o.mlH : o.mlA)}` : "", ouSub = g.state === "in" ? `${total} so far` : "";
+  if (fin) {
+    const m = String(o.details || "").match(/^([A-Z]{2,4})\s*([+-]?\d+(?:\.\d+)?)/);
+    if (m) {
+      const st = toEspn(m[1]), num = Math.abs(parseFloat(m[2]));
+      const stScore = st === g.home ? g.hs : g.as, otScore = st === g.home ? g.as : g.hs, other = st === g.home ? g.away : g.home;
+      const margin = stScore - otScore;
+      spreadSub = margin > num ? `<b class="hit">${esc(st)} covered</b>` : margin === num ? `<b class="push">Push</b>` : `<b class="hit">${esc(other)} covered</b>`;
+    } else if (/pick|pk|even/i.test(o.details || "")) spreadSub = g.hs === g.as ? `<b class="push">Push</b>` : `<b class="hit">${esc(g.hs > g.as ? g.home : g.away)} covered</b>`;
+    if (hasML) { const w = g.hs > g.as ? g.home : g.as > g.hs ? g.away : null; mlSub = w ? (w === fav ? `<b class="hit">${esc(w)} won</b>` : `<b class="hit">${esc(w)} won · ${fmtML(w === g.away ? o.mlA : o.mlH)}</b>`) : `<b class="push">Tie</b>`; }
+    if (o.ou != null) ouSub = total > o.ou ? `<b class="hit">Over · ${total}</b>` : total < o.ou ? `<b class="hit">Under · ${total}</b>` : `<b class="push">Push · ${total}</b>`;
+  }
+  // fantasy starters (mine and the opponent's) in this game
+  const inGame = [...myPlayersIn(g, "mine").map(x => ({ ...x, who: "mine" })), ...myPlayersIn(g, "opp").map(x => ({ ...x, who: "opp" }))];
+  const players = inGame.length
+    ? `<ul class="pl">${inGame.map(x => `<li class="${x.who}" data-pid="${esc(x.pid)}" role="button" title="${x.who === "mine" ? "My starter" : "Opponent's starter"}"><span class="nm">${esc(x.name)}</span><span class="tg">${x.who === "mine" ? "me" : "opp"}</span><span class="pt">${x.pts.toFixed(1)}</span></li>`).join("")}</ul>`
+    : `<span class="sub">None ${fin ? "played" : "in this one"}</span>`;
+  const cells = [
+    `<div class="ln"><span class="k">Spread</span><span class="v">${esc(o.details || "Pick")}</span>${spreadSub ? `<span class="sub">${spreadSub}</span>` : ""}</div>`,
+    hasML ? `<div class="ln"><span class="k">Moneyline</span><span class="v">${esc(fav)} ${fmtML(fav === g.away ? o.mlA : o.mlH)}</span><span class="sub">${mlSub}</span></div>` : "",
+    `<div class="ln"><span class="k">Over / Under</span><span class="v">${o.ou ?? "–"}</span>${ouSub ? `<span class="sub">${ouSub}</span>` : ""}</div>`,
+    `<div class="ln"><span class="k">Fantasy starters</span>${players}</div>`,
+  ].filter(Boolean);
+  return `<div class="lines" style="grid-template-columns: repeat(${cells.length}, 1fr)">${cells.join("")}</div>`;
 }
 function renderHero(g) {
   if (!g) { el("#hero").innerHTML = `<div class="empty">No games on the board</div>`; return; }
@@ -1385,7 +1415,7 @@ async function pickGame(id) {
 document.addEventListener("click", e => {
   const ob = e.target.closest("#fxSoFar [data-open]"); if (ob) return openPlayer(ob.dataset.open);
   const srow = e.target.closest("#fxSoFar li[data-sofar] > .row"); if (srow) { const li = srow.parentElement, pid = li.dataset.sofar; li.classList.toggle("open"); S.openPids = S.openPids || new Set(); li.classList.contains("open") ? S.openPids.add(pid) : S.openPids.delete(pid); return; }
-  const prow = e.target.closest("#roster tr[data-pid], #fxFeed li[data-pid], .bg .mp[data-pid], .tk[data-pid]"); if (prow && prow.dataset.pid) return openPlayer(prow.dataset.pid);
+  const prow = e.target.closest("#roster tr[data-pid], #fxFeed li[data-pid], .bg .mp[data-pid], .tk[data-pid], .ln .pl li[data-pid]"); if (prow && prow.dataset.pid) return openPlayer(prow.dataset.pid);
   const seg = e.target.closest("#fxSeg button"); if (seg) { S.sleeper.view = seg.dataset.side; return renderFantasy(); }
   if (e.target.closest("#pmClose") || e.target === el("#pmodal")) return closePlayer();
   if (e.target.closest("#fClose") || e.target === el("#fmodal")) return closeFinal();
