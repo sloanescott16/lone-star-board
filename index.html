@@ -358,6 +358,7 @@
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>
 
+
 <style>
   .chip.err { color: var(--warn); border-color: rgba(242,184,75,.45); display: none; }
   .wk { display: inline-flex; align-items: center; gap: 2px; padding: 2px 3px; }
@@ -506,6 +507,45 @@
   .sofar .drop .tools { display: flex; gap: 8px; margin-top: 8px; }
   .sofar .drop .btn { font-size: 11px; padding: 4px 10px; }
   .fxfeed li .pts.tot { color: var(--ink); }
+  /* ---------- regroup mode (after a Cowboys loss) ---------- */
+  .rg { background: linear-gradient(180deg, #16212f 0%, var(--surface) 100%); border: 1px solid var(--line-strong); border-radius: 14px; padding: 18px 22px; display: grid; gap: 14px; position: relative; overflow: hidden; }
+  .rg::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--accent); }
+  .rg[hidden] { display: none; }
+  .rg-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .rg-kick { font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  .rg-sub { font-size: 14px; color: var(--ink-2); }
+  .rg-head .btn { margin-left: auto; }
+  .rg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .rg-card { background: var(--ground); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+  .rg-card h3 { margin: 0; font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .rg-big { font-family: var(--display); font-weight: 800; font-size: 32px; line-height: 1; color: var(--ink); }
+  .rg-big small { font-family: var(--body); font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+  .rg-l { font-size: 13.5px; color: var(--ink-2); }
+  .rg-l b { color: var(--ink); font-weight: 600; }
+  .rg-l .good { color: var(--good); font-weight: 600; }
+  .rg-l .bad { color: var(--live); font-weight: 600; }
+  .rg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .rg .mp { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink); background: var(--accent-soft); border: 1px solid rgba(91,156,255,.35); border-radius: 999px; padding: 3px 10px 3px 6px; cursor: pointer; }
+  .rg .mp i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .rg .mp b { font-family: var(--display); font-weight: 800; color: var(--accent); }
+  .rg-row { display: grid; grid-template-columns: 20px 1fr auto 44px; gap: 10px; align-items: center; font-size: 13.5px; padding: 7px 0; border-top: 1px solid var(--line); }
+  .rg-row.first { border-top: 0; }
+  .rg-row .mini { width: 20px; height: 20px; border-radius: 5px; font-size: 10px; font-family: var(--display); font-weight: 800; color: #fff; display: grid; place-items: center; }
+  .rg-row .sc { color: var(--muted); font-size: 12.5px; }
+  .rg-row .res { font-family: var(--display); font-weight: 800; font-size: 16px; text-align: right; }
+  .rg-row .res.l { color: var(--good); }
+  .rg-row .res.w { color: var(--live); }
+  .rg-row .res.n { color: var(--muted); font-size: 12px; }
+  .rg-foot { font-size: 12.5px; color: var(--muted); }
+  body.regroup .featured { display: none; }
+  #rgOn[hidden] { display: none; }
+  .fsheet.soft { border-color: var(--line-strong); animation: none; }
+  .fsheet.soft .f-kicker { color: var(--muted); letter-spacing: .24em; }
+  .fsheet.soft .f-team .sc { font-size: 62px; color: var(--ink-2); }
+  .fsheet.soft .f-team .nm { color: var(--ink-2); }
+  .fsheet.soft .f-team .tag { display: none; }
+  .fsheet.soft .f-team .mark { opacity: .8; }
+  @media (max-width: 1100px) { .rg-grid { grid-template-columns: 1fr; } }
   /* scoreboard fills the viewport: grid sized by JS, type scaled to the card by container units */
   body.v-scores { padding-bottom: 0; overflow: hidden; }
   body.v-scores .wrap { gap: 10px; }
@@ -564,6 +604,7 @@
     <div class="spacer"></div>
     <span class="clock" id="clock"></span>
     <span class="updated" id="updated">Loading</span>
+    <button class="btn" id="rgOn" type="button" title="Soften a Cowboys loss" hidden>Regroup</button>
     <button class="btn fsb" id="fsTop" type="button" title="Full screen">Full screen</button>
   </header>
 
@@ -599,6 +640,14 @@
 
   <!-- ================= HOME ================= -->
   <main class="view" id="view-home">
+    <section class="rg" id="regroup" hidden>
+      <div class="rg-head">
+        <span class="rg-kick">Regroup</span>
+        <span class="rg-sub" id="rgSub"></span>
+        <button class="btn" id="rgOff" type="button">Show the damage</button>
+      </div>
+      <div class="rg-grid" id="rgBody"></div>
+    </section>
     <section class="featured">
       <article class="hero" id="hero"><div class="empty">Loading the Cowboys game</div></article>
       <div class="side">
@@ -640,7 +689,7 @@
   <div class="sheet fsheet" role="dialog" aria-modal="true" aria-label="Final score">
     <div class="f-kicker">Final</div>
     <div id="fBody"></div>
-    <div class="f-foot"><span class="f-note" id="fNote"></span><button class="btn" id="fClose" type="button">Close</button></div>
+    <div class="f-foot"><span class="f-note" id="fNote"></span><span><button class="btn" id="fRegroup" type="button" hidden>Regroup</button> <button class="btn" id="fClose" type="button">Close</button></span></div>
   </div>
 </div>
 
@@ -1003,12 +1052,106 @@ function showFinal(id) {
     <div class="f-teams">${team(g.away, g.as, g.awayRec, aw, hw)}<div class="f-vs">${aw || hw ? "beat" : "tied"}</div>${team(g.home, g.hs, g.homeRec, hw, aw)}</div>
     ${mine.length || theirs.length ? `<div class="f-players bg">${mine.length ? `<div class="mine">${chips(mine)}</div>` : ""}${theirs.length ? `<div class="mine opp">${chips(theirs)}</div>` : ""}</div>` : ""}`;
   el("#fNote").textContent = `${esc(g.status)} · ${g.venue || ""}`;
+  // a loss by the favourite gets a quiet final: no confetti, no winner badge, score stated rather than shouted
+  const soft = isFavLoss(g);
+  el("#fmodal").querySelector(".fsheet").classList.toggle("soft", soft);
+  el("#fmodal").querySelector(".f-kicker").textContent = soft ? "That one's over" : "Final";
+  el("#fRegroup").hidden = !soft;
   const m = el("#fmodal"); m.hidden = false;
   clearTimeout(S.finalTimer); S.finalTimer = setTimeout(closeFinal, 60000);
-  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) confetti(chartColor(aw ? g.away : g.home));
+  if (!soft && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti(chartColor(aw ? g.away : g.home));
 }
 function closeFinal() { el("#fmodal").hidden = true; if (S.finals.length) setTimeout(() => showFinal(S.finals.shift()), 400); }
 function pumpFinals() { if (S.finals.length && el("#fmodal").hidden) showFinal(S.finals.shift()); }
+
+/* =====================================================================
+   REGROUP MODE: what the board does after the Cowboys lose
+   ===================================================================== */
+const rgKey = id => "lsb-regroup-" + id;
+const isFavLoss = g => { if (!g || g.state !== "post") return false; const us = g.home === CFG.fav ? g.hs : g.as, them = g.home === CFG.fav ? g.as : g.hs;
+  return (g.home === CFG.fav || g.away === CFG.fav) && them > us; };
+// the finished favourite game, only if it was a loss and only on the live week
+function favLoss() {
+  if (offWeek()) return null;
+  const g = S.favGame; if (!isFavLoss(g)) return null;
+  const home = g.home === CFG.fav;
+  return { g, us: home ? g.hs : g.as, them: home ? g.as : g.hs, foe: home ? g.away : g.home, rec: home ? g.homeRec : g.awayRec };
+}
+const rgActive = () => { const L = favLoss(); return L && store.get(rgKey(L.g.id), "on") === "on" ? L : null; };
+function setRegroup(on) { const L = favLoss(); if (!L) return; store.set(rgKey(L.g.id), on ? "on" : "off"); renderRegroup(); if (on) window.scrollTo({ top: 0, behavior: "smooth" }); }
+// next week's fixture, fetched once, so the panel can point at the next one
+async function loadNextFav() {
+  const wk = (S.curWeek || S.week || 0) + 1;
+  if (S.nextFavWk === wk) return; S.nextFavWk = wk; S.nextFav = null;
+  if (wk < 2 || wk > WKMAX) return;
+  try {
+    const d = await getJSON(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${wk}&dates=${S.season || new Date().getFullYear()}`);
+    S.nextFav = (d.events || []).map(normGame).find(g => g.home === CFG.fav || g.away === CFG.fav) || null;
+  } catch (e) { console.warn("next week", e); }
+}
+function renderRegroup() {
+  const L = rgActive(), any = favLoss();
+  el("#rgOn").hidden = !any || !!L;
+  el("#regroup").hidden = !L;
+  document.body.classList.toggle("regroup", !!L);
+  if (!L) return;
+  const { g, us, them, foe, rec } = L;
+  const sl = S.sleeper, margin = them - us;
+  el("#rgSub").textContent = `${T(CFG.fav)[1]} ${us}, ${T(foe)[1]} ${them}. Here is the rest of the day.`;
+
+  /* --- card 1: what still went your way --- */
+  const mine = myPlayersIn(g);
+  const fxPts = mine.reduce((a, x) => a + x.pts, 0);
+  const chips = mine.map(m => `<span class="mp" data-pid="${esc(m.pid)}" role="button" title="Points breakdown"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
+  const good = [];
+  if (sl.mine) { const my = sl.mine.points ?? 0, op = sl.oppM?.points ?? 0, up = my - op;
+    good.push(`Your fantasy week: <b>${my.toFixed(1)}</b> to <b>${op.toFixed(1)}</b>, ${up >= 0 ? `<span class="good">up ${up.toFixed(1)}</span>` : `<span class="bad">down ${Math.abs(up).toFixed(1)}</span>`}.`); }
+  // the spread is a second scoreboard, and it is often the kinder one
+  const m = String(g.odds?.details || "").match(/^([A-Z]{2,4})\s*([+-]?\d+(?:\.\d+)?)/);
+  if (m) { const st = toEspn(m[1]), num = Math.abs(parseFloat(m[2]));
+    if (st === CFG.fav) { if (num - margin > 0) good.push(`Still covered the <b>${num}</b>.`); }
+    else if (margin < num) good.push(`<b>${T(CFG.fav)[1]}</b> covered as ${num}-point dogs.`); }
+  good.push(margin <= 3 ? `A <b>${margin}-point</b> game. One possession either way.` : margin <= 8 ? `<b>${margin}</b> points. A score and a stop from a different afternoon.` : `Down <b>${margin}</b>. Some weeks the tape is short.`);
+  const c1 = `<div class="rg-card"><h3>Still went your way</h3>
+    <div class="rg-big">${fxPts.toFixed(1)}<small>fantasy points out of that game</small></div>
+    ${chips ? `<div class="rg-chips">${chips}</div>` : `<div class="rg-l">None of your starters were in it, so nothing of yours went down with it.</div>`}
+    ${good.map(x => `<div class="rg-l">${x}</div>`).join("")}</div>`;
+
+  /* --- card 2: the rest of the division --- */
+  const rivals = CFG.division.filter(ab => ab !== CFG.fav).map(ab => {
+    const x = S.events.find(e => e.home === ab || e.away === ab);
+    if (!x) return { ab, res: "n", txt: "Bye", sc: "" };
+    const home = x.home === ab, own = home ? x.hs : x.as, oth = home ? x.as : x.hs;
+    const line = `${home ? "vs" : "@"} ${esc(home ? x.away : x.home)}`;
+    if (x.state === "pre") return { ab, res: "n", txt: "Yet to play", sc: line };
+    const sc = `${line} · ${own}-${oth}`;
+    if (x.state === "in") return { ab, res: "n", txt: esc(x.status), sc };
+    return { ab, res: own > oth ? "w" : own < oth ? "l" : "n", txt: own > oth ? "W" : own < oth ? "L" : "T", sc };
+  }).sort((a, b) => ({ l: 0, n: 1, w: 2 }[a.res]) - ({ l: 0, n: 1, w: 2 }[b.res]));
+  const lost = rivals.filter(r => r.res === "l").length;
+  const c2 = `<div class="rg-card"><h3>Misery loves company</h3>
+    <div class="rg-big">${lost}<small>of ${rivals.length} NFC East rivals lost too</small></div>
+    ${rivals.map((r, i) => `<div class="rg-row ${i ? "" : "first"}"><span class="mini" style="background:${T(r.ab)[2]}">${esc(r.ab)}</span><span>${esc(T(r.ab)[1])}</span><span class="sc">${r.sc}</span><span class="res ${r.res}">${r.txt}</span></div>`).join("")}
+    <div class="rg-foot">${lost === rivals.length ? "Everyone in the division took one. The gap did not move." : lost ? "The gap held up better than the afternoon did." : "Nobody did you any favours today."}</div></div>`;
+
+  /* --- card 3: next one --- */
+  const nx = S.nextFav;
+  const [w = 0, l = 0, t = 0] = String(rec || "").split("-").map(Number);
+  const played = (w || 0) + (l || 0) + (t || 0), left = Math.max(0, 17 - played);
+  let c3body = `<div class="rg-l">Next week's schedule isn't posted yet.</div>`;
+  if (nx) {
+    const home = nx.home === CFG.fav, opp = home ? nx.away : nx.home;
+    const days = Math.max(0, Math.ceil((nx.date - Date.now()) / 86400000));
+    c3body = `<div class="rg-big">${home ? "vs" : "at"} ${esc(T(opp)[1])}</div>
+      <div class="rg-l">${esc(fmtCT(nx.date, { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))} CT${nx.net ? ` · ${esc(nx.net)}` : ""}</div>
+      <div class="rg-l"><b>${days}</b> day${days === 1 ? "" : "s"} to sit with it.</div>`;
+  }
+  const c3 = `<div class="rg-card"><h3>Next one up</h3>${c3body}
+    <div class="rg-l">Record <b>${esc(rec || "–")}</b>${played ? `, <b>${left}</b> game${left === 1 ? "" : "s"} still on the schedule.` : "."}</div>
+    <div class="rg-foot">Nothing is decided in Week ${S.week || ""}.</div></div>`;
+
+  el("#rgBody").innerHTML = c1 + c2 + c3;
+}
 
 /* ---- flourish for a fresh scoring play ---- */
 function celebrate(e) {
@@ -1397,6 +1540,7 @@ function renderFantasy() {
   const reel = el("#reel"); reel.innerHTML = items + items;
   requestAnimationFrame(() => { reel.style.animationDuration = Math.max(30, (reel.scrollWidth / 2) / 45) + "s"; });   // steady 45 px/s whatever the length
   if (document.body.classList.contains("v-scores")) renderBoard();
+  if (S.events.length) renderRegroup();   // fantasy totals feed the regroup panel
   const tkOpp = (sl.opp?.name || "Opp").split(" ")[0];
   el("#tkTag").innerHTML = `<span class="tn">${esc(sl.me.name)}</span><span class="tsc">${myPts.toFixed(1)} <span class="op">· ${opPts.toFixed(1)}</span></span>`;
 }
@@ -1423,7 +1567,7 @@ window.addEventListener("resize", fitBoard);
    LOOPS
    ===================================================================== */
 function renderAll() {
-  renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard();
+  renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderRegroup();
 }
 let espnTimer, slTimer;
 async function espnLoop() {
@@ -1432,6 +1576,7 @@ async function espnLoop() {
     await loadScoreboard();
     try { await loadSummary(); } catch (e) { console.warn("summary", e); }
     renderAll(); S.lastOk = Date.now(); setErr(false); pumpFinals();
+    if (favLoss()) { await loadNextFav(); renderRegroup(); }
   } catch (e) { console.warn("scoreboard", e); setErr(true); }
   const anyLive = S.events.some(g => g.live);
   espnTimer = setTimeout(espnLoop, anyLive ? CFG.pollLive : CFG.pollIdle);
@@ -1503,10 +1648,13 @@ async function pickGame(id) {
 document.addEventListener("click", e => {
   const ob = e.target.closest("#fxSoFar [data-open]"); if (ob) return openPlayer(ob.dataset.open);
   const srow = e.target.closest("#fxSoFar li[data-sofar] > .row"); if (srow) { const li = srow.parentElement, pid = li.dataset.sofar; li.classList.toggle("open"); S.openPids = S.openPids || new Set(); li.classList.contains("open") ? S.openPids.add(pid) : S.openPids.delete(pid); return; }
-  const prow = e.target.closest("#roster tr[data-pid], #fxFeed li[data-pid], .bg .mp[data-pid], .tk[data-pid], .ln .pl li[data-pid]"); if (prow && prow.dataset.pid) return openPlayer(prow.dataset.pid);
+  const prow = e.target.closest("#roster tr[data-pid], #fxFeed li[data-pid], .bg .mp[data-pid], .rg .mp[data-pid], .tk[data-pid], .ln .pl li[data-pid]"); if (prow && prow.dataset.pid) return openPlayer(prow.dataset.pid);
   const seg = e.target.closest("#fxSeg button"); if (seg) { S.sleeper.view = seg.dataset.side; return renderFantasy(); }
   if (e.target.closest("#pmClose") || e.target === el("#pmodal")) return closePlayer();
   if (e.target.closest("#fClose") || e.target === el("#fmodal")) return closeFinal();
+  if (e.target.closest("#rgOff")) return setRegroup(false);
+  if (e.target.closest("#rgOn")) return setRegroup(true);
+  if (e.target.closest("#fRegroup")) { closeFinal(); setRegroup(true); if (location.hash !== "#home") location.hash = "#home"; return; }
   const card = e.target.closest("#slots .g[data-id]"); if (card) return pickGame(card.dataset.id);
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
 });
