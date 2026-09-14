@@ -586,8 +586,33 @@
   body.lg-cfb .ticker { display: none !important; }
   body.lg-cfb.v-scores { padding-bottom: 0; }
   body.lg-cfb .settings .fx { display: none; }
-  body.lg-cfb .hero::before { background: #cc0000; }
-  body.lg-cfb .g.dal, body.lg-cfb .bg.dal { border-color: rgba(204,0,0,.6); background: linear-gradient(180deg, #2a1618, var(--surface)); }
+  /* Saturday wears scarlet and black */
+  body.lg-cfb {
+    --ground: #08080a;
+    --surface: #151216;
+    --raised: #1f1a1e;
+    --line: #2d2429;
+    --line-strong: #453338;
+    --ink: #f4eff0;
+    --ink-2: #c4b9bc;
+    --muted: #8b7f84;
+    --accent: #e8232a;
+    --accent-soft: rgba(232,35,42,.16);
+    --live: #ff2f36;
+    --live-soft: rgba(255,47,54,.14);
+    --redzone: #ff2f36;
+  }
+  body.lg-cfb .rk, body.lg-cfb .stand .rkn { color: #d9cccd; }
+  body.lg-cfb .topbar { border-bottom: 1px solid rgba(232,35,42,.4); }
+  body.lg-cfb .nav, body.lg-cfb .seg { border-color: #4a3338; }
+  body.lg-cfb .nav a.on, body.lg-cfb .seg button.on { color: #fff; }
+  body.lg-cfb .hero { background: linear-gradient(180deg, #24151a 0%, var(--surface) 100%); }
+  body.lg-cfb .g.live, body.lg-cfb .bg.live { border-color: rgba(255,47,54,.32); }
+  body.lg-cfb .chip.live { border-color: rgba(255,47,54,.45); }
+  body.lg-cfb .g.dal, body.lg-cfb .bg.dal { border-color: rgba(232,35,42,.65); background: linear-gradient(180deg, #2c1418, var(--surface)); }
+  body.lg-cfb .field { background: repeating-linear-gradient(90deg, var(--raised) 0 10%, #241d21 10% 20%); }
+  body.lg-cfb .pm-x:hover { color: #fff; }
+  body.lg-cfb .stand tr.dal td { color: #ffd9da; }
   .csel { font: inherit; font-size: 12px; font-weight: 600; letter-spacing: .06em; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 10px; }
   .rk { font-style: normal; font-family: var(--display); font-weight: 800; color: var(--warn); margin-right: 5px; font-size: .78em; }
   .board.fill .bg .nm .rk { font-size: .6em; }
@@ -1240,7 +1265,7 @@ function celebrate(e) {
 function confetti(color) {
   const c = el("#confetti"), ctx = c.getContext("2d"); c.hidden = false;
   c.width = innerWidth; c.height = innerHeight;
-  const cols = [color, "#ffffff", "#5b9cff", "#ffd166"], N = 160, ps = [];
+  const cols = LG.key === "cfb" ? [color, "#ffffff", "#e8232a", "#2b2427"] : [color, "#ffffff", "#5b9cff", "#ffd166"], N = 160, ps = [];
   for (let i = 0; i < N; i++) ps.push({ x: c.width/2 + (Math.random()-.5)*200, y: c.height*0.35, vx: (Math.random()-.5)*14, vy: -Math.random()*14 - 4, w: 6+Math.random()*6, h: 8+Math.random()*8, r: Math.random()*Math.PI, vr: (Math.random()-.5)*.3, col: cols[i%cols.length] });
   const t0 = performance.now();
   (function frame(now) {
@@ -1414,12 +1439,14 @@ function renderWP(g) {
   const pts = series.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`), path = "M"+pts.join(" L");
   const mid = y(50);
   const areaH = path + ` L${x(n-1).toFixed(1)},${mid} L${x(0)},${mid} Z`;   // filled toward the 50 line; clipped per side
-  const grid = [25,75].map(v=>`<line x1="${px}" x2="${W-px}" y1="${y(v)}" y2="${y(v)}" stroke="#26303f" stroke-dasharray="3 4"/>`).join("")
-    + `<line x1="${px}" x2="${W-px}" y1="${mid}" y2="${mid}" stroke="#344152"/>`
+  const cfb = LG.key === "cfb";
+  const gl = cfb ? "#2d2429" : "#26303f", gl2 = cfb ? "#453338" : "#344152", gt = cfb ? "#8b7f84" : "#7f8ba0", gbg = cfb ? "#151216" : "#141b26";
+  const grid = [25,75].map(v=>`<line x1="${px}" x2="${W-px}" y1="${y(v)}" y2="${y(v)}" stroke="${gl}" stroke-dasharray="3 4"/>`).join("")
+    + `<line x1="${px}" x2="${W-px}" y1="${mid}" y2="${mid}" stroke="${gl2}"/>`
     + `<text x="${W-px}" y="${y(75)-3}" text-anchor="end" font-size="10" fill="${hc}">${esc(g.home)} 75%</text><text x="${W-px}" y="${y(25)+11}" text-anchor="end" font-size="10" fill="${ac}">${esc(g.away)} 75%</text>`;
   // quarter markers at fixed points along the game clock
   let qx = "", ql = "";
-  for (let q = 1; q <= maxP; q++) { const qx0 = px + ((q-1)/maxP)*(W-2*px); if (q > 1) qx += `<line x1="${qx0}" x2="${qx0}" y1="${py}" y2="${H-py}" stroke="#26303f"/>`; ql += `<text x="${qx0+3}" y="${H-1}" font-size="10" fill="#7f8ba0">${ordinal(q)}</text>`; }
+  for (let q = 1; q <= maxP; q++) { const qx0 = px + ((q-1)/maxP)*(W-2*px); if (q > 1) qx += `<line x1="${qx0}" x2="${qx0}" y1="${py}" y2="${H-py}" stroke="${gl}"/>`; ql += `<text x="${qx0+3}" y="${H-1}" font-size="10" fill="${gt}">${ordinal(q)}</text>`; }
   const last = series[n-1], lastC = last >= 50 ? hc : ac;
   box.insertAdjacentHTML("afterbegin", `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Game flow, win probability by play">
       <defs>
@@ -1431,7 +1458,7 @@ function renderWP(g) {
       <path d="${areaH}" fill="${ac}" fill-opacity=".22" clip-path="url(#cBot)"/>
       <path d="${path}" fill="none" stroke="${hc}" stroke-width="2" stroke-linejoin="round" clip-path="url(#cTop)"/>
       <path d="${path}" fill="none" stroke="${ac}" stroke-width="2" stroke-linejoin="round" clip-path="url(#cBot)"/>
-      <circle cx="${x(n-1)}" cy="${y(last)}" r="4.5" fill="${lastC}" stroke="#141b26" stroke-width="2"/>
+      <circle cx="${x(n-1)}" cy="${y(last)}" r="4.5" fill="${lastC}" stroke="${gbg}" stroke-width="2"/>
       <line id="wpX" x1="0" x2="0" y1="${py}" y2="${H-py}" stroke="#b7c0ce" style="display:none"/><circle id="wpDot" r="4" fill="#eef2f7" style="display:none"/>${ql}
       <rect id="wpHit" x="0" y="0" width="${W}" height="${H}" fill="transparent"/></svg>`);
   el("#wpHead").innerHTML = head(last);
