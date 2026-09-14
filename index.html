@@ -679,9 +679,25 @@ const TEAMS = {
   SF:["San Francisco","49ers","#aa0000"], SEA:["Seattle","Seahawks","#002244"], TB:["Tampa Bay","Buccaneers","#d50a0a"],
   TEN:["Tennessee","Titans","#0c2340"], WSH:["Washington","Commanders","#5a1414"],
 };
-const CHART = { BAL:"#c9a227", BUF:"#e0163a", CHI:"#e8531f", CLE:"#ff3c00", DAL:"#4f8eff", GB:"#ffb612", HOU:"#c8102e", IND:"#6aa6ff", JAX:"#d7a22a",
-  LV:"#b5bcc0", LAR:"#ffa300", MIN:"#ffc62f", NE:"#e0163a", NYG:"#5b8def", NYJ:"#4ea87a", PHI:"#4cbb8f", SEA:"#69be28", TEN:"#4b92db", WSH:"#ffb612", DET:"#3aa0e8", ATL:"#e0163a", DEN:"#ff7a3d" };
-const chartColor = ab => CHART[toEspn(ab)] || T(ab)[2];
+// bright primary for dark backgrounds, plus an alternate (usually the secondary kit colour) used when two teams' primaries collide
+const CHART = { ARI:["#d6335c","#ffb612"], ATL:["#e0163a","#a5acaf"], BAL:["#8d6bff","#c9a227"], BUF:["#4f8eff","#e0163a"], CAR:["#2fa3ff","#b5bcc0"], CHI:["#3f6fd6","#e8531f"],
+  CIN:["#fb4f14","#f2f2f2"], CLE:["#ff3c00","#c9a06a"], DAL:["#4f8eff","#b0b7bc"], DEN:["#ff7a3d","#3f6fd6"], DET:["#3aa0e8","#b0b7bc"], GB:["#2fa672","#ffb612"],
+  HOU:["#c8102e","#3fa9f5"], IND:["#6aa6ff","#f2f2f2"], JAX:["#3ab5c2","#d7a22a"], KC:["#e31837","#ffb81c"], LV:["#b5bcc0","#f2f2f2"], LAC:["#2fa3ff","#ffc20e"],
+  LAR:["#5b8def","#ffa300"], MIA:["#1fb8c4","#ff8a2b"], MIN:["#a374e8","#ffc62f"], NE:["#4f8eff","#e0163a"], NO:["#d3bc8d","#f2f2f2"], NYG:["#5b8def","#a71930"],
+  NYJ:["#4ea87a","#f2f2f2"], PHI:["#4cbb8f","#a5acaf"], PIT:["#ffb612","#f2f2f2"], SF:["#e0163a","#d7a22a"], SEA:["#69be28","#4f8eff"], TB:["#e0163a","#ff7a3d"],
+  TEN:["#4b92db","#e0163a"], WSH:["#e0163a","#ffb612"] };
+const chartColor = (ab, alt) => { const c = CHART[toEspn(ab)]; return c ? c[alt ? 1 : 0] : T(ab)[2]; };
+// perceptual-ish distance between two hex colours so we can spot look-alike kits
+const colorDist = (a, b) => { const h = c => [1,3,5].map(i => parseInt(c.slice(i, i+2), 16)); const [r1,g1,b1] = h(a), [r2,g2,b2] = h(b); const rm = (r1+r2)/2; return Math.sqrt((2 + rm/256)*(r1-r2)**2 + 4*(g1-g2)**2 + (2 + (255-rm)/256)*(b1-b2)**2); };
+// pick chart colours for a matchup: the favourite team always keeps its primary; the other side swaps to its alternate if the two would blur together
+function matchupColors(home, away) {
+  let hc = chartColor(home), ac = chartColor(away);
+  if (colorDist(hc, ac) < 150) {
+    if (away === CFG.fav) hc = chartColor(home, true); else ac = chartColor(away, true);   // the favourite keeps its colour, the other side gives way
+    if (colorDist(hc, ac) < 150) { if (away === CFG.fav) hc = "#b7c0ce"; else ac = "#b7c0ce"; }
+  }
+  return { hc, ac };
+}
 const toEspn = ab => ({ WAS:"WSH", LA:"LAR", OAK:"LV", SD:"LAC" }[ab] || ab);
 const T = ab => TEAMS[toEspn(ab)] || [ab, ab, "#334"];
 
@@ -1129,8 +1145,7 @@ function renderWP(g) {
   const sum = S.summary, box = el("#wpChart");
   box.querySelectorAll("svg").forEach(s => s.remove());
   if (!g) return;
-  const hc0 = chartColor(g.home), ac0 = chartColor(g.away);
-  const hc = hc0, ac = ac0.toLowerCase() === hc0.toLowerCase() ? "#b7c0ce" : ac0;
+  const { hc, ac } = matchupColors(g.home, g.away);
   const wp = sum?.winprobability;
   const head = (hp) => `
     <span class="side"><span class="tm" style="color:${ac}">${esc(g.away)}</span><span class="n" style="color:${ac}">${hp == null ? "–" : Math.round(100-hp) + "%"}</span></span>
@@ -1141,18 +1156,34 @@ function renderWP(g) {
   const step = Math.max(1, Math.ceil(raw.length / 140));
   const keep = (_, i) => i % step === 0 || i === raw.length - 1;
   const series = raw.filter(keep);
-  const periodOf = {}; for (const d of [...(sum.drives?.previous||[]), sum.drives?.current].filter(Boolean)) for (const p of d.plays||[]) periodOf[p.id] = p.period?.number;
-  const periods = wp.filter(keep).map(x => periodOf[x.playId] || 0);
+  // where each play sits in game time, so the line only reaches the right edge when the game is actually over
+  const periodOf = {}, clockOf = {};
+  for (const d of [...(sum.drives?.previous||[]), sum.drives?.current].filter(Boolean)) for (const p of d.plays||[]) { periodOf[p.id] = p.period?.number; clockOf[p.id] = p.clock?.displayValue ?? p.clock?.value; }
+  const kept = wp.filter(keep);
+  const periods = kept.map(x => periodOf[x.playId] || 0);
+  const maxP = Math.max(4, g.period || 0, ...periods);
+  const secs = v => { if (v == null) return null; if (typeof v === "number") return v; const m = String(v).match(/^(\d+):(\d+)$/); return m ? +m[1]*60 + +m[2] : null; };
+  const fracOf = (per, clk) => { if (!per) return null; const len = per > 4 ? 600 : 900; const sc = secs(clk); const within = sc == null ? 0.5 : 1 - Math.min(1, sc/len); return (per - 1 + within) / maxP; };
+  let fr = kept.map(x => fracOf(periodOf[x.playId], clockOf[x.playId]));
+  // plays with a period but no clock: spread them evenly across that quarter rather than piling up mid-quarter
+  const noClk = {}; kept.forEach((x, i) => { const per = periodOf[x.playId]; if (per && secs(clockOf[x.playId]) == null) (noClk[per] = noClk[per] || []).push(i); });
+  const nowWithin = g.state === "in" && g.period ? 1 - Math.min(1, (secs(g.clock) ?? 0) / (g.period > 4 ? 600 : 900)) : 1;
+  for (const per in noClk) { const cap = g.state === "in" && +per === g.period ? nowWithin : 1; noClk[per].forEach((i, k, arr) => { fr[i] = (per - 1 + cap * (k + 0.5) / arr.length) / maxP; }); }
+  // fill any gaps by interpolating between known neighbours, and keep the axis monotonic
+  for (let i = 0; i < fr.length; i++) if (fr[i] == null) { let a = i-1; while (a >= 0 && fr[a] == null) a--; let b = i+1; while (b < fr.length && fr[b] == null) b++; const av = a >= 0 ? fr[a] : 0, bv = b < fr.length ? fr[b] : (g.state === "post" ? 1 : (g.period ? (g.period - 1 + (1 - Math.min(1, (secs(g.clock) ?? 0)/(g.period > 4 ? 600 : 900))))/maxP : av)); fr[i] = av + (bv - av) * ((i - a) / (b - a)); }
+  for (let i = 1; i < fr.length; i++) if (fr[i] < fr[i-1]) fr[i] = fr[i-1];
+  if (g.state === "post") fr[fr.length-1] = 1;
   const n = series.length, W=420, H=170, px=6, py=12;
-  const x = i => px + i*(W-2*px)/Math.max(1,n-1), y = v => py + (100-v)*(H-2*py)/100;
+  const x = i => px + Math.min(1, Math.max(0, fr[i] ?? 0))*(W-2*px), y = v => py + (100-v)*(H-2*py)/100;
   const pts = series.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`), path = "M"+pts.join(" L");
   const mid = y(50);
   const areaH = path + ` L${x(n-1).toFixed(1)},${mid} L${x(0)},${mid} Z`;   // filled toward the 50 line; clipped per side
   const grid = [25,75].map(v=>`<line x1="${px}" x2="${W-px}" y1="${y(v)}" y2="${y(v)}" stroke="#26303f" stroke-dasharray="3 4"/>`).join("")
     + `<line x1="${px}" x2="${W-px}" y1="${mid}" y2="${mid}" stroke="#344152"/>`
     + `<text x="${W-px}" y="${y(75)-3}" text-anchor="end" font-size="10" fill="${hc}">${esc(g.home)} 75%</text><text x="${W-px}" y="${y(25)+11}" text-anchor="end" font-size="10" fill="${ac}">${esc(g.away)} 75%</text>`;
-  let qx = "", ql = periods[0] ? `<text x="${px+3}" y="${H-1}" font-size="10" fill="#7f8ba0">${ordinal(periods[0])}</text>` : "", lastP = periods[0];
-  periods.forEach((p, i) => { if (p && p !== lastP) { qx += `<line x1="${x(i)}" x2="${x(i)}" y1="${py}" y2="${H-py}" stroke="#26303f"/>`; ql += `<text x="${x(i)+3}" y="${H-1}" font-size="10" fill="#7f8ba0">${ordinal(p)}</text>`; lastP = p; } });
+  // quarter markers at fixed points along the game clock
+  let qx = "", ql = "";
+  for (let q = 1; q <= maxP; q++) { const qx0 = px + ((q-1)/maxP)*(W-2*px); if (q > 1) qx += `<line x1="${qx0}" x2="${qx0}" y1="${py}" y2="${H-py}" stroke="#26303f"/>`; ql += `<text x="${qx0+3}" y="${H-1}" font-size="10" fill="#7f8ba0">${ordinal(q)}</text>`; }
   const last = series[n-1], lastC = last >= 50 ? hc : ac;
   box.insertAdjacentHTML("afterbegin", `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Game flow, win probability by play">
       <defs>
@@ -1176,7 +1207,7 @@ function renderWP(g) {
   const svg = box.querySelector("svg"), hit = el("#wpHit"), tip = el("#wpTip"), xl = el("#wpX"), dot = el("#wpDot");
   hit.onmousemove = e => {
     const r = svg.getBoundingClientRect(); const rx = (e.clientX - r.left)/r.width*W;
-    const i = Math.max(0, Math.min(n-1, Math.round((rx-px)/((W-2*px)/Math.max(1,n-1)))));
+    let i = 0, best = Infinity; for (let k = 0; k < n; k++) { const dd = Math.abs(x(k) - rx); if (dd < best) { best = dd; i = k; } }
     xl.setAttribute("x1",x(i)); xl.setAttribute("x2",x(i)); xl.style.display=""; dot.setAttribute("cx",x(i)); dot.setAttribute("cy",y(series[i])); dot.style.display="";
     tip.style.display="block"; tip.style.left=(x(i)/W*r.width)+"px"; tip.style.top=(y(series[i])/H*r.height)+"px";
     tip.innerHTML = `<b style="color:${hc}">${esc(g.home)} ${Math.round(series[i])}%</b> · <b style="color:${ac}">${esc(g.away)} ${Math.round(100-series[i])}%</b> · ${periods[i] ? ordinal(periods[i]) : ""} play ${i*step+1}`;
