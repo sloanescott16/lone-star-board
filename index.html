@@ -700,8 +700,8 @@ let LG = LEAGUES[(() => { try { return JSON.parse(localStorage.getItem("cc-leagu
 if (qs.get("lg") && LEAGUES[qs.get("lg")]) LG = LEAGUES[qs.get("lg")];
 const api = p => `https://site.api.espn.com/apis/site/v2/sports/${LG.path}/${p}`;
 const CT = {};   // college teams learned from the feed: abbr -> [school, nickname, colour, alt colour]
-const CONF = { "1":"ACC", "4":"Big 12", "5":"Big Ten", "8":"SEC", "9":"Pac-12", "12":"C-USA", "15":"MAC", "17":"Mountain West", "18":"Independents", "20":"Pac-12", "37":"Sun Belt", "62":"C-USA", "151":"American" };
-const CONF_ORDER = ["8","5","4","1","151","37","17","15","12","18"];
+const CONF = { "1":"ACC", "4":"Big 12", "5":"Big Ten", "8":"SEC", "9":"Pac-12", "12":"C-USA", "15":"MAC", "16":"WAC", "17":"Mountain West", "18":"Independents", "20":"Big Sky", "21":"MVFC", "24":"MEAC", "25":"NEC", "29":"Southern", "30":"Southland", "32":"FCS Indep.", "37":"Sun Belt", "151":"American", "other":"Other" };
+const CONF_ORDER = ["8","5","4","1","151","37","17","15","12","9","18"];   // FBS only; FCS visitors ride along in their opponent's block
 if (qs.get("league")) CFG.leagueId = qs.get("league");
 if (qs.get("team")) CFG.teamName = qs.get("team");
 
@@ -1409,10 +1409,12 @@ function boardFilter(list) {
   if (S.cf === "conf" && S.conf !== "all") return list.filter(g => g.homeConf === S.conf || g.awayConf === S.conf);
   return list;
 }
-const confSort = (a, b) => { const ia = CONF_ORDER.indexOf(a), ib = CONF_ORDER.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || confName(a).localeCompare(confName(b)); };
 function confSections(list) {
-  const ids = [...new Set(list.flatMap(g => [g.homeConf, g.awayConf]).filter(Boolean))].sort(confSort);
-  return ids.map(id => [id, list.filter(g => g.homeConf === id || g.awayConf === id)]).filter(x => x[1].length);
+  const secs = CONF_ORDER.filter(id => list.some(g => g.homeConf === id || g.awayConf === id))
+    .map(id => [id, list.filter(g => g.homeConf === id || g.awayConf === id)]);
+  const rest = list.filter(g => !CONF_ORDER.includes(g.homeConf) && !CONF_ORDER.includes(g.awayConf));
+  if (rest.length) secs.push(["other", rest]);
+  return secs;
 }
 function renderConfPicker() {
   const seg = el("#cfbSeg"), sel = el("#confSel"); if (!seg || !sel) return;
@@ -1420,7 +1422,7 @@ function renderConfPicker() {
   sel.style.display = LG.key === "cfb" && S.cf === "conf" ? "" : "none";
   if (LG.key !== "cfb") return;
   seg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.cf === S.cf));
-  const ids = [...new Set(S.events.flatMap(g => [g.homeConf, g.awayConf]).filter(Boolean))].sort(confSort);
+  const ids = CONF_ORDER.filter(id => S.events.some(g => g.homeConf === id || g.awayConf === id));
   const want = ids.join(",");
   if (sel.dataset.ids !== want) {
     sel.dataset.ids = want;
