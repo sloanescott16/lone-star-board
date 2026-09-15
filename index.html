@@ -719,7 +719,7 @@
       <section class="panel">
         <h2>Points ticker <small>both lineups · newest first · scroll for more</small></h2>
         <ul class="fxfeed scroll" id="fxFeed"><li class="empty">Points changes for both lineups will appear here as they land</li></ul>
-        <h2 class="sofar-h">Scoring so far <small>tap a player for their plays</small></h2>
+        <h2 class="sofar-h">Scoring so far <small id="sofarNote">tap a player for their plays</small></h2>
         <ul class="sofar" id="fxSoFar"></ul>
       </section>
     </div>
@@ -1797,17 +1797,19 @@ function renderFantasy() {
   const stateOf = pid => { const p = sl.players?.[pid]; const g = p && gameForTeam(p[2]); return !g ? "done" : g.live ? "live" : g.state === "post" ? "done" : "up"; };
   const order = { done: 0, live: 1, up: 2 };
   S.openPids = S.openPids || new Set();
-  const sofarRows = starters.filter(pid => (pp[pid] || 0) !== 0 || stateOf(pid) === "done")
-    .sort((a,b) => order[stateOf(a)] - order[stateOf(b)] || (pp[b]||0) - (pp[a]||0))
+  const sofarRows = sStarters.filter(pid => (spp[pid] || 0) !== 0 || stateOf(pid) === "done")
+    .sort((a,b) => order[stateOf(a)] - order[stateOf(b)] || (spp[b]||0) - (spp[a]||0))
     .map(pid => { const p = sl.players?.[pid] || [pid,"",""]; const g = gameForTeam(p[2]); const line = sl.stats ? statLine(pid) : "";
       const plays = sl.events.filter(e => e.pid === pid);
       return `<li class="${S.openPids.has(pid) ? "open" : ""}" data-sofar="${esc(pid)}">
-        <div class="row"><span class="chev">&#9654;</span><div><span class="nm">${esc(p[0])}</span> <span class="st">${g ? esc(g.status) : "Bye"}</span>${line ? `<span class="line">${esc(line)}</span>` : ""}</div><span class="pts">${(+pp[pid]||0).toFixed(2)}</span></div>
+        <div class="row"><span class="chev">&#9654;</span><div><span class="nm">${esc(p[0])}</span> <span class="st">${g ? esc(g.status) : "Bye"}</span>${line ? `<span class="line">${esc(line)}</span>` : ""}</div><span class="pts">${(+spp[pid]||0).toFixed(2)}</span></div>
         <div class="drop">
           <ul class="sp">${plays.length ? plays.map(e => `<li><span class="when">${fmtCT(e.t,{hour:"numeric",minute:"2-digit"})}${e.when ? " · " + esc(e.when) : ""}</span><span>${esc(e.what || "Points update")}</span><span class="d ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span></li>`).join("") : `<li><span class="when"></span><span>No plays logged since this page was opened; the stat line above is the full picture.</span><span></span></li>`}</ul>
           <div class="tools"><button type="button" class="btn" data-open="${esc(pid)}">Full breakdown</button></div>
         </div></li>`; }).join("");
-  el("#fxSoFar").innerHTML = sofarRows || `<li class="empty">Nothing on the board yet</li>`;
+  const sideName = side === mine ? sl.me.name : (sl.opp?.name || "Opponent");
+  el("#sofarNote").textContent = `${sideName} · tap a player for their plays`;
+  el("#fxSoFar").innerHTML = sofarRows || `<li class="empty">Nothing on the board yet for ${esc(sideName)}</li>`;
   el("#fxFeed").innerHTML =
     (ev.length ? ev.map(e => `<li class="${isOpp(e)?'opp':''}" data-pid="${esc(e.pid)}"><span class="when">${fmtCT(e.t,{hour:"numeric",minute:"2-digit"})}${e.when ? `<small>${esc(e.when)}</small>` : ""}</span><span class="what"><span class="sd">${isOpp(e)?'OPP':'YOU'}</span><b>${esc(e.name)}</b>${e.what ? `<span class="line">${esc(e.what)}</span>` : ""}</span><span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span></li>`).join("")
       : `<li class="empty">Live changes land here as either lineup scores</li>`);
