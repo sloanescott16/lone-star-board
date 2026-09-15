@@ -913,7 +913,8 @@ const S = {
   lastOk: 0, err: false, viewWeek: null, curWeek: null, cf: "all", conf: "all", hcf: "all", hconf: "all", view: "home", grouped: false,
 };
 const WKMAX = () => LG.weeks;
-const fxWeek = () => S.viewWeek ?? S.sleeper.week;
+// v47: fantasy follows the week on screen: a jumped-to week, else the NFL board's current week, else Sleeper's (which rolls forward early in the week)
+const fxWeek = () => S.viewWeek ?? ((LG.fantasy && S.curWeek) || S.sleeper.week);
 const offWeek = () => S.viewWeek != null;
 const el = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -1092,8 +1093,16 @@ async function loadSleeperStatic() {
     sl.scoringKey = rec(league.scoring_settings || {}) >= 1 ? "pts_ppr" : rec(league.scoring_settings || {}) > 0 ? "pts_half_ppr" : "pts_std";
   }
 }
+function resetFx(wk) {
+  const sl = S.sleeper;
+  sl.mine = null; sl.oppM = null; sl.opp = null; sl.snap = null; sl.hadEvents = false; sl.fresh = [];
+  sl.stats = null; sl.statsT = 0; sl.proj = null; sl.projT = 0;
+  sl.events = wk ? store.get("lsb-fxevents-" + wk, []) : []; sl.lastPts = wk ? store.get("lsb-fxlast-" + wk, {}) : {};
+  sl.fxWk = wk;
+}
 async function loadMatchup() {
   const sl = S.sleeper; const wk = fxWeek();
+  if (sl.fxWk !== wk) resetFx(wk);
   const ms = await getJSON(`${SL}/league/${CFG.leagueId}/matchups/${wk}`);
   const mine = ms.find(m => m.roster_id === sl.me.roster.roster_id);
   const opp = mine ? ms.find(m => m.matchup_id === mine.matchup_id && m.roster_id !== mine.roster_id) : null;
@@ -1896,6 +1905,7 @@ async function espnLoop() {
   clearTimeout(espnTimer);
   try {
     await loadScoreboard();
+    if (LG.fantasy && S.sleeper.me && S.sleeper.fxWk != null && S.sleeper.fxWk !== fxWeek()) sleeperLoop();   // board settled on a different week than the matchup
     if (LG.key === "cfb") { try { await loadRanks(); } catch (e) { console.warn("rankings", e); } }
     try { await loadSummary(); } catch (e) { console.warn("summary", e); }
     try { await loadOpenLine(); } catch (e) { console.warn("open line", e); }
@@ -1937,9 +1947,7 @@ function setWeek(w) {
   if (next === S.viewWeek) return;
   S.viewWeek = next;
   S.pickId = null; S.featured = null; S.summary = null; S.lastScores = {}; S.scoreFeed = [];
-  const sl = S.sleeper;
-  sl.mine = null; sl.oppM = null; sl.opp = null; sl.events = []; sl.lastPts = {}; sl.snap = null; sl.hadEvents = false; sl.fresh = [];
-  sl.stats = null; sl.statsT = 0; sl.proj = null; sl.projT = 0; sl.view = "me";
+  resetFx(null); S.sleeper.view = "me";
   el("#hero").innerHTML = `<div class="empty">Loading Week ${next ?? cur}</div>`;
   renderWeekBox();
   espnLoop(); sleeperLoop();
