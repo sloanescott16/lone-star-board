@@ -638,6 +638,27 @@
   body.lg-cfb.v-home .home-filter { display: flex; }
   .home-filter .lbl { font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
   .home-filter .seg { margin-left: 0; }
+  /* v53: schedule tab */
+  .sch-head .seg { margin-left: 0; }
+  .sch-head .sub { margin-left: auto; }
+  #sched .slot-head .sub b { color: var(--ink-2); font-weight: 600; }
+  #sched .g { cursor: pointer; }
+  #sched .g:not(.live).dal { border-color: var(--line); background: var(--surface); }
+  #sched .g.imp { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 0 18px var(--accent-soft); }
+  .g .sd { font-family: var(--display); font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 4px; padding: 0 4px; margin-left: 2px; }
+  .g .sd.in { color: var(--accent); border-color: var(--accent); }
+  .g .sd.wc { color: var(--warn); border-color: rgba(242,184,75,.5); }
+  .div-recs { font-size: 12px; color: var(--muted); }
+  .div-recs b { color: var(--ink-2); font-weight: 600; }
+  .div-recs .fav { color: var(--accent); }
+  /* v53: important live games on the scoreboard */
+  .bg.imp { border: 2px solid var(--accent); box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 0 26px var(--accent-soft); }
+  .bg.imp.dal { background: linear-gradient(180deg, #17233a, var(--surface)); }
+  .bg .why { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+  .bg .why span { font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+  .board.fill .bg .why span { font-size: clamp(10px, 4.5cqh, 22px); padding: .4cqh 1.6cqw; }
+  body.lg-cfb .bg.imp.dal { background: linear-gradient(180deg, #2c1418, var(--surface)); }
+  @media (max-width: 640px) { .sch-head .sub { margin-left: 0; width: 100%; } .topbar .nav { max-width: 100%; } .topbar .nav a { padding: 5px 8px; font-size: 12px; letter-spacing: .06em; } }
   .home-filter .sub { font-size: 12px; color: var(--muted); }
   .csel { font: inherit; font-size: 12px; font-weight: 600; letter-spacing: .06em; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 10px; }
   .rk { font-style: normal; font-family: var(--display); font-weight: 800; color: var(--warn); margin-right: 5px; font-size: .78em; }
@@ -698,6 +719,7 @@
     <div class="seg lg" id="lgSeg" role="group" aria-label="League"><button type="button" data-lg="cfb">Saturday</button><button type="button" data-lg="nfl">Sunday</button></div>
     <nav class="nav" id="nav">
       <a href="#home" data-v="home">Home</a>
+      <a href="#schedule" data-v="schedule">Schedule</a>
       <a href="#scores" data-v="scores">Scoreboard</a>
       <a href="#fantasy" data-v="fantasy">Fantasy</a>
     </nav>
@@ -721,6 +743,17 @@
       <button class="btn fsb" id="fsBtn" type="button">Full screen</button>
     </div>
     <div class="board" id="board"><div class="empty">Loading scores</div></div>
+  </main>
+
+  <!-- ================= SCHEDULE ================= -->
+  <main class="view" id="view-schedule">
+    <div class="board-head sch-head">
+      <h2>Schedule</h2>
+      <span class="seg" id="dayseg" role="group" aria-label="Day"></span>
+      <span class="seg" id="sortSeg" role="group" aria-label="Sort"></span>
+      <span class="sub" id="schSub"></span>
+    </div>
+    <div id="sched"><div class="empty">Loading the schedule</div></div>
   </main>
 
   <!-- ================= FANTASY ================= -->
@@ -846,6 +879,11 @@ if (qs.get("lg") && LEAGUES[qs.get("lg")]) LG = LEAGUES[qs.get("lg")];
 const api = p => `https://site.api.espn.com/apis/site/v2/sports/${LG.path}/${p}`;
 const CT = {};   // college teams learned from the feed: abbr -> [school, nickname, colour, alt colour, logo]
 const CONF = { "1":"ACC", "4":"Big 12", "5":"Big Ten", "8":"SEC", "9":"Pac-12", "12":"C-USA", "15":"MAC", "16":"WAC", "17":"Mountain West", "18":"Independents", "20":"Big Sky", "21":"MVFC", "24":"MEAC", "25":"NEC", "29":"Southern", "30":"Southland", "32":"FCS Indep.", "37":"Sun Belt", "151":"American", "other":"Other" };
+// v53: NFL divisions, NFC East first; the wildcard view reads seeds from ESPN standings, records as a fallback
+const DIVS = [["NFC East",["DAL","PHI","WSH","NYG"]],["NFC North",["CHI","DET","GB","MIN"]],["NFC South",["ATL","CAR","NO","TB"]],["NFC West",["ARI","LAR","SF","SEA"]],
+  ["AFC East",["BUF","MIA","NE","NYJ"]],["AFC North",["BAL","CIN","CLE","PIT"]],["AFC South",["HOU","IND","JAX","TEN"]],["AFC West",["DEN","KC","LV","LAC"]]];
+const divOf = ab => DIVS.find(d => d[1].includes(ab)) || null;
+const confOf = ab => (divOf(ab) || ["?"])[0].slice(0, 3);
 const CONF_ORDER = ["8","5","4","1","151","37","17","15","12","9","18"];   // FBS only; FCS visitors ride along in their opponent's block
 if (qs.get("league")) CFG.leagueId = qs.get("league");
 if (qs.get("team")) CFG.teamName = qs.get("team");
@@ -1655,18 +1693,21 @@ function myPlayersIn(g, side) {
   return (m.starters || []).map(pid => ({ pid, p: sl.players[pid] })).filter(x => x.p && (toEspn(x.p[2]) === g.home || toEspn(x.p[2]) === g.away))
     .map(x => ({ pid: x.pid, name: x.p[0], pos: x.p[1], team: toEspn(x.p[2]), pts: +(pp[x.pid] || 0) }));
 }
-function gameCard(g, big) {
-  const up = g.state === "pre", fin = g.state === "post", isFav = g.home === CFG.fav || g.away === CFG.fav;
-  const cls = [big ? "bg" : "g", g.live?"live":"", isFav?"dal":"", up?"upcoming":"", fin?"final":"", fin && big ? "held" : "", !big && S.featured && S.featured.id === g.id ? "picked" : ""].join(" ");
+function gameCard(g, big, ex) {
+  ex = ex || {};
+  const up = g.state === "pre", fin = g.state === "post", isFav = (g.home === CFG.fav || g.away === CFG.fav) && (!big || g.live);
+  const cls = [big ? "bg" : "g", g.live?"live":"", isFav?"dal":"", ex.imp ? "imp" : "", up?"upcoming":"", fin?"final":"", fin && big ? "held" : "", !big && S.featured && S.featured.id === g.id ? "picked" : ""].join(" ");
   const row = (ab, s, other, rec) => {
     const trail = !up && s < other, win = fin && s > other;
     const rk = ab === g.home ? g.homeRank : g.awayRank, rkh = rk ? `<em class="rk">#${rk}</em>` : "";
+    const sd = ex.seed && ex.seed[ab] ? `<span class="sd ${ex.seed[ab] <= 4 ? "in" : ex.seed[ab] <= 7 ? "wc" : ""}" title="${ex.seed[ab] <= 4 ? "Division leader" : ex.seed[ab] <= 7 ? "Wild card" : "Outside the playoffs"}, ${confOf(ab)} seed">${ex.seed[ab]}</span>` : "";
     const inner = big
       ? `<span class="nm">${rkh}<span class="tn">${esc(dispName(ab))}</span>${g.poss===ab?'<span class="poss" title="possession"></span>':''}<small>${esc(rec)}</small></span>`
-      : `<span class="nm">${rkh}<span class="tn">${esc(dispName(ab))}</span>${g.poss===ab?'<span class="poss" title="possession"></span>':''} <small>${esc(rec)}</small></span>`;
+      : `<span class="nm">${rkh}<span class="tn">${esc(dispName(ab))}</span>${sd}${g.poss===ab?'<span class="poss" title="possession"></span>':''} <small>${esc(rec)}</small></span>`;
     return `<div class="row">${mark(ab,"abbr")}${inner}<span class="sc ${trail?'trail':''} ${win?'win':''}">${up ? (big ? (ab===g.away ? esc(g.status) : "") : "") : s}</span></div>`;
   };
-  const foot = `<div class="foot"><span class="st">${up ? (big ? slotOf(g) : esc(g.status)) : esc(g.status)}</span>${g.rz?'<span class="rz">Red zone</span>':''}${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${big && g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}${g.net ? `<span class="net">${esc(g.net)}</span>` : ""}</div>`;
+  const why = big && ex.why && ex.why.length ? `<span class="why">${ex.why.map(w => `<span>${esc(w)}</span>`).join("")}</span>` : "";
+  const foot = `<div class="foot"><span class="st">${up ? (big ? slotOf(g) : esc(g.status)) : esc(g.status)}</span>${why}${g.rz?'<span class="rz">Red zone</span>':''}${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${big && g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}${g.net ? `<span class="net">${esc(g.net)}</span>` : ""}</div>`;
   const lm = !big && g.odds ? `<div class="lm">${linesHTML(g, true)}</div>` : "";
   const mine = big && LG.fantasy ? myPlayersIn(g) : [], theirs = big && LG.fantasy ? myPlayersIn(g, "opp") : [];
   const chips = arr => arr.map(m => `<span class="mp" data-pid="${esc(m.pid)}" role="button" title="Points breakdown"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
@@ -1805,23 +1846,148 @@ function renderBoard() {
   const live = S.events.filter(g=>g.live).length, fin = S.events.filter(g=>g.state==="post").length;
   el("#boardSub").textContent = `${S.events.length} games · ${live} live · ${fin} final · ${S.events.length-live-fin} to come`;
   renderConfPicker();
-  const held = offWeek() ? S.events.slice() : S.events.filter(g => g.live || (g.state === "post" && S.finishedAt?.[g.id] && Date.now() - S.finishedAt[g.id] < 180000));
-  const liveGames = boardFilter(held);
+  const held = offWeek() ? [] : S.events.filter(g => g.live);   // v53: live games only; the Schedule tab has the rest
+  const liveGames = boardFilter(held).map(g => ({ g, w: importance(g) })).sort((a, b) => b.w.score - a.w.score || a.g.date - b.g.date);
+  const card = x => gameCard(x.g, true, { imp: x.w.score > 0, why: x.w.why });
   const next = S.events.find(g => g.state === "pre");
   const board = el("#board");
   const grouped = LG.key === "cfb" && S.cf === "conf" && S.conf === "all" && liveGames.length > 0;
   S.grouped = grouped; bodyClass();
   if (grouped) {
     board.classList.remove("fill"); board.classList.add("sections"); board.style.cssText = "";
-    board.innerHTML = confSections(liveGames).map(([id, gs]) =>
-      `<section class="csec"><h3>${esc(confName(id))}<span>${gs.length} ${offWeek() ? "game" + (gs.length>1?"s":"") : "live"}</span></h3><div class="board-grid">${gs.map(g => gameCard(g,true)).join("")}</div></section>`).join("");
+    board.innerHTML = confSections(liveGames.map(x => x.g)).map(([id, gs]) =>
+      `<section class="csec"><h3>${esc(confName(id))}<span>${gs.length} live</span></h3><div class="board-grid">${liveGames.filter(x => gs.includes(x.g)).map(card).join("")}</div></section>`).join("");
   } else {
     board.classList.remove("sections");
-    board.innerHTML = liveGames.map(g => gameCard(g,true)).join("")
-      || `<div class="empty">${offWeek() ? `Nothing scheduled for Week ${S.viewWeek}` : held.length ? "Nothing live in this filter right now" : `No games in progress${next ? `. Next kickoff: ${esc(dispName(next.away))} at ${esc(dispName(next.home))}, ${fmtCT(next.date,{weekday:"short",hour:"numeric",minute:"2-digit"})} CT` : ""}`}.</div>`;
+    board.innerHTML = liveGames.map(card).join("")
+      || `<div class="empty">${offWeek() ? `Nothing live in Week ${S.viewWeek}. The Schedule tab has every game` : held.length ? "Nothing live in this filter right now" : `No games in progress${next ? `. Next kickoff: ${esc(dispName(next.away))} at ${esc(dispName(next.home))}, ${fmtCT(next.date,{weekday:"short",hour:"numeric",minute:"2-digit"})} CT` : ""}`}.</div>`;
     fitBoard();
   }
   el("#liveChip").style.display = live ? "" : "none"; el("#liveCount").textContent = live ? `${live} live` : "Live";
+}
+
+// v53: why a live game matters. Only called for live games, so the treatment disappears at the final whistle.
+function importance(g) {
+  const why = []; let score = 0;
+  const has = ab => g.home === ab || g.away === ab;
+  if (has(CFG.fav)) { why.push(T(CFG.fav)[1]); score += 100; }
+  if (LG.key === "nfl") {
+    if (!has(CFG.fav) && CFG.division.some(has)) { why.push("Division"); score += 30; }
+    if (LG.fantasy && myPlayersIn(g).length) { why.push("Your players"); score += 20; }
+    if (LG.fantasy && myPlayersIn(g, "opp").length) { why.push("Opponent's players"); score += 15; }
+    const sd = S.seeds || {};
+    if (!why.length && sd[g.home] && sd[g.away] && sd[g.home] <= 7 && sd[g.away] <= 7 && confOf(g.home) === confOf(g.away)) { why.push("Playoff race"); score += 10; }
+  } else {
+    if (g.homeRank && g.awayRank) { why.push("Top 25 clash"); score += 25; }
+    if (!has(CFG.fav) && g.homeConf === "4" && g.awayConf === "4") { why.push("Big 12"); score += 10; }
+  }
+  const m = Math.abs((g.hs || 0) - (g.as || 0));
+  if ((g.period >= 4) && m <= 8) { why.push(g.period > 4 ? "Overtime" : "Close finish"); score += 12; }
+  return { score, why };
+}
+
+// v53: NFL playoff seeds for the wildcard view. ESPN standings first, records off the board if that fails.
+async function loadSeeds() {
+  if (LG.key !== "nfl" || (S.seedsT && Date.now() - S.seedsT < 900e3)) return;
+  S.seedsT = Date.now();
+  try {
+    const d = await getJSON(`https://site.api.espn.com/apis/v2/sports/football/nfl/standings${S.season ? "?season=" + S.season : ""}`);
+    const out = {};
+    for (const c of d.children || []) for (const e of c.standings?.entries || []) {
+      const ab = e.team?.abbreviation, sd = (e.stats || []).find(x => x.name === "playoffSeed");
+      if (ab && sd && +sd.value > 0) out[ab] = +sd.value;
+    }
+    if (Object.keys(out).length >= 20) { S.seeds = out; S.seedSrc = "espn"; return; }
+  } catch (e) { console.warn("standings", e); }
+  S.seeds = null; S.seedsT = Date.now() - 840e3;   // retry in a minute
+}
+function seedsFromRecords() {
+  const rec = {};
+  for (const g of S.events) { rec[g.home] = g.homeRec; rec[g.away] = g.awayRec; }
+  const pct = ab => { const [w=0,l=0,t=0] = String(rec[ab] || "").split("-").map(Number); return (w + t/2) / ((w+l+t) || 1) + w / 1000; };
+  const out = {};
+  for (const cf of ["NFC","AFC"]) {
+    const divs = DIVS.filter(d => d[0].startsWith(cf));
+    const leaders = divs.map(d => d[1].filter(ab => rec[ab] != null).sort((a,b) => pct(b) - pct(a))[0]).filter(Boolean).sort((a,b) => pct(b) - pct(a));
+    const rest = divs.flatMap(d => d[1]).filter(ab => rec[ab] != null && !leaders.includes(ab)).sort((a,b) => pct(b) - pct(a));
+    [...leaders, ...rest].forEach((ab, i) => out[ab] = i + 1);
+  }
+  return out;
+}
+const seeds = () => S.seeds || seedsFromRecords();
+
+// the days that have games this week, and the one on screen
+function schedDays() {
+  const days = [];
+  for (const g of S.events) { const k = fmtCT(g.date, { year:"numeric", month:"2-digit", day:"2-digit" }); if (!days.some(d => d.k === k)) days.push({ k, d: g.date }); }
+  return days;
+}
+function pickDay(days) {
+  if (days.some(d => d.k === S.sday)) return S.sday;
+  const today = fmtCT(Date.now(), { year:"numeric", month:"2-digit", day:"2-digit" });
+  if (!offWeek()) {
+    if (days.some(d => d.k === today)) return today;
+    const next = S.events.find(g => g.state !== "post");
+    if (next) return fmtCT(next.date, { year:"numeric", month:"2-digit", day:"2-digit" });
+    return days.length ? days[days.length - 1].k : null;
+  }
+  return days.length ? days[0].k : null;
+}
+const SORTS = { nfl: [["league","League"],["division","Division"],["wildcard","Wildcard race"]], cfb: [["league","All FBS"],["conf","Conference"],["top25","Top 25"]] };
+function renderSchedule() {
+  const box = el("#sched"); if (!box) return;
+  const cfb = LG.key === "cfb", sorts = SORTS[LG.key];
+  if (!sorts.some(x => x[0] === S.ssort)) S.ssort = "league";
+  const days = schedDays();
+  S.sday = pickDay(days);
+  const dayK = d => fmtCT(d, { year:"numeric", month:"2-digit", day:"2-digit" });
+  el("#dayseg").innerHTML = days.map(d => `<button type="button" data-day="${d.k}" class="${d.k === S.sday ? "on" : ""}">${esc(fmtCT(d.d, { weekday:"short", month: days.length > 1 ? undefined : "short", day: days.length > 1 ? undefined : "numeric" }))}</button>`).join("");
+  el("#dayseg").style.display = days.length > 1 ? "" : "none";
+  el("#sortSeg").innerHTML = sorts.map(([k, l]) => `<button type="button" data-sort="${k}" class="${k === S.ssort ? "on" : ""}">${l}</button>`).join("");
+  const list = S.events.filter(g => dayK(g.date) === S.sday);
+  const live = list.filter(g => g.live).length, fin = list.filter(g => g.state === "post").length;
+  const dayName = S.sday && list[0] ? fmtCT(list[0].date, { weekday:"long", month:"short", day:"numeric" }) : "";
+  const card = (g, seed) => gameCard(g, false, { imp: g.live && importance(g).score > 0, seed });
+  const sec = (name, sub, gs, seed) => `<section class="slot"><div class="slot-head"><h2>${esc(name)}</h2><span class="sub">${sub}</span></div><div class="games">${gs.map(g => card(g, seed)).join("")}</div></section>`;
+  const cnt = n => `${n} game${n === 1 ? "" : "s"}`;
+  const byTime = (a, b) => a.date - b.date || (bestRank(a) - bestRank(b));
+  let html = "", shown = list.length;
+  if (!list.length) html = `<div class="empty">${S.events.length ? "No games on this day" : "No games scheduled"}</div>`;
+  else if (S.ssort === "league") {
+    const groups = new Map();
+    for (const g of list.slice().sort(byTime)) { const k = fmtCT(g.date, { hour:"numeric", minute:"2-digit" }) + " CT"; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(g); }
+    html = [...groups].map(([k, gs]) => sec(k, cnt(gs.length), gs)).join("");
+  } else if (S.ssort === "division") {
+    const rec = {}; for (const g of S.events) { rec[g.home] = g.homeRec; rec[g.away] = g.awayRec; }
+    const pct = ab => { const [w=0,l=0,t=0] = String(rec[ab] || "").split("-").map(Number); return (w + t/2) / ((w+l+t) || 1); };
+    html = DIVS.map(([name, teams]) => {
+      const gs = list.filter(g => teams.includes(g.home) || teams.includes(g.away)).sort(byTime);
+      if (!gs.length) return "";
+      const recs = teams.slice().sort((a, b) => pct(b) - pct(a)).map(ab => `<b class="${ab === CFG.fav ? "fav" : ""}">${ab}</b> ${esc(rec[ab] || "bye")}`).join(" · ");
+      return sec(name, `${cnt(gs.length)} · <span class="div-recs">${recs}</span>`, gs);
+    }).join("");
+  } else if (S.ssort === "wildcard") {
+    const sd = seeds();
+    const tiers = [["In the playoffs today", 1, 7], ["In the hunt", 8, 11], ["Chasing", 12, 16]];
+    const parts = [];
+    for (const cf of ["NFC", "AFC"]) {
+      const mine = list.filter(g => confOf(g.home) === cf || confOf(g.away) === cf);
+      const best = g => Math.min(...[g.home, g.away].filter(ab => confOf(ab) === cf).map(ab => sd[ab] || 99));
+      for (const [label, lo, hi] of tiers) {
+        const gs = mine.filter(g => { const b = best(g); return b >= lo && b <= hi || (hi === 16 && b > 16); }).sort((a, b) => best(a) - best(b) || byTime(a, b));
+        if (gs.length) parts.push(sec(`${cf} · ${label}`, `${cnt(gs.length)} · seeds ${lo}${hi === 7 ? "-7 (1-4 lead a division)" : "-" + hi}`, gs, sd));
+      }
+    }
+    html = parts.join("") + `<p class="fx-note">Games between conferences appear under both. Seeds ${S.seeds ? "are today's playoff order" : "worked out from records until the standings feed answers"}.</p>`;
+  } else if (S.ssort === "conf") {
+    html = confSections(list).map(([id, gs]) => sec(confName(id), cnt(gs.length), gs.slice().sort(byTime))).join("");
+  } else if (S.ssort === "top25") {
+    const gs = list.filter(g => g.homeRank || g.awayRank).sort((a, b) => bestRank(a) - bestRank(b) || byTime(a, b));
+    shown = gs.length;
+    html = gs.length ? sec("Top 25", cnt(gs.length) + " · best rank first", gs) : `<div class="empty">No ranked teams play on this day</div>`;
+  }
+  box.innerHTML = html;
+  el("#schSub").textContent = list.length ? `${dayName} · ${shown} game${shown === 1 ? "" : "s"} · ${live} live · ${fin} final` : "";
 }
 
 function playerRow(pid, slot, pts, bench) {
@@ -1929,7 +2095,7 @@ window.addEventListener("resize", fitBoard);
    LOOPS
    ===================================================================== */
 function renderAll() {
-  renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderRegroup();
+  renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderSchedule(); renderRegroup();
 }
 let espnTimer, slTimer;
 async function espnLoop() {
@@ -1938,6 +2104,7 @@ async function espnLoop() {
     await loadScoreboard();
     if (LG.fantasy && S.sleeper.me && S.sleeper.fxWk != null && S.sleeper.fxWk !== fxWeek()) sleeperLoop();   // board settled on a different week than the matchup
     if (LG.key === "cfb") { try { await loadRanks(); } catch (e) { console.warn("rankings", e); } }
+    if (LG.key === "nfl") await loadSeeds();
     try { await loadSummary(); } catch (e) { console.warn("summary", e); }
     try { await loadOpenLine(); } catch (e) { console.warn("open line", e); }
     renderAll(); S.lastOk = Date.now(); setErr(false); pumpFinals();
@@ -1977,7 +2144,7 @@ function setWeek(w) {
   const next = (w == null || w === cur) ? null : w;
   if (next === S.viewWeek) return;
   S.viewWeek = next;
-  S.pickId = null; S.featured = null; S.summary = null; S.lastScores = {}; S.scoreFeed = [];
+  S.pickId = null; S.featured = null; S.summary = null; S.lastScores = {}; S.scoreFeed = []; S.sday = null; S.seedsT = 0;
   resetFx(null); S.sleeper.view = "me";
   el("#hero").innerHTML = `<div class="empty">Loading Week ${next ?? cur}</div>`;
   renderWeekBox();
@@ -1995,25 +2162,26 @@ function bodyClass() {
 function route() {
   let v = (location.hash.replace("#","") || "home");
   if (v === "fantasy" && !LG.fantasy) v = "home";
-  const known = ["home","scores","fantasy"].includes(v) ? v : "home";
+  const known = ["home","schedule","scores","fantasy"].includes(v) ? v : "home";
   S.view = known;
   document.querySelectorAll(".view").forEach(m => m.classList.toggle("on", m.id === "view-"+known));
   document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.dataset.v === known));
   bodyClass();
   if (known === "scores" && S.events.length) renderBoard(); else fitBoard();
+  if (known === "schedule") renderSchedule();
 }
 // Saturday / Sunday: same shell, different sport
 function setLeague(k) {
   if (!LEAGUES[k] || k === LG.key) return;
   LG = LEAGUES[k]; store.set("cc-league", k);
   clearTimeout(espnTimer); clearTimeout(slTimer);
-  Object.assign(S, { events: [], featured: null, favGame: null, summary: null, pickId: null, scoreFeed: [], lastScores: {}, prevState: {}, finishedAt: {}, finals: [], lineTried: {}, week: null, viewWeek: null, curWeek: null, season: null, ranks: null, ranksT: 0, grouped: false, nextFav: null, nextFavWk: null });
+  Object.assign(S, { events: [], featured: null, favGame: null, summary: null, pickId: null, scoreFeed: [], lastScores: {}, prevState: {}, finishedAt: {}, finals: [], lineTried: {}, week: null, viewWeek: null, curWeek: null, season: null, ranks: null, ranksT: 0, seeds: null, seedsT: 0, sday: null, grouped: false, nextFav: null, nextFavWk: null });
   document.querySelectorAll("#lgSeg button").forEach(b => b.classList.toggle("on", b.dataset.lg === k));
   if (!LG.fantasy && location.hash === "#fantasy") location.hash = "#home";
   route();
   el("#board").innerHTML = `<div class="empty">Loading scores</div>`;
   el("#hero").innerHTML = `<div class="empty">Loading the ${esc(dispName(CFG.fav))} game</div>`;
-  el("#slots").innerHTML = ""; el("#feed").innerHTML = `<li class="empty">Nothing yet</li>`; el("#standings").innerHTML = "";
+  el("#slots").innerHTML = ""; el("#sched").innerHTML = `<div class="empty">Loading the schedule</div>`; el("#feed").innerHTML = `<li class="empty">Nothing yet</li>`; el("#standings").innerHTML = "";
   renderWeekBox(); renderConfPicker(); renderHomePicker(); renderRegroup();
   espnLoop(); if (LG.fantasy) sleeperLoop();
 }
@@ -2048,10 +2216,13 @@ document.addEventListener("click", e => {
   if (e.target.closest("#rgOff")) return setRegroup(false);
   if (e.target.closest("#rgOn")) return setRegroup(true);
   if (e.target.closest("#fRegroup")) { closeFinal(); setRegroup(true); if (location.hash !== "#home") location.hash = "#home"; return; }
+  const dayb = e.target.closest("#dayseg button"); if (dayb) { S.sday = dayb.dataset.day; return renderSchedule(); }
+  const sortb = e.target.closest("#sortSeg button"); if (sortb) { S.ssort = sortb.dataset.sort; store.set("cc-sort-" + LG.key, S.ssort); return renderSchedule(); }
+  const scard = e.target.closest("#sched .g[data-id]"); if (scard) { location.hash = "#home"; return pickGame(scard.dataset.id); }
   const card = e.target.closest("#slots .g[data-id]"); if (card) return pickGame(card.dataset.id);
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape") { closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) pickGame(e.target.dataset.id); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) pickGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) { location.hash = "#home"; pickGame(e.target.dataset.id); } });
 /* v46: full screen is desktop only. iOS and most touch browsers ignore the API,
    so the buttons are removed rather than left on screen doing nothing. */
 (function () {
@@ -2064,6 +2235,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") { closePlaye
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { espnLoop(); if (LG.fantasy) sleeperLoop(); } });
 el("#cfgLeague").textContent = CFG.leagueId; el("#cfgTeam").textContent = CFG.teamName;
 S.cf = store.get("cc-cf", "all"); S.conf = store.get("cc-conf", "all");
+Object.defineProperty(S, "ssort", { get: () => S["_ss" + LG.key] ?? (S["_ss" + LG.key] = store.get("cc-sort-" + LG.key, "league")), set: v => { S["_ss" + LG.key] = v; }, configurable: true });
 S.hcf = store.get("cc-hcf", "all"); S.hconf = store.get("cc-hconf", "all");
 document.querySelectorAll("#lgSeg button").forEach(b => b.classList.toggle("on", b.dataset.lg === LG.key));
 renderWeekBox(); renderConfPicker(); renderHomePicker();
