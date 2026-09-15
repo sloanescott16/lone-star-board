@@ -650,6 +650,19 @@
   body.lg-cfb .brand h1, body.lg-cfb .team .name, body.lg-cfb .bg .nm, body.lg-cfb .f-team .nm { letter-spacing: .01em; }
   body.lg-cfb .board.fill .bg .nm { font-size: clamp(14px, min(11cqh, 6.4cqw), 66px); }
   body.lg-cfb .board.fill .bg .sc { font-size: clamp(30px, min(32cqh, 19cqw), 190px); }
+
+  /* opponent plays in the tickers (v40) */
+  .tk .sd { font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: .12em; padding: 2px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
+  .tk.opp { background: rgba(255,255,255,.025); }
+  .tk.opp .sd { background: rgba(242,184,75,.18); color: var(--warn); }
+  .tk.opp .who { color: var(--ink-2); }
+  .tk.opp .pts { color: var(--warn); }
+  .tk.opp .pts.neg { color: var(--live); }
+  .fxfeed li .sd { display: inline-block; font-family: var(--display); font-weight: 800; font-size: 10px; letter-spacing: .12em; padding: 1px 5px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-right: 6px; vertical-align: middle; }
+  .fxfeed li.opp .sd { background: rgba(242,184,75,.18); color: var(--warn); }
+  .fxfeed li.opp .what b { color: var(--ink-2); }
+  .fxfeed li.opp .pts { color: var(--warn); }
+  .fxfeed li.opp .pts.neg { color: var(--live); }
 </style>
 </head>
 <body class="v-home">
@@ -704,8 +717,8 @@
         <table id="roster"></table>
       </section>
       <section class="panel">
-        <h2>Points ticker <small>newest first · scroll for more</small></h2>
-        <ul class="fxfeed scroll" id="fxFeed"><li class="empty">Points changes will appear here as they land</li></ul>
+        <h2>Points ticker <small>both lineups · newest first · scroll for more</small></h2>
+        <ul class="fxfeed scroll" id="fxFeed"><li class="empty">Points changes for both lineups will appear here as they land</li></ul>
         <h2 class="sofar-h">Scoring so far <small>tap a player for their plays</small></h2>
         <ul class="sofar" id="fxSoFar"></ul>
       </section>
@@ -788,7 +801,7 @@
   </div>
 </div>
 
-<div class="ticker" aria-label="Fantasy player updates">
+<div class="ticker" aria-label="Fantasy player updates, both lineups">
   <div class="tag" id="tkTag"><span class="tn">My team</span><span class="tsc">–</span></div>
   <div class="track"><div class="reel" id="reel"></div></div>
 </div>
@@ -1054,6 +1067,7 @@ async function loadMatchup() {
   // ticker events: driven by the stat line itself, so the points and the description always describe the same play
   const key = "lsb-fxevents-" + wk, events = store.get(key, []);
   const pp = mine?.players_points || {};
+  const allPts = { ...(opp?.players_points || {}), ...pp };   // opponent points ride along so their plays reach the tickers
   try { await loadWeekStats(); } catch (e) { console.warn("stats", e); }
   const roster = [...new Set([...(mine?.players || []), ...(opp?.players || [])])];
   const snapKey = "lsb-fxsnap-" + wk, snap = sl.snap || store.get(snapKey, null);   // last seen stat lines for roster players
@@ -1074,14 +1088,14 @@ async function loadMatchup() {
     }
     sl.snap = next; store.set(snapKey, next);
   } else if (Object.keys(sl.lastPts).length) {
-    // no stat feed: fall back to bare point swings
-    for (const [pid, pts] of Object.entries(pp)) {
+    // no stat feed: fall back to bare point swings, both lineups
+    for (const [pid, pts] of Object.entries(allPts)) {
       const d = Math.round((pts - (sl.lastPts[pid] || 0)) * 100) / 100;
       if (Math.abs(d) >= 0.05) { const p = sl.players?.[pid]; const g = p && gameForTeam(p[2]);
         events.unshift({ t: Date.now(), pid, name: p ? p[0] : pid, slot: p ? p[1] : "", team: p ? p[2] : "", d, total: pts, when: g ? g.status : "", what: "" }); }
     }
   }
-  sl.lastPts = { ...pp }; store.set("lsb-fxlast-" + wk, sl.lastPts);
+  sl.lastPts = { ...allPts }; store.set("lsb-fxlast-" + wk, sl.lastPts);
   const before = sl.events.length ? sl.events[0] : null;
   sl.events = events.slice(0, 60); store.set(key, sl.events);
   // anything newer than what we had last poll, starters only, is a fresh scoring play worth a flourish
@@ -1774,7 +1788,12 @@ function renderFantasy() {
   el("#roster").innerHTML = `<thead><tr><th></th><th>Player</th><th>Game</th><th style="text-align:right">Pts</th></tr></thead><tbody>` +
     sStarters.map((pid,i) => playerRow(pid, sl.positions[i] || "FLEX", spp[pid], false)).join("") +
     (bench.length ? `<tr class="bench-head"><td colspan="4"><span>Bench</span></td></tr>` + bench.sort((a,b)=>(spp[b]||0)-(spp[a]||0)).map(pid => playerRow(pid, "BN", spp[pid], true)).join("") : "") + `</tbody>`;
-  const ev = sl.events.filter(e => starters.includes(e.pid));   // starters only, bench stays off the ticker
+  // starters only, bench stays off the tickers; opponent starters ride along tagged OPP
+  const oStarters = opp?.starters || [], opp_pp = opp?.players_points || {};
+  const isOpp = e => !starters.includes(e.pid) && oStarters.includes(e.pid);
+  const evMine = sl.events.filter(e => starters.includes(e.pid));
+  const evOpp = sl.events.filter(isOpp);
+  const ev = sl.events.filter(e => starters.includes(e.pid) || oStarters.includes(e.pid));
   const stateOf = pid => { const p = sl.players?.[pid]; const g = p && gameForTeam(p[2]); return !g ? "done" : g.live ? "live" : g.state === "post" ? "done" : "up"; };
   const order = { done: 0, live: 1, up: 2 };
   S.openPids = S.openPids || new Set();
@@ -1790,11 +1809,15 @@ function renderFantasy() {
         </div></li>`; }).join("");
   el("#fxSoFar").innerHTML = sofarRows || `<li class="empty">Nothing on the board yet</li>`;
   el("#fxFeed").innerHTML =
-    (ev.length ? ev.map(e => `<li data-pid="${esc(e.pid)}"><span class="when">${fmtCT(e.t,{hour:"numeric",minute:"2-digit"})}${e.when ? `<small>${esc(e.when)}</small>` : ""}</span><span class="what"><b>${esc(e.name)}</b>${e.what ? `<span class="line">${esc(e.what)}</span>` : ""}</span><span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span></li>`).join("")
-      : `<li class="empty">Live changes land here as your starters score</li>`);
+    (ev.length ? ev.map(e => `<li class="${isOpp(e)?'opp':''}" data-pid="${esc(e.pid)}"><span class="when">${fmtCT(e.t,{hour:"numeric",minute:"2-digit"})}${e.when ? `<small>${esc(e.when)}</small>` : ""}</span><span class="what"><span class="sd">${isOpp(e)?'OPP':'YOU'}</span><b>${esc(e.name)}</b>${e.what ? `<span class="line">${esc(e.what)}</span>` : ""}</span><span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span></li>`).join("")
+      : `<li class="empty">Live changes land here as either lineup scores</li>`);
   // ticker
-  const items = (ev.length ? ev.slice(0, 5) : starters.filter(pid => pp[pid]).map(pid => ({ name: (sl.players?.[pid]||[pid])[0], slot: (sl.players?.[pid]||[])[1], team: (sl.players?.[pid]||[])[2], d: 0, total: pp[pid]||0, what: sl.stats ? statLine(pid, 3) : "" })))
-    .map(e => `<span class="tk" data-pid="${esc(e.pid || "")}">${e.t ? `<span class="ts">${fmtCT(e.t,{hour:"numeric",minute:"2-digit"})}${e.when ? " · " + esc(e.when) : ""}</span>` : ""}<span class="who">${esc(e.name)}</span><span class="pos">${esc(e.slot||"")}${e.team ? " · " + esc(e.team) : ""}</span>${e.what ? `<span>${esc(e.what)}</span>` : ""}${e.d ? `<span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span>` : ""}<span class="tot">${(+e.total||0).toFixed(2)} total</span></span>`).join("");
+  // 5 most recent plays from each lineup, merged newest first; opponent items tagged OPP
+  const idle = (pids, pts, o) => pids.filter(pid => pts[pid]).map(pid => ({ pid, name: (sl.players?.[pid]||[pid])[0], slot: (sl.players?.[pid]||[])[1], team: (sl.players?.[pid]||[])[2], d: 0, total: pts[pid]||0, what: sl.stats ? statLine(pid, 3) : "", o }));
+  const items = (ev.length
+      ? [...evMine.slice(0, 5).map(e => ({ ...e, o: false })), ...evOpp.slice(0, 5).map(e => ({ ...e, o: true }))].sort((a, b) => b.t - a.t)
+      : [...idle(starters, pp, false), ...idle(oStarters, opp_pp, true)])
+    .map(e => `<span class="tk ${e.o?'opp':''}" data-pid="${esc(e.pid || "")}"><span class="sd">${e.o?'OPP':'YOU'}</span>${e.t ? `<span class="ts">${fmtCT(e.t,{hour:"numeric",minute:"2-digit"})}${e.when ? " · " + esc(e.when) : ""}</span>` : ""}<span class="who">${esc(e.name)}</span><span class="pos">${esc(e.slot||"")}${e.team ? " · " + esc(e.team) : ""}</span>${e.what ? `<span>${esc(e.what)}</span>` : ""}${e.d ? `<span class="pts ${e.d<0?'neg':''}">${e.d>0?'+':''}${e.d.toFixed(2)}</span>` : ""}<span class="tot">${(+e.total||0).toFixed(2)} total</span></span>`).join("");
   const reel = el("#reel"); reel.innerHTML = items + items;
   requestAnimationFrame(() => { reel.style.animationDuration = Math.max(30, (reel.scrollWidth / 2) / 45) + "s"; });   // steady 45 px/s whatever the length
   if (document.body.classList.contains("v-scores")) renderBoard();
