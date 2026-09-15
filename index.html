@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0c1119">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230c1119%27/%3E%3Ctext x=%2716%27 y=%2723%27 font-size=%2720%27 text-anchor=%27middle%27 fill=%27%235b9cff%27%3E%E2%98%85%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%230c1119%27%2F%3E%3Cpath%20d%3D%27M16.0%2C2.6%20L19.6%2C11.0%20L28.7%2C11.9%20L21.9%2C17.9%20L23.9%2C26.8%20L16.0%2C22.2%20L8.1%2C26.8%20L10.1%2C17.9%20L3.3%2C11.9%20L12.4%2C11.0%20Z%27%20fill%3D%27%235b9cff%27%2F%3E%3C%2Fsvg%3E">
 <title>Command Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&family=Graduate&display=swap">
@@ -50,13 +50,18 @@
     display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
     padding-bottom: 12px; border-bottom: 1px solid var(--line);
   }
-  .brand { display: flex; align-items: baseline; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; flex-wrap: wrap; }
   .brand h1 {
     margin: 0; font-family: var(--display); font-weight: 800; font-size: 30px;
     letter-spacing: 0.02em; text-transform: uppercase; line-height: 1;
+    display: flex; align-items: center; gap: 10px; white-space: nowrap;
   }
-  .brand .star { color: var(--accent); }
-  .brand .week { font-family: var(--display); font-weight: 600; font-size: 20px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
+  .brand .cmk { display: inline-flex; align-items: center; flex: none; }
+  .brand .mk { height: 1.04em; width: auto; display: block; overflow: visible; }
+  .brand .mk-cfb { display: none; }
+  body.lg-cfb .brand .mk-nfl { display: none; }
+  body.lg-cfb .brand .mk-cfb { display: block; }
+  .brand .week { font-family: var(--display); font-weight: 600; font-size: 20px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
   .topbar .spacer { flex: 1; }
   .chip {
     display: inline-flex; align-items: center; gap: 7px;
@@ -343,7 +348,10 @@
   }
   @media (max-width: 640px) {
     body { font-size: 14px; }
-    .brand h1 { font-size: 24px; }
+    .topbar { gap: 10px 12px; }
+    .brand { gap: 8px 10px; }
+    .brand h1 { font-size: 23px; gap: 8px; }
+    .brand .week { font-size: 15px; }
     .clock { display: none; }
     .hero { padding: 16px 14px 14px; }
     .matchup { grid-template-columns: 1fr 1fr; }
@@ -641,7 +649,7 @@
 <div class="wrap">
   <header class="topbar">
     <div class="brand">
-      <h1><span class="star">&#9733;</span> Command Center</h1>
+      <h1><span class="cmk" aria-hidden="true"><svg class="mk mk-nfl" viewBox="0 0 24 24"><path d="M12.0,1.4 L14.87,8.06 L22.08,8.72 L16.64,13.51 L18.23,20.58 L12.0,16.88 L5.77,20.58 L7.36,13.51 L1.92,8.72 L9.13,8.06 Z" fill="var(--accent)" stroke="#dbe4f4" stroke-width="1.1" stroke-linejoin="round"/></svg><svg class="mk mk-cfb" viewBox="0 0 28 22"><path d="M1,2 L12,2 L12,6.6 L8.4,6.6 L8.4,19 L4.6,19 L4.6,6.6 L1,6.6 Z" fill="var(--accent)" stroke="#f3e7e8" stroke-width="1.1" stroke-linejoin="round"/><path d="M16,2 L27,2 L27,6.6 L23.4,6.6 L23.4,19 L19.6,19 L19.6,6.6 L16,6.6 Z" fill="var(--accent)" stroke="#f3e7e8" stroke-width="1.1" stroke-linejoin="round"/></svg></span><span class="cname">Command Center</span></h1>
       <span class="week wk" id="weekBox">
         <button class="wkb" id="wkPrev" type="button" title="Previous week" aria-label="Previous week">&#8249;</button>
         <select id="weekSel" aria-label="Week"></select>
