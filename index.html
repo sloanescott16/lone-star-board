@@ -386,6 +386,8 @@
   .ln .v { font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1.1; }
   .ln .v.small { font-size: 15px; color: var(--ink-2); font-weight: 600; }
   .ln .sub { font-size: 12px; color: var(--ink-2); }
+  .ln .op { font-size: 11px; color: var(--muted); letter-spacing: .02em; }
+  .ln .op b { font-weight: 600; color: var(--ink-2); }
   .g .lm { font-size: 11.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px; line-height: 1.35; }
   .g .lm .spread { color: var(--muted); }
   .ln .sub .hit { color: var(--good); font-weight: 600; }
@@ -928,7 +930,9 @@ function normGame(ev) {
   let odds = parseOdds(c.odds?.[0]);
   // freeze the pregame line as the closing line once the game starts
   const ok = "lsb-line-" + ev.id, saved = store.get(ok, null);
-  if (state === "pre" && odds) store.set(ok, odds); else if (saved) odds = saved;
+  // a pre game's scoreboard odds are fresher than the cache, but carry no opening numbers, so keep those from what we saved
+  if (state === "pre" && odds) { if (saved) for (const k of ["oSp","oOu","oMlA","oMlH"]) if (odds[k] == null && saved[k] != null) odds[k] = saved[k]; store.set(ok, odds); }
+  else if (saved) odds = saved;
   let status;
   if (state === "pre") status = fmtCT(ev.date, { weekday:"short", hour:"numeric", minute:"2-digit" }).replace(",", "");
   else if (state === "post") status = type.shortDetail; // Final / Final/OT
@@ -1315,8 +1319,16 @@ function parseOdds(o) {
   const side = (t, k) => pick(o[t]?.moneyLine, o.moneyline?.[k]?.close?.odds, o.moneyline?.[k]?.current?.odds, o[t]?.close?.moneyLine?.american, o[t]?.current?.moneyLine?.american);
   const so = (t, k) => pick(o[t]?.spreadOdds, o.pointSpread?.[k]?.close?.odds, o.pointSpread?.[k]?.current?.odds, o[t]?.close?.pointSpread?.american, o[t]?.current?.pointSpread?.american);
   const ou = pick(o.overUnder, o.total?.over?.close?.line, o.total?.over?.current?.line);
-  return { details: o.details || "", ou: num(ou), spread: num(o.spread), mlA: num(side("awayTeamOdds","away")), mlH: num(side("homeTeamOdds","home")), sA: num(so("awayTeamOdds","away")), sH: num(so("homeTeamOdds","home")) };
+  // opening numbers: ESPN buries them under open{} on the team odds, the market objects, or the entry itself
+  const snum = v => (v == null || v === "") ? null : (/^\s*(pk|even|ev)\s*$/i.test(String(v)) ? 0 : num(v));
+  const oSp = snum(pick(o.homeTeamOdds?.open?.pointSpread?.american, o.homeTeamOdds?.open?.pointSpread?.alternateDisplayValue, o.pointSpread?.home?.open?.line, o.open?.pointSpread?.american, o.open?.pointSpread?.alternateDisplayValue));
+  const oOu = num(pick(o.open?.total?.alternateDisplayValue, o.open?.total?.american, o.total?.over?.open?.line, o.open?.over?.line));
+  const oml = (t, k) => pick(o[t]?.open?.moneyLine?.american, o[t]?.open?.moneyLine?.alternateDisplayValue, o.moneyline?.[k]?.open?.odds);
+  return { details: o.details || "", ou: num(ou), spread: num(o.spread), mlA: num(side("awayTeamOdds","away")), mlH: num(side("homeTeamOdds","home")), sA: num(so("awayTeamOdds","away")), sH: num(so("homeTeamOdds","home")),
+           oSp, oOu, oMlA: num(oml("awayTeamOdds","away")), oMlH: num(oml("homeTeamOdds","home")) };
 }
+// prefer the book entry that actually carries opening numbers
+function bestPick(list) { if (!list?.length) return null; return list.find(x => x?.homeTeamOdds?.open || x?.open || x?.pointSpread?.home?.open) || list[0]; }
 const fmtML = v => v == null ? "–" : (v > 0 ? "+" : "") + v;
 // fold a summary pickcenter entry into a game's line and keep it, so finished games still show their closing numbers
 function mergeLine(g, raw) {
@@ -1326,13 +1338,20 @@ function mergeLine(g, raw) {
   store.set("lsb-line-" + g.id, g.odds);
   return true;
 }
+// the scoreboard never ships opening numbers, so pull the featured game's book entry once and keep the open
+async function loadOpenLine() {
+  const g = S.featured; if (!g) return;
+  if (g.odds && (g.odds.oSp != null || g.odds.oOu != null)) return;
+  S.openTried = S.openTried || {}; if (S.openTried[g.id]) return; S.openTried[g.id] = true;
+  try { const sum = await getJSON(api("summary?event=" + g.id)); if (sum?.pickcenter?.length) mergeLine(g, bestPick(sum.pickcenter)); } catch {}
+}
 // games that were never seen pregame (opened the board after kickoff) have no frozen line; pull it once from the summary
 async function backfillLines() {
   S.lineTried = S.lineTried || {};
   const need = S.events.filter(g => g.state !== "pre" && (!g.odds || !g.odds.details) && !S.lineTried[g.id]);
   await Promise.all(need.map(async g => {
     S.lineTried[g.id] = true;
-    try { const sum = await getJSON(api("summary?event=" + g.id)); if (sum?.pickcenter?.length) mergeLine(g, sum.pickcenter[0]); } catch {}
+    try { const sum = await getJSON(api("summary?event=" + g.id)); if (sum?.pickcenter?.length) mergeLine(g, bestPick(sum.pickcenter)); } catch {}
   }));
 }
 function linesHTML(g, compact) {
@@ -1359,10 +1378,21 @@ function linesHTML(g, compact) {
   const players = inGame.length
     ? `<ul class="pl">${inGame.map(x => `<li class="${x.who}" data-pid="${esc(x.pid)}" role="button" title="${x.who === "mine" ? "My starter" : "Opponent's starter"}"><span class="nm">${esc(x.name)}</span><span class="tg">${x.who === "mine" ? "me" : "opp"}</span><span class="pt">${x.pts.toFixed(1)}</span></li>`).join("")}</ul>`
     : `<span class="sub">None ${fin ? "played" : "in this one"}</span>`;
+  // where each number opened, so he can see which way the market moved
+  const openSpread = o.oSp == null ? "" : o.oSp === 0 ? "PK" : o.oSp < 0 ? `${g.home} ${o.oSp}` : `${g.away} -${o.oSp}`;
+  const opened = t => `<span class="op">Opened <b>${t}</b></span>`;
+  // keep the three cells on the same baselines: if any has a sub line, the others get a spacer
+  const padSub = (spreadSub || mlSub || ouSub) ? `<span class="sub">&nbsp;</span>` : "";
+  spreadSub = spreadSub ? `<span class="sub">${spreadSub}</span>` : padSub;
+  mlSub = hasML ? (mlSub ? `<span class="sub">${mlSub}</span>` : padSub) : "";
+  ouSub = ouSub ? `<span class="sub">${ouSub}</span>` : padSub;
+  const opSpread = openSpread ? opened(esc(openSpread)) : "";
+  const opOu = o.oOu != null ? opened(String(o.oOu)) : "";
+  const opMl = hasML && o.oMlA != null && o.oMlH != null ? opened(`${esc(fav)} ${fmtML(fav === g.away ? o.oMlA : o.oMlH)}`) : "";
   const cells = [
-    `<div class="ln"><span class="k">Spread</span><span class="v">${esc(o.details || "Pick")}</span>${spreadSub ? `<span class="sub">${spreadSub}</span>` : ""}</div>`,
-    hasML ? `<div class="ln"><span class="k">Moneyline</span><span class="v">${esc(fav)} ${fmtML(fav === g.away ? o.mlA : o.mlH)}</span><span class="sub">${mlSub}</span></div>` : "",
-    `<div class="ln"><span class="k">Over / Under</span><span class="v">${o.ou ?? "–"}</span>${ouSub ? `<span class="sub">${ouSub}</span>` : ""}</div>`,
+    `<div class="ln"><span class="k">Spread</span><span class="v">${esc(o.details || "Pick")}</span>${spreadSub}${opSpread}</div>`,
+    hasML ? `<div class="ln"><span class="k">Moneyline</span><span class="v">${esc(fav)} ${fmtML(fav === g.away ? o.mlA : o.mlH)}</span>${mlSub}${opMl}</div>` : "",
+    `<div class="ln"><span class="k">Over / Under</span><span class="v">${o.ou ?? "–"}</span>${ouSub}${opOu}</div>`,
     LG.fantasy ? `<div class="ln"><span class="k">Fantasy starters</span>${players}</div>` : "",
   ].filter(Boolean);
   return `<div class="lines" style="grid-template-columns: repeat(${cells.length}, 1fr)">${cells.join("")}</div>`;
@@ -1370,7 +1400,7 @@ function linesHTML(g, compact) {
 function renderHero(g) {
   if (!g) { el("#hero").innerHTML = `<div class="empty">No games on the board</div>`; return; }
   const sum = S.summary;
-  if (sum?.pickcenter?.length && (!g.odds || g.odds.mlA == null || !g.odds.details)) mergeLine(g, sum.pickcenter[0]);
+  if (sum?.pickcenter?.length && (!g.odds || g.odds.mlA == null || !g.odds.details || !g._pcOpen)) { mergeLine(g, bestPick(sum.pickcenter)); g._pcOpen = true; }
   const lead = (g.hs ?? 0) >= (g.as ?? 0);
   const team = (ab, side, rec, poss) => { const rk = ab === g.home ? g.homeRank : g.awayRank; return `
     <div class="team ${side} ${poss?'has-ball':''}">
@@ -1804,6 +1834,7 @@ async function espnLoop() {
     await loadScoreboard();
     if (LG.key === "cfb") { try { await loadRanks(); } catch (e) { console.warn("rankings", e); } }
     try { await loadSummary(); } catch (e) { console.warn("summary", e); }
+    try { await loadOpenLine(); } catch (e) { console.warn("open line", e); }
     renderAll(); S.lastOk = Date.now(); setErr(false); pumpFinals();
     if (favLoss()) { await loadNextFav(); renderRegroup(); }
   } catch (e) { console.warn("scoreboard", e); setErr(true); }
@@ -1893,6 +1924,7 @@ async function pickGame(id) {
   const g = S.events.find(x => x.id === id); if (g) S.featured = g;
   renderAll(); window.scrollTo({ top: 0, behavior: "smooth" });
   try { await loadSummary(); } catch (e) { console.warn("summary", e); }
+  try { await loadOpenLine(); } catch (e) { console.warn("open line", e); }
   renderAll();
 }
 document.addEventListener("change", e => {
