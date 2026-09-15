@@ -550,7 +550,7 @@
   .rg-row .mini { width: 20px; height: 20px; border-radius: 5px; font-size: 10px; font-family: var(--display); font-weight: 800; color: #fff; display: grid; place-items: center; }
   .rg-row .sc { color: var(--muted); font-size: 12.5px; }
   .rg-row .res { font-family: var(--display); font-weight: 800; font-size: 16px; text-align: right; }
-  .rg-row .res.l { color: var(--good); }
+  .rg-row .res.l { color: var(--live); }
   .rg-row .res.w { color: var(--live); }
   .rg-row .res.n { color: var(--muted); font-size: 12px; }
   .rg-foot { font-size: 12.5px; color: var(--muted); }
@@ -1296,7 +1296,13 @@ function renderRegroup() {
   /* --- card 1: what still went your way --- */
   const mine = myPlayersIn(g);
   const fxPts = mine.reduce((a, x) => a + x.pts, 0);
-  const chips = mine.map(m => `<span class="mp" data-pid="${esc(m.pid)}" role="button" title="Points breakdown"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
+  const chip = m => `<span class="mp" data-pid="${esc(m.pid)}" role="button" title="Points breakdown"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`;
+  const chips = mine.map(chip).join("");
+  // v49: the best of his whole lineup this week, 3 to 5 of them, so one quiet Cowboy never carries the card alone
+  const spp = sl.mine?.players_points || {};
+  const ranked = (sl.mine?.starters || []).filter(pid => sl.players?.[pid]).map(pid => { const p = sl.players[pid]; return { pid, name: p[0], team: toEspn(p[2]), pts: +(spp[pid] || 0) }; })
+    .filter(x => x.pts > 0).sort((a, b) => b.pts - a.pts);
+  const top = ranked.filter((x, i) => i < 3 || (i < 5 && x.pts >= 10));   // three always, a fourth and fifth if they reached double digits
   const good = [];
   if (sl.mine) { const my = sl.mine.points ?? 0, op = sl.oppM?.points ?? 0, up = my - op;
     good.push(`Your fantasy week: <b>${my.toFixed(1)}</b> to <b>${op.toFixed(1)}</b>, ${up >= 0 ? `<span class="good">up ${up.toFixed(1)}</span>` : `<span class="bad">down ${Math.abs(up).toFixed(1)}</span>`}.`); }
@@ -1310,7 +1316,8 @@ function renderRegroup() {
   const c1 = `<div class="rg-card"><h3>Still went your way</h3>
     <div class="rg-big">${fxPts.toFixed(1)}<small>fantasy points out of that game</small></div>
     ${chips ? `<div class="rg-chips">${chips}</div>` : `<div class="rg-l">None of your starters were in it, so nothing of yours went down with it.</div>`}
-    ${good.map(x => `<div class="rg-l">${x}</div>`).join("")}</div>`;
+    ${good.map(x => `<div class="rg-l">${x}</div>`).join("")}
+    ${top.length ? `<div class="rg-sec">Top performers this week</div><div class="rg-chips">${top.map(chip).join("")}</div>` : ""}</div>`;
 
   /* --- card 2: other people's bad days (v48: losers league-wide, Eagles/49ers on top, no rival wins) --- */
   // division rivals only show while they can still lose or once they have; a rival's win is never shown
