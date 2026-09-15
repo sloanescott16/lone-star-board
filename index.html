@@ -651,6 +651,14 @@
   body.lg-cfb .board.fill .bg .nm { font-size: clamp(14px, min(11cqh, 6.4cqw), 66px); }
   body.lg-cfb .board.fill .bg .sc { font-size: clamp(30px, min(32cqh, 19cqw), 190px); }
 
+  /* team logos in place of the abbreviation tile (v43) */
+  .mark.lgo, .abbr.lgo, .mini.lgo { background: none !important; text-shadow: none; overflow: visible; }
+  .mark.lgo img, .abbr.lgo img, .mini.lgo img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 0 2px rgba(255,255,255,.5)); }
+  .f-team .mark.lgo img { filter: drop-shadow(0 0 3px rgba(255,255,255,.5)); }
+  /* the odd team with no logo keeps a tile, sized so four letters still fit */
+  .g .abbr.w4 { font-size: 10.5px; } .bg .abbr.w4 { font-size: 14px; } .mark.w4 { font-size: 17px; }
+  .stand .mini.w4, .rg-row .mini.w4 { font-size: 8.5px; } .board.fill .bg .abbr.w4 { font-size: min(5.2cqh, 3cqw); }
+
   /* opponent plays in the tickers (v40) */
   .tk .sd { font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: .12em; padding: 2px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); }
   .tk.opp { background: rgba(255,255,255,.025); }
@@ -827,7 +835,7 @@ const qs = new URLSearchParams(location.search);
 let LG = LEAGUES[(() => { try { return JSON.parse(localStorage.getItem("cc-league")); } catch { return null; } })() || (new Date().getDay() === 6 ? "cfb" : "nfl")] || LEAGUES.nfl;
 if (qs.get("lg") && LEAGUES[qs.get("lg")]) LG = LEAGUES[qs.get("lg")];
 const api = p => `https://site.api.espn.com/apis/site/v2/sports/${LG.path}/${p}`;
-const CT = {};   // college teams learned from the feed: abbr -> [school, nickname, colour, alt colour]
+const CT = {};   // college teams learned from the feed: abbr -> [school, nickname, colour, alt colour, logo]
 const CONF = { "1":"ACC", "4":"Big 12", "5":"Big Ten", "8":"SEC", "9":"Pac-12", "12":"C-USA", "15":"MAC", "16":"WAC", "17":"Mountain West", "18":"Independents", "20":"Big Sky", "21":"MVFC", "24":"MEAC", "25":"NEC", "29":"Southern", "30":"Southland", "32":"FCS Indep.", "37":"Sun Belt", "151":"American", "other":"Other" };
 const CONF_ORDER = ["8","5","4","1","151","37","17","15","12","9","18"];   // FBS only; FCS visitors ride along in their opponent's block
 if (qs.get("league")) CFG.leagueId = qs.get("league");
@@ -890,7 +898,8 @@ const bestRank = g => Math.min(g.homeRank || 99, g.awayRank || 99);
 function learnTeam(t) {
   if (LG.key !== "cfb" || !t || !t.abbreviation) return;
   const hex = c => c ? (String(c).startsWith("#") ? c : "#" + c) : "";
-  CT[t.abbreviation] = [t.shortDisplayName || t.location || t.abbreviation, t.name || t.nickname || "", hex(t.color) || "#334455", hex(t.alternateColor) || ""];
+  const logo = t.logo || (Array.isArray(t.logos) && (t.logos.find(l => (l.rel||[]).includes("dark"))?.href || t.logos[0]?.href)) || "";
+  CT[t.abbreviation] = [t.shortDisplayName || t.location || t.abbreviation, t.name || t.nickname || "", hex(t.color) || "#334455", hex(t.alternateColor) || "", logo];
 }
 
 /* =====================================================================
@@ -907,7 +916,15 @@ const fxWeek = () => S.viewWeek ?? S.sleeper.week;
 const offWeek = () => S.viewWeek != null;
 const el = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const mark = (ab, cls="mark") => `<span class="${cls}" style="background:${T(ab)[2]}">${esc(toEspn(ab))}</span>`;
+const logoOf = ab => (LG.key === "cfb" && CT[ab] && CT[ab][4]) || "";
+// college abbreviations run to four letters and overflow the tile, so use the school's logo wherever we have one
+const mark = (ab, cls="mark") => {
+  const l = logoOf(ab), txt = toEspn(ab);
+  return l ? `<span class="${cls} lgo"><img src="${esc(l)}" alt="${esc(ab)}" loading="lazy" onerror="logoFail(this,'${esc(ab)}')"></span>`
+           : `<span class="${cls}${txt.length > 3 ? " w4" : ""}" style="background:${T(ab)[2]}">${esc(txt)}</span>`;
+};
+// a logo that will not load drops back to the coloured abbreviation tile
+function logoFail(img, ab) { const s = img.parentNode; if (!s) return; s.classList.remove("lgo"); s.classList.toggle("w4", String(ab).length > 3); s.style.background = T(ab)[2]; s.textContent = ab; }
 const fmtCT = (d, opts) => new Date(d).toLocaleString("en-US", { timeZone:"America/Chicago", ...opts });
 const store = {
   get(k, d){ try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
@@ -1644,7 +1661,7 @@ async function loadRanks() {
   const poll = (d.rankings || []).find(r => /ap top/i.test(r.name || "") || /^ap/i.test(r.shortName || "")) || (d.rankings || [])[0];
   S.ranks = (poll?.ranks || []).map(r => {
     const t = r.team || {};
-    if (t.abbreviation && !CT[t.abbreviation]) learnTeam({ abbreviation: t.abbreviation, shortDisplayName: t.shortDisplayName || t.location || t.name, name: t.nickname || t.name, color: t.color, alternateColor: t.alternateColor });
+    if (t.abbreviation && !CT[t.abbreviation]) learnTeam({ abbreviation: t.abbreviation, shortDisplayName: t.shortDisplayName || t.location || t.name, name: t.nickname || t.name, color: t.color, alternateColor: t.alternateColor, logo: t.logo, logos: t.logos });
     return { rank: r.current, ab: t.abbreviation || "", name: t.shortDisplayName || t.location || t.name || "", rec: r.recordSummary || "" };
   }).filter(r => r.rank && r.rank <= 25);
 }
