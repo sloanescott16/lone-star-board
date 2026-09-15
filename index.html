@@ -651,7 +651,7 @@
   body.lg-cfb .board.fill .bg .nm { font-size: clamp(14px, min(11cqh, 6.4cqw), 66px); }
   body.lg-cfb .board.fill .bg .sc { font-size: clamp(30px, min(32cqh, 19cqw), 190px); }
 
-  /* team logos in place of the abbreviation tile (v43) */
+  /* team logos in place of the abbreviation tile (v43 college, v44 NFL) */
   .mark.lgo, .abbr.lgo, .mini.lgo { background: none !important; text-shadow: none; overflow: visible; }
   .mark.lgo img, .abbr.lgo img, .mini.lgo img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 0 2px rgba(255,255,255,.5)); }
   .f-team .mark.lgo img { filter: drop-shadow(0 0 3px rgba(255,255,255,.5)); }
@@ -916,7 +916,18 @@ const fxWeek = () => S.viewWeek ?? S.sleeper.week;
 const offWeek = () => S.viewWeek != null;
 const el = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const logoOf = ab => (LG.key === "cfb" && CT[ab] && CT[ab][4]) || "";
+const LOGO = {};   // NFL logos learned from the feed: ESPN abbr -> url
+function learnLogo(t) {
+  if (LG.key === "cfb" || !t || !t.abbreviation) return;
+  const u = t.logo || (Array.isArray(t.logos) && (t.logos.find(l => (l.rel || []).includes("dark"))?.href || t.logos[0]?.href)) || "";
+  if (u) LOGO[t.abbreviation] = u;
+}
+// college logos ride in the learned team row; NFL falls back to ESPN's stable logo path so teams on a bye still have one
+const logoOf = ab => {
+  if (LG.key === "cfb") return (CT[ab] && CT[ab][4]) || "";
+  const e = toEspn(ab);
+  return LOGO[e] || (TEAMS[e] ? `https://a.espncdn.com/i/teamlogos/nfl/500/${e.toLowerCase()}.png` : "");
+};
 // college abbreviations run to four letters and overflow the tile, so use the school's logo wherever we have one
 const mark = (ab, cls="mark") => {
   const l = logoOf(ab), txt = toEspn(ab);
@@ -924,6 +935,14 @@ const mark = (ab, cls="mark") => {
            : `<span class="${cls}${txt.length > 3 ? " w4" : ""}" style="background:${T(ab)[2]}">${esc(txt)}</span>`;
 };
 // a logo that will not load drops back to the coloured abbreviation tile
+// paint an existing tile element (the player popup header) the same way mark() would
+function setMark(node, ab) {
+  if (!node) return;
+  const l = logoOf(ab), txt = toEspn(ab);
+  node.classList.remove("lgo", "w4");
+  if (l) { node.classList.add("lgo"); node.style.background = ""; node.innerHTML = `<img src="${esc(l)}" alt="${esc(ab)}" loading="lazy" onerror="logoFail(this,'${esc(ab)}')">`; }
+  else { if (txt.length > 3) node.classList.add("w4"); node.style.background = T(ab)[2]; node.textContent = txt; }
+}
 function logoFail(img, ab) { const s = img.parentNode; if (!s) return; s.classList.remove("lgo"); s.classList.toggle("w4", String(ab).length > 3); s.style.background = T(ab)[2]; s.textContent = ab; }
 const fmtCT = (d, opts) => new Date(d).toLocaleString("en-US", { timeZone:"America/Chicago", ...opts });
 const store = {
@@ -943,6 +962,7 @@ function normGame(ev) {
   const c = ev.competitions[0];
   const home = c.competitors.find(x => x.homeAway === "home"), away = c.competitors.find(x => x.homeAway === "away");
   learnTeam(home.team); learnTeam(away.team);
+  learnLogo(home.team); learnLogo(away.team);
   const rankOf = x => { const r = (x.curatedRank && x.curatedRank.current) ?? x.rank; return r && r > 0 && r <= 25 ? r : 0; };
   const st = ev.status, type = st.type;
   const state = type.state; // pre | in | post
@@ -1176,7 +1196,7 @@ async function openPlayer(pid) {
   const sl = S.sleeper, p = sl.players?.[pid] || [pid, "", ""], g = gameForTeam(p[2]);
   const pts = +((sl.mine?.players_points?.[pid] ?? sl.oppM?.players_points?.[pid]) || 0);
   const m = el("#pmodal"); m.hidden = false;
-  el("#pmMark").textContent = toEspn(p[2] || "FA"); el("#pmMark").style.background = T(p[2] || "FA")[2];
+  setMark(el("#pmMark"), p[2] || "FA");
   el("#pmTitle").textContent = p[0]; el("#pmSub").textContent = `${p[1]} · ${toEspn(p[2])}${g ? " · " + (g.state === "pre" ? "Kickoff " + fmtCT(g.date,{weekday:"short",hour:"numeric",minute:"2-digit"}) : `${g.away} ${g.as} · ${g.home} ${g.hs} · ${g.status}`) : " · Bye"}`;
   el("#pmPts").textContent = pts.toFixed(2);
   el("#pmX").href = "https://x.com/search?src=typed_query&q=" + encodeURIComponent(p[0]);
@@ -1318,7 +1338,7 @@ function celebrate(e) {
   const big = e.d >= 6, neg = e.d < 0;
   const t = document.createElement("div");
   t.className = "toast " + (neg ? "neg" : big ? "big" : ""); t.style.setProperty("--tc", tc);
-  t.innerHTML = `<span class="abbr" style="background:${T(team)[2]}">${esc(team)}</span>
+  t.innerHTML = `${mark(team, "abbr")}
     <div><div class="kicker">${neg ? "Ouch" : big ? "Touchdown!" : "Points"}</div><div class="name">${esc(p[0])}</div>${e.what ? `<div class="what">${esc(e.what)}</div>` : ""}</div>
     <span class="pts">${e.d > 0 ? "+" : ""}${e.d.toFixed(2)}</span>`;
   el("#toasts").prepend(t);
