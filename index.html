@@ -1268,7 +1268,7 @@ function favLoss() {
   return { g, us: home ? g.hs : g.as, them: home ? g.as : g.hs, foe: home ? g.away : g.home, rec: home ? g.homeRec : g.awayRec };
 }
 const rgActive = () => { const L = favLoss(); return L && store.get(rgKey(L.g.id), "on") === "on" ? L : null; };
-function setRegroup(on) { const L = favLoss(); if (!L) return; store.set(rgKey(L.g.id), on ? "on" : "off"); renderRegroup(); if (on) window.scrollTo({ top: 0, behavior: "smooth" }); else damageSound(); }
+function setRegroup(on, quiet) { const L = favLoss(); if (!L) return; store.set(rgKey(L.g.id), on ? "on" : "off"); renderRegroup(); bodyClass(); if (on) window.scrollTo({ top: 0, behavior: "smooth" }); else if (!quiet) damageSound(); }
 // drop a damage.mp3 next to index.html and "Show the damage" plays it; with no file it stays silent
 function damageSound() {
   try { const a = S.dmg || (S.dmg = new Audio("damage.mp3")); a.currentTime = 0; a.volume = .85; a.play().catch(() => {}); } catch (e) {}
@@ -2020,6 +2020,7 @@ el("#wkPrev").addEventListener("click", () => setWeek((S.week || S.curWeek || 1)
 el("#wkNext").addEventListener("click", () => setWeek((S.week || S.curWeek || 1) + 1));
 el("#wkNow").addEventListener("click", () => setWeek(null));
 async function pickGame(id) {
+  if (id && rgActive()) setRegroup(false, true);   // v51: a card click while regrouping brings that game up, no sound
   S.pickId = id; S.summary = null;
   const g = S.events.find(x => x.id === id); if (g) S.featured = g;
   renderAll(); window.scrollTo({ top: 0, behavior: "smooth" });
