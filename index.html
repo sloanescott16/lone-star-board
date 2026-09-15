@@ -1628,7 +1628,8 @@ function renderSlots() {
   const groups = new Map();
   if (byConf) { for (const [id, gs] of confSections(list)) groups.set(confName(id), gs); }
   else for (const g of list) { const k = slotOf(g); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(g); }
-  if (cfb) for (const gs of groups.values()) gs.sort((a, b) => (bestRank(a) - bestRank(b)) || (a.date - b.date));   // ranked games first
+  // conference blocks read in kickoff order, first game to last; the time windows keep ranked games on top
+  if (cfb) for (const gs of groups.values()) gs.sort(byConf ? (a, b) => (a.date - b.date) || (bestRank(a) - bestRank(b)) : (a, b) => (bestRank(a) - bestRank(b)) || (a.date - b.date));
   el("#slots").innerHTML = [...groups].map(([name, gs]) => `
     <section class="slot">
       <div class="slot-head"><h2>${esc(name)}</h2><span class="sub">${byConf ? "" : fmtCT(gs[0].date,{weekday:"short",month:"short",day:"numeric"}) + " · "}${gs.length} game${gs.length>1?'s':''}</span></div>
