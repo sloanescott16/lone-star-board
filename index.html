@@ -525,6 +525,12 @@
   .rg-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
   .rg-kick { font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
   .rg-sub { font-size: 14px; color: var(--ink-2); }
+  .rg-hl { display: grid; gap: 3px; min-width: 0; }
+  .rg-mg { color: var(--muted); } .rg-mg b { color: var(--ink); font-weight: 600; }
+  .rg-row.hate { background: rgba(56,199,122,.10); border-radius: 8px; padding-inline: 8px; margin-inline: -8px; border-top-color: transparent; }
+  .rg-row.hate span:nth-child(2) { font-weight: 700; color: var(--ink); }
+  .rg-row .why { display: block; font-size: 11.5px; color: var(--muted); }
+  .rg-sec { font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
   .rg-head .btn { margin-left: auto; }
   .rg-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
   .rg-card { background: var(--ground); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
@@ -739,7 +745,7 @@
     <section class="rg" id="regroup" hidden>
       <div class="rg-head">
         <span class="rg-kick">Regroup</span>
-        <span class="rg-sub" id="rgSub"></span>
+        <div class="rg-hl"><span class="rg-sub" id="rgSub"></span><span class="rg-sub rg-mg" id="rgMargin"></span></div>
         <button class="btn" id="rgOff" type="button">Show the damage</button>
       </div>
       <div class="rg-grid" id="rgBody"></div>
@@ -1299,28 +1305,43 @@ function renderRegroup() {
   if (m) { const st = toEspn(m[1]), num = Math.abs(parseFloat(m[2]));
     if (st === CFG.fav) { if (num - margin > 0) good.push(`Still covered the <b>${num}</b>.`); }
     else if (margin < num) good.push(`<b>${T(CFG.fav)[1]}</b> covered as ${num}-point dogs.`); }
-  good.push(margin <= 3 ? `A <b>${margin}-point</b> game. One possession either way.` : margin <= 8 ? `<b>${margin}</b> points. A score and a stop from a different afternoon.` : `Down <b>${margin}</b>. Some weeks the tape is short.`);
+  const hr = +fmtCT(g.date, { hour: "numeric", hourCycle: "h23" }), part = hr < 12 ? "morning" : hr < 17 ? "afternoon" : "night";
+  el("#rgMargin").innerHTML = margin <= 3 ? `A <b>${margin}-point</b> game. One possession either way.` : margin <= 8 ? `<b>${margin}</b> points. A score and a stop from a different ${part}.` : `Down <b>${margin}</b>. Some weeks the tape is short.`;
   const c1 = `<div class="rg-card"><h3>Still went your way</h3>
     <div class="rg-big">${fxPts.toFixed(1)}<small>fantasy points out of that game</small></div>
     ${chips ? `<div class="rg-chips">${chips}</div>` : `<div class="rg-l">None of your starters were in it, so nothing of yours went down with it.</div>`}
     ${good.map(x => `<div class="rg-l">${x}</div>`).join("")}</div>`;
 
-  /* --- card 2: the rest of the division --- */
-  const rivals = CFG.division.filter(ab => ab !== CFG.fav).map(ab => {
-    const x = S.events.find(e => e.home === ab || e.away === ab);
-    if (!x) return { ab, res: "n", txt: "Bye", sc: "" };
-    const home = x.home === ab, own = home ? x.hs : x.as, oth = home ? x.as : x.hs;
-    const line = `${home ? "vs" : "@"} ${esc(home ? x.away : x.home)}`;
-    if (x.state === "pre") return { ab, res: "n", txt: "Yet to play", sc: line };
-    const sc = `${line} · ${own}-${oth}`;
-    if (x.state === "in") return { ab, res: "n", txt: esc(x.status), sc };
-    return { ab, res: own > oth ? "w" : own < oth ? "l" : "n", txt: own > oth ? "W" : own < oth ? "L" : "T", sc };
-  }).sort((a, b) => ({ l: 0, n: 1, w: 2 }[a.res]) - ({ l: 0, n: 1, w: 2 }[b.res]));
-  const lost = rivals.filter(r => r.res === "l").length;
+  /* --- card 2: other people's bad days (v48: losers league-wide, Eagles/49ers on top, no rival wins) --- */
+  // division rivals only show while they can still lose or once they have; a rival's win is never shown
+  const HATED = ["PHI", "SF"];
+  const favOf = x => { const o = x.odds || {};
+    if (o.mlA != null && o.mlH != null && o.mlA !== o.mlH) return o.mlA < o.mlH ? x.away : x.home;
+    const mm = String(o.details || "").match(/^([A-Z]{2,4})\s*-?(\d+(?:\.\d+)?)/); return mm ? toEspn(mm[1]) : null; };
+  const spreadOf = x => { const mm = String(x.odds?.details || "").match(/(\d+(?:\.\d+)?)/); return mm ? +mm[1] : null; };
+  const losers = [];
+  for (const x of S.events) {
+    if (x.state !== "post" || x.hs === x.as || x.home === CFG.fav || x.away === CFG.fav) continue;
+    const lo = x.hs < x.as ? x.home : x.away, wi = lo === x.home ? x.away : x.home, by = Math.abs(x.hs - x.as);
+    const own = lo === x.home ? x.hs : x.as, oth = lo === x.home ? x.as : x.hs;
+    const upset = favOf(x) === lo, sp = spreadOf(x), blow = by >= 14, hate = HATED.includes(lo), div = CFG.division.includes(lo);
+    if (!(upset || blow || hate || div)) continue;
+    const why = [hate ? "The big one" : "", div ? "Division" : "", upset ? `Lost as ${sp != null ? sp + "-point " : ""}favourites` : "", blow ? `Blown out by ${by}` : ""].filter(Boolean).join(" · ");
+    losers.push({ ab: lo, hate, div, sc: `${lo === x.home ? "vs" : "@"} ${esc(wi)} · ${own}-${oth}`, why, rank: (hate ? 1000 : 0) + (div ? 500 : 0) + (upset ? 20 + (sp || 0) * 2 : 0) + by });
+  }
+  losers.sort((a, b) => b.rank - a.rank);
+  const pending = CFG.division.filter(ab => ab !== CFG.fav).map(ab => ({ ab, x: S.events.find(e => e.home === ab || e.away === ab) }))
+    .filter(r => r.x && r.x.state !== "post").map(r => { const home = r.x.home === r.ab;
+      return { ab: r.ab, sc: `${home ? "vs" : "@"} ${esc(home ? r.x.away : r.x.home)}${r.x.state === "in" ? ` · ${home ? r.x.hs : r.x.as}-${home ? r.x.as : r.x.hs}` : ""}`, txt: r.x.state === "in" ? esc(r.x.status) : "Yet to play" }; });
+  const shown = losers.slice(0, 7), hated = losers.filter(r => r.hate), divL = losers.filter(r => r.div).length;
+  const row = (r, i, res, txt) => `<div class="rg-row ${i ? "" : "first"} ${r.hate ? "hate" : ""}"><span class="mini" style="background:${T(r.ab)[2]}">${esc(r.ab)}</span><span>${esc(T(r.ab)[1])}${r.why ? `<span class="why">${esc(r.why)}</span>` : ""}</span><span class="sc">${r.sc}</span><span class="res ${res}">${txt}</span></div>`;
+  const foot = hated.length ? `The ${hated.map(r => T(r.ab)[1]).join(" and ")} lost. Savour that one.`
+    : shown.length ? (divL ? "Plenty of company, some of it in the division." : "Plenty of company out there.") : pending.length ? "Still time for someone else to have a worse one." : "A quiet day for everyone else's misery.";
   const c2 = `<div class="rg-card"><h3>Misery loves company</h3>
-    <div class="rg-big">${lost}<small>of ${rivals.length} NFC East rivals lost too</small></div>
-    ${rivals.map((r, i) => `<div class="rg-row ${i ? "" : "first"}"><span class="mini" style="background:${T(r.ab)[2]}">${esc(r.ab)}</span><span>${esc(T(r.ab)[1])}</span><span class="sc">${r.sc}</span><span class="res ${r.res}">${r.txt}</span></div>`).join("")}
-    <div class="rg-foot">${lost === rivals.length ? "Everyone in the division took one. The gap did not move." : lost ? "The gap held up better than the afternoon did." : "Nobody did you any favours today."}</div></div>`;
+    <div class="rg-big">${shown.length}<small>${shown.length === 1 ? "loser" : "losers"} worth enjoying</small></div>
+    ${shown.map((r, i) => row(r, i, "l", "L")).join("")}
+    ${pending.length ? `<div class="rg-sec">Division, still to finish</div>${pending.map((r, i) => row(r, i, "n", r.txt)).join("")}` : ""}
+    <div class="rg-foot">${foot}</div></div>`;
 
   /* --- card 3: next one --- */
   const nx = S.nextFav;
