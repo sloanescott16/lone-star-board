@@ -2012,8 +2012,15 @@ document.addEventListener("click", e => {
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape") { closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) pickGame(e.target.dataset.id); });
-document.querySelectorAll(".fsb").forEach(b => b.addEventListener("click", () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); }));
-document.addEventListener("fullscreenchange", () => { document.querySelectorAll(".fsb").forEach(b => b.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"); setTimeout(fitBoard, 50); });
+/* v46: full screen is desktop only. iOS and most touch browsers ignore the API,
+   so the buttons are removed rather than left on screen doing nothing. */
+(function () {
+  const canFS = !!(document.fullscreenEnabled && document.documentElement.requestFullscreen);
+  const touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  if (!canFS || touch) { document.querySelectorAll(".fsb").forEach(b => { b.hidden = true; b.style.display = "none"; }); return; }
+  document.querySelectorAll(".fsb").forEach(b => b.addEventListener("click", () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); }));
+  document.addEventListener("fullscreenchange", () => { document.querySelectorAll(".fsb").forEach(b => b.textContent = document.fullscreenElement ? "Exit full screen" : "Full screen"); setTimeout(fitBoard, 50); });
+})();
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { espnLoop(); if (LG.fantasy) sleeperLoop(); } });
 el("#cfgLeague").textContent = CFG.leagueId; el("#cfgTeam").textContent = CFG.teamName;
 S.cf = store.get("cc-cf", "all"); S.conf = store.get("cc-conf", "all");
