@@ -291,6 +291,8 @@
   .fx-score .mid { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
   .fx-score .mid b { font-family: var(--display); font-size: 18px; font-weight: 700; color: var(--ink-2); letter-spacing: .08em; }
   .fx-score .proj { font-size: 12px; color: var(--muted); }
+  .fx-score .sc { display: grid; justify-items: center; gap: 6px; }
+  .fx-score .sc .proj b { font-family: var(--display); font-size: 17px; }
   .fx-score .proj b { color: var(--ink-2); font-weight: 600; }
   .fx-body { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 18px; align-items: start; }
   .roster table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -1848,9 +1850,10 @@ function renderFantasy() {
   el("#fxHead").innerHTML = `
     <div class="fx-team"><span class="lbl">My team</span><span class="tn">${esc(sl.me.name)}</span><span class="own">${esc(sl.me.owner)} · Week ${fxWeek()}${sl.league?.name ? " · " + esc(sl.league.name) : ""}</span>${tally(mine)}</div>
     <div class="fx-score">
-      <span class="n ${lead?'':'trail'}">${myPts.toFixed(2)}</span>
-      <div class="mid"><b>VS</b>${sl.proj && Object.keys(sl.proj).length ? `<span class="proj">proj <b>${myProj.toFixed(1)}</b> · <b>${opProj.toFixed(1)}</b></span>` : ""}</div>
-      <span class="n ${lead?'trail':''}">${opPts.toFixed(2)}</span>
+      ${(() => { const hasP = sl.proj && Object.keys(sl.proj).length, pj = v => hasP ? `<span class="proj">proj <b>${v.toFixed(1)}</b></span>` : "";   // v52: each projection sits under its own score
+        return `<div class="sc"><span class="n ${lead?'':'trail'}">${myPts.toFixed(2)}</span>${pj(myProj)}</div>
+      <div class="mid"><b>VS</b></div>
+      <div class="sc"><span class="n ${lead?'trail':''}">${opPts.toFixed(2)}</span>${pj(opProj)}</div>`; })()}
     </div>
     <div class="fx-team opp"><span class="lbl">Opponent</span><span class="tn">${esc(sl.opp?.name || "Bye week")}</span><span class="own">${esc(sl.opp?.owner || "")}</span>${opp ? tally(opp) : ""}</div>`;
   if (!mine) { el("#roster").innerHTML = `<tbody><tr><td class="empty">No matchup this week</td></tr></tbody>`; return; }
