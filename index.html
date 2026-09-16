@@ -367,6 +367,9 @@
   }
   @media (prefers-reduced-motion: reduce) { .chip.live .dot { animation: none; } }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* v54: the live chip opens the scoreboard */
+  a.chip.go { text-decoration: none; cursor: pointer; transition: filter .15s, transform .15s; }
+  a.chip.go:hover { filter: brightness(1.25); transform: translateY(-1px); }
 </style>
 
 
@@ -723,7 +726,7 @@
       <a href="#scores" data-v="scores">Scoreboard</a>
       <a href="#fantasy" data-v="fantasy">Fantasy</a>
     </nav>
-    <span class="chip live" id="liveChip" style="display:none"><span class="dot"></span> <span id="liveCount">Live</span></span>
+    <a class="chip live go" id="liveChip" href="#scores" title="Open the full scoreboard" style="display:none"><span class="dot"></span> <span id="liveCount">Live</span></a>
     <span class="chip err" id="errChip">Feed hiccup, retrying</span>
     <div class="spacer"></div>
     <span class="clock" id="clock"></span>
