@@ -2207,6 +2207,7 @@ document.addEventListener("change", e => {
   if (e.target.id === "homeConfSel") { S.hconf = e.target.value; store.set("cc-hconf", S.hconf); renderSlots(); }
 });
 document.addEventListener("click", e => {
+  if (e.target.closest("#liveChip")) { S.cf = "all"; S.conf = "all"; store.set("cc-cf", "all"); store.set("cc-conf", "all"); renderBoard(); return; }   // v55: live chip opens the whole board
   const lgb = e.target.closest("#lgSeg button"); if (lgb) return setLeague(lgb.dataset.lg);
   const cfb = e.target.closest("#cfbSeg button"); if (cfb) { S.cf = cfb.dataset.cf; store.set("cc-cf", S.cf); return renderBoard(); }
   const hseg = e.target.closest("#homeSeg button"); if (hseg) { S.hcf = hseg.dataset.hcf; store.set("cc-hcf", S.hcf); return renderSlots(); }
