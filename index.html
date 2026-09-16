@@ -704,6 +704,9 @@
   .fxfeed li.opp .what b { color: var(--ink-2); }
   .fxfeed li.opp .pts { color: var(--warn); }
   .fxfeed li.opp .pts.neg { color: var(--live); }
+  /* v58: owner line, full schedule chip */
+  .fx-team .meta { font-size:12px; color:var(--muted); opacity:.85; }
+  #dayseg button.full { font-weight: 700; }
   /* v57: game center and team pop-ups */
   .modal.gcm { z-index: 55; } .modal.tmm { z-index: 60; }
   .sheet.wide { width: min(1040px, 100%); max-height: 92vh; padding: 16px 20px 18px; }
@@ -1276,7 +1279,7 @@ async function loadSleeperStatic() {
       getJSON(`${SL}/league/${CFG.leagueId}`), getJSON(`${SL}/league/${CFG.leagueId}/users`),
       getJSON(`${SL}/league/${CFG.leagueId}/rosters`), getJSON(SL + "/state/nfl"),
     ]);
-    sl.league = league; sl.users = users; sl.rosters = rosters; sl.week = state.week; sl.season = state.season || state.league_season;
+    sl.league = league; sl.users = users; sl.rosters = rosters; sl.rostersT = Date.now(); sl.week = state.week; sl.season = state.season || state.league_season;
     sl.positions = (league.roster_positions || []).filter(p => p !== "BN" && p !== "IR" && p !== "TAXI");
     const want = CFG.teamName.trim().toLowerCase();
     const un = (CFG.username || "").toLowerCase();
@@ -1286,6 +1289,9 @@ async function loadSleeperStatic() {
     el("#cfgLeague").textContent = league.name || CFG.leagueId; el("#cfgTeam").textContent = sl.me.name;
     const rec = s => s.rec ?? 1;
     sl.scoringKey = rec(league.scoring_settings || {}) >= 1 ? "pts_ppr" : rec(league.scoring_settings || {}) > 0 ? "pts_half_ppr" : "pts_std";
+  } else if (Date.now() - (sl.rostersT || 0) > 300e3) {   // v58: lineups change during the week; the preview reads them off the rosters
+    sl.rostersT = Date.now();
+    try { const rs = await getJSON(`${SL}/league/${CFG.leagueId}/rosters`); if (Array.isArray(rs) && rs.length) sl.rosters = rs; } catch (e) { console.warn("rosters", e); }
   }
 }
 function resetFx(wk) {
@@ -1295,13 +1301,15 @@ function resetFx(wk) {
   sl.events = wk ? store.get("lsb-fxevents-" + wk, []) : []; sl.lastPts = wk ? store.get("lsb-fxlast-" + wk, {}) : {};
   sl.fxWk = wk;
 }
+// v58: Sleeper hands back an unopened week with starters [] (and sometimes players []); fall back to the lineup as set on the roster
+function asSet(m){ if(!m) return m; const sl=S.sleeper, r=(sl.rosters||[]).find(x=>x.roster_id===m.roster_id); const real=a=>(a||[]).filter(p=>p&&p!=="0"); if(!r) return m; const out={...m}; if(!real(m.starters).length&&real(r.starters).length){out.starters=r.starters.slice();out.preview=true;} if(!(m.players||[]).length) out.players=(r.players||[]).slice(); return out; }
 async function loadMatchup() {
   const sl = S.sleeper; const wk = fxWeek();
   if (sl.fxWk !== wk) resetFx(wk);
   const ms = await getJSON(`${SL}/league/${CFG.leagueId}/matchups/${wk}`);
-  const mine = ms.find(m => m.roster_id === sl.me.roster.roster_id);
-  const opp = mine ? ms.find(m => m.matchup_id === mine.matchup_id && m.roster_id !== mine.roster_id) : null;
-  sl.mine = mine; sl.oppM = opp;
+  let mine = ms.find(m => m.roster_id === sl.me.roster.roster_id);
+  let opp = mine ? ms.find(m => m.matchup_id === mine.matchup_id && m.roster_id !== mine.roster_id) : null;
+  sl.mine = asSet(mine); sl.oppM = asSet(opp); mine = sl.mine; opp = sl.oppM;
   if (opp && !sl.opp) {
     const r = sl.rosters.find(x => x.roster_id === opp.roster_id), u = r && sl.users.find(x => x.user_id === r.owner_id);
     sl.opp = { name: u?.metadata?.team_name || u?.display_name || "Opponent", owner: u?.display_name || "" };
@@ -1900,7 +1908,7 @@ function renderSlots() {
   el("#slots").innerHTML = [...groups].map(([name, gs]) => `
     <section class="slot">
       <div class="slot-head"><h2>${esc(name)}</h2><span class="sub">${byConf ? "" : fmtCT(gs[0].date,{weekday:"short",month:"short",day:"numeric"}) + " · "}${gs.length} game${gs.length>1?'s':''}</span></div>
-      <div class="games">${gs.map(g => gameCard(g,false)).join("")}</div>
+      <div class="games">${gs.map(g => gameCard(g,false,{gc:true})).join("")}</div>
     </section>`).join("") || `<div class="empty">${cfb && S.hcf !== "all" ? "No games in this filter" : "No games scheduled"}</div>`;
 }
 
@@ -2072,6 +2080,7 @@ function schedDays() {
   return days;
 }
 function pickDay(days) {
+  if (S.sfull && days.length > 1) return "all";   // v58: full week
   if (days.some(d => d.k === S.sday)) return S.sday;
   const today = fmtCT(Date.now(), { year:"numeric", month:"2-digit", day:"2-digit" });
   if (!offWeek()) {
@@ -2082,7 +2091,8 @@ function pickDay(days) {
   }
   return days.length ? days[0].k : null;
 }
-const SORTS = { nfl: [["league","League"],["division","Division"],["wildcard","Wildcard race"]], cfb: [["league","All FBS"],["conf","Conference"],["top25","Top 25"]] };
+// v58: League only on Sunday for now; re-add ["division","Division"] and ["wildcard","Wildcard race"] around week 15 (their code below still works)
+const SORTS = { nfl: [["league","League"]], cfb: [["league","All FBS"],["conf","Conference"],["top25","Top 25"]] };
 function renderSchedule() {
   const box = el("#sched"); if (!box) return;
   const cfb = LG.key === "cfb", sorts = SORTS[LG.key];
@@ -2090,12 +2100,14 @@ function renderSchedule() {
   const days = schedDays();
   S.sday = pickDay(days);
   const dayK = d => fmtCT(d, { year:"numeric", month:"2-digit", day:"2-digit" });
-  el("#dayseg").innerHTML = days.map(d => `<button type="button" data-day="${d.k}" class="${d.k === S.sday ? "on" : ""}">${esc(fmtCT(d.d, { weekday:"short", month: days.length > 1 ? undefined : "short", day: days.length > 1 ? undefined : "numeric" }))}</button>`).join("");
+  const full = S.sday === "all";
+  el("#dayseg").innerHTML = `<button type="button" data-day="all" class="full ${full ? "on" : ""}">Full schedule</button>` + days.map(d => `<button type="button" data-day="${d.k}" class="${d.k === S.sday ? "on" : ""}">${esc(fmtCT(d.d, { weekday:"short", month: days.length > 1 ? undefined : "short", day: days.length > 1 ? undefined : "numeric" }))}</button>`).join("");
   el("#dayseg").style.display = days.length > 1 ? "" : "none";
   el("#sortSeg").innerHTML = sorts.map(([k, l]) => `<button type="button" data-sort="${k}" class="${k === S.ssort ? "on" : ""}">${l}</button>`).join("");
-  const list = S.events.filter(g => dayK(g.date) === S.sday);
+  el("#sortSeg").style.display = sorts.length > 1 ? "" : "none";
+  const list = full ? S.events.slice() : S.events.filter(g => dayK(g.date) === S.sday);
   const live = list.filter(g => g.live).length, fin = list.filter(g => g.state === "post").length;
-  const dayName = S.sday && list[0] ? fmtCT(list[0].date, { weekday:"long", month:"short", day:"numeric" }) : "";
+  const dayName = full ? "Full week" : S.sday && list[0] ? fmtCT(list[0].date, { weekday:"long", month:"short", day:"numeric" }) : "";
   const card = (g, seed) => gameCard(g, false, { imp: g.live && importance(g).score > 0, seed, gc: true });
   const sec = (name, sub, gs, seed) => `<section class="slot"><div class="slot-head"><h2>${esc(name)}</h2><span class="sub">${sub}</span></div><div class="games">${gs.map(g => card(g, seed)).join("")}</div></section>`;
   const cnt = n => `${n} game${n === 1 ? "" : "s"}`;
@@ -2104,7 +2116,7 @@ function renderSchedule() {
   if (!list.length) html = `<div class="empty">${S.events.length ? "No games on this day" : "No games scheduled"}</div>`;
   else if (S.ssort === "league") {
     const groups = new Map();
-    for (const g of list.slice().sort(byTime)) { const k = fmtCT(g.date, { hour:"numeric", minute:"2-digit" }) + " CT"; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(g); }
+    for (const g of list.slice().sort(byTime)) { const k = (full ? fmtCT(g.date, { weekday:"short", month:"short", day:"numeric" }) + " · " : "") + fmtCT(g.date, { hour:"numeric", minute:"2-digit" }) + " CT"; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(g); }
     html = [...groups].map(([k, gs]) => sec(k, cnt(gs.length), gs)).join("");
   } else if (S.ssort === "division") {
     const rec = {}; for (const g of S.events) { rec[g.home] = g.homeRec; rec[g.away] = g.awayRec; }
@@ -2140,6 +2152,7 @@ function renderSchedule() {
 }
 
 function playerRow(pid, slot, pts, bench) {
+  if (!pid || pid === "0") return `<tr class="${bench?'bench':''} empty-slot"><td class="slot">${esc(slot)}</td><td><div class="pn" style="color:var(--muted)">Empty slot</div></td><td></td><td class="pts zero">–</td></tr>`;   // v58: Sleeper's "0" placeholder
   const sl = S.sleeper, p = sl.players?.[pid] || [pid, "", ""], g = gameForTeam(p[2]);
   const st = !g ? "up" : g.live ? "live" : g.state === "post" ? "done" : "up";
   const gtxt = g ? (g.state === "pre" ? `${g.home===toEspn(p[2])?"vs":"@"} ${g.home===toEspn(p[2])?g.away:g.home}` : `${g.away} ${g.as} · ${g.home} ${g.hs}`) : "Bye";
@@ -2158,12 +2171,12 @@ function renderFantasy() {
   const projOf = m => m ? (m.starters||[]).reduce((a,pid)=> a + (+(sl.proj?.[pid]) || 0), 0) : 0;
   const tally = m => {
     const t = { done:0, live:0, up:0 };
-    for (const pid of (m?.starters || [])) { const p = sl.players?.[pid]; const g = p && gameForTeam(p[2]); t[!g ? "done" : g.live ? "live" : g.state === "post" ? "done" : "up"]++; }
+    for (const pid of (m?.starters || [])) { if (!pid || pid === "0") continue; const p = sl.players?.[pid]; const g = p && gameForTeam(p[2]); t[!g ? "done" : g.live ? "live" : g.state === "post" ? "done" : "up"]++; }
     return `<span class="tally"><b class="d">${t.done}</b> done <span class="sep">·</span> <b class="l">${t.live}</b> playing <span class="sep">·</span> <b class="u">${t.up}</b> to play</span>`;
   };
   const myProj = projOf(mine), opProj = projOf(opp);
   el("#fxHead").innerHTML = `
-    <div class="fx-team"><span class="lbl">My team</span><span class="tn">${esc(sl.me.name)}</span><span class="own">${esc(sl.me.owner)} · Week ${fxWeek()}${sl.league?.name ? " · " + esc(sl.league.name) : ""}</span>${tally(mine)}</div>
+    <div class="fx-team"><span class="lbl">My team</span><span class="tn">${esc(sl.me.name)}</span><span class="own">${esc(sl.me.owner)}</span><span class="meta">Week ${fxWeek()}${sl.league?.name ? " · " + esc(sl.league.name) : ""}${mine?.preview ? " · lineup as set" : ""}</span>${tally(mine)}</div>
     <div class="fx-score">
       ${(() => { const hasP = sl.proj && Object.keys(sl.proj).length, pj = v => hasP ? `<span class="proj">proj <b>${v.toFixed(1)}</b></span>` : "";   // v52: each projection sits under its own score
         return `<div class="sc"><span class="n ${lead?'':'trail'}">${myPts.toFixed(2)}</span>${pj(myProj)}</div>
@@ -2624,20 +2637,20 @@ document.addEventListener("click", e => {
   if (e.target.closest("#rgOff")) return setRegroup(false);
   if (e.target.closest("#rgOn")) return setRegroup(true);
   if (e.target.closest("#fRegroup")) { closeFinal(); setRegroup(true); if (location.hash !== "#home") location.hash = "#home"; return; }
-  const dayb = e.target.closest("#dayseg button"); if (dayb) { S.sday = dayb.dataset.day; return renderSchedule(); }
+  const dayb = e.target.closest("#dayseg button"); if (dayb) { S.sday = dayb.dataset.day; S.sfull = dayb.dataset.day === "all"; store.set("cc-sfull", S.sfull); return renderSchedule(); }
   const sortb = e.target.closest("#sortSeg button"); if (sortb) { S.ssort = sortb.dataset.sort; store.set("cc-sort-" + LG.key, S.ssort); return renderSchedule(); }
   // v57: team names and logos open the team; a schedule card opens its game center / breakdown / preview
   if (e.target.closest("#gcClose") || e.target === el("#gmodal")) return closeGame();
   if (e.target.closest("#tmClose") || e.target === el("#tmodal")) return closeTeam();
-  if (e.target.closest("#gcFeature")) { const id = GC.id; closeGame(); location.hash = "#home"; return pickGame(id); }
+  if (e.target.closest("#gcFeature")) { const id = GC.id; closeGame(); if (location.hash !== "#home") location.hash = "#home"; return pickGame(id); }
   const tBtn = e.target.closest(".gc-team[data-team], .tm-st tr[data-team], #standings tr[data-team]"); if (tBtn) return openTeam(tBtn.dataset.team);
   const tRow = e.target.closest(".g .row[data-team]"); if (tRow && e.target.closest(".abbr, .tn")) return openTeam(tRow.dataset.team);
   const tGame = e.target.closest(".tm-sch tr[data-game]"); if (tGame) return openGame(tGame.dataset.game);
   const scard = e.target.closest("#sched .g[data-id]"); if (scard) return openGame(scard.dataset.id);
-  const card = e.target.closest("#slots .g[data-id]"); if (card) return pickGame(card.dataset.id);
+  const card = e.target.closest("#slots .g[data-id]"); if (card) return openGame(card.dataset.id);   // v58: home cards open the game center too
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!el("#tmodal").hidden) return closeTeam(); if (!el("#gmodal").hidden) return closeGame(); closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) pickGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) openGame(e.target.dataset.id); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!el("#tmodal").hidden) return closeTeam(); if (!el("#gmodal").hidden) return closeGame(); closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) openGame(e.target.dataset.id); });
 /* v46: full screen is desktop only. iOS and most touch browsers ignore the API,
    so the buttons are removed rather than left on screen doing nothing. */
 (function () {
@@ -2651,6 +2664,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) { es
 el("#cfgLeague").textContent = CFG.leagueId; el("#cfgTeam").textContent = CFG.teamName;
 S.cf = store.get("cc-cf", "all"); S.conf = store.get("cc-conf", "all");
 Object.defineProperty(S, "ssort", { get: () => S["_ss" + LG.key] ?? (S["_ss" + LG.key] = store.get("cc-sort-" + LG.key, "league")), set: v => { S["_ss" + LG.key] = v; }, configurable: true });
+S.sfull = store.get("cc-sfull", false);
 S.hcf = store.get("cc-hcf", "all"); S.hconf = store.get("cc-hconf", "all");
 document.querySelectorAll("#lgSeg button").forEach(b => b.classList.toggle("on", b.dataset.lg === LG.key));
 renderWeekBox(); renderConfPicker(); renderHomePicker();
