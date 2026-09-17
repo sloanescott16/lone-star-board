@@ -797,6 +797,9 @@
   .pv-pl .hs { width: 44px; height: 44px; border-radius: 50%; background: var(--surface); overflow: hidden; flex: none; display: grid; place-items: center; font-size: 11px; color: var(--muted); }
   .pv-pl .hs img { width: 130%; height: 100%; object-fit: cover; }
   .pv-pl .t { min-width: 0; }
+  .pv-pl > div, .pv-grid .gc-lead > div { min-width: 0; }
+  .pv-pl .t b { white-space: normal; overflow: visible; }
+  .pv-inj li .st { white-space: normal; text-align: right; max-width: 96px; }
   .pv-pl .t i { font-style: normal; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; }
   .pv-pl .t b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pv-pl .t span { font-size: 12px; color: var(--ink-2); }
@@ -2733,7 +2736,7 @@ function previewHTML(g, sum) {   // v62
     const rank = s => /out|ir|reserve|pup|suspend/i.test(s) ? 0 : /doubt/i.test(s) ? 1 : /quest/i.test(s) ? 2 : 3;
     const col = ab => {
       const T0 = sum.injuries.find(x => x.team?.abbreviation === ab);
-      const list = (T0?.injuries || []).map(x => ({ n: x.athlete?.displayName || "", pos: x.athlete?.position?.abbreviation || "", st: x.status || x.type?.description || "", what: x.details?.type || "", side: x.details?.side && !/not/i.test(x.details.side) ? x.details.side : "" }))
+      const list = (T0?.injuries || []).map(x => ({ n: x.athlete?.displayName || "", pos: x.athlete?.position?.abbreviation || "", st: (x.status || x.type?.description || "").replace(/^Injured Reserve$/i, "IR"), what: x.details?.type || "", side: x.details?.side && !/not/i.test(x.details.side) ? x.details.side : "" }))
         .filter(x => x.n && !/^active$/i.test(x.st)).sort((a, b) => rank(a.st) - rank(b.st));
       return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))} <span style="margin-left:auto">${list.length || ""}</span></div>${list.length ? `<ul class="inj pv-inj">${list.map(x => `<li><b>${esc(x.n)}</b><i>${esc([x.pos, [x.side, x.what].filter(Boolean).join(" ")].filter(Boolean).join(" · "))}</i><span class="st ${["out", "dbt", "q", "q"][rank(x.st)]}">${esc(x.st)}</span></li>`).join("")}</ul>` : `<p class="gc-note" style="margin:4px 0 0">Nobody listed</p>`}</div>`;
     };
@@ -2772,7 +2775,7 @@ function previewHTML(g, sum) {   // v62
   const arts = (sum.news?.articles || []).filter(a => a.headline).slice(0, 5);
   if (arts.length) news = `<ul class="pv-news">${arts.map(a => { const href = a.links?.web?.href; return `<li>${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(a.headline)}</a>` : `<b>${esc(a.headline)}</b>`}${a.description ? `<p>${esc(a.description)}</p>` : ""}</li>`; }).join("")}</ul>`;
   const lines = g.odds ? `<section class="gc-card"><h3>Lines</h3>${linesHTML(g, false)}</section>` : "";
-  const c1 = card("Tale of the tape", tape, "season to date · league rank") + card("Last five", l5);
+  const c1 = card("Tale of the tape", tape, /<small>/.test(tape) ? "season to date · league rank" : "season to date") + card("Last five", l5);
   const c2 = lines + card("Players to watch", pl, "team leaders") + card("Injury report", inj);
   const c3 = card("Win chances", wc, "matchup predictor") + card("Game info", infoT) + card("Standings", st) + card("Headlines", news);
   return `<div class="pv-grid"><div class="gc-col">${c1 || `<div class="empty">Numbers post closer to kickoff</div>`}</div><div class="gc-col">${c2}</div><div class="gc-col">${c3}</div></div>`;
