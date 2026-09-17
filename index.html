@@ -902,6 +902,218 @@
     .tm-sch td { padding: 6px 4px; }
     .gc-sp li { grid-template-columns: 20px 46px 1fr auto; }
   }
+  /* ================= SEASON ================= */
+  #view-season, #snPmod {
+    --card: var(--surface); --card2: var(--raised); --mute: var(--ink-2); --dim: var(--muted);
+    --bad: var(--live); --blue: var(--accent);
+  }
+  #view-season { align-content: start; }
+  .sn-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .sn-head h2 { margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .sn-head .sub { color: var(--muted); font-size: 13px; }
+  .sn-head .seg { margin-left: auto; }
+  :is(#view-season, #snPmod) .gcard { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; min-width: 0; }
+  :is(#view-season, #snPmod) .gcard > .gh { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--raised); }
+  :is(#view-season, #snPmod) .gcard > .gh h3 { margin: 0; font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  :is(#view-season, #snPmod) .gcard > .gh .gn { margin-left: auto; font-size: 11px; color: var(--muted); text-align: right; }
+  :is(#view-season, #snPmod) .gcard .gb { padding: 12px 14px; }
+  :is(#view-season, #snPmod) .gcard .empty { padding: 6px 0; }
+  :is(#view-season, #snPmod) .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  :is(#view-season, #snPmod) .lnk { font: inherit; font-size: 11px; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
+  :is(#view-season, #snPmod) .lnk:hover { text-decoration: underline; }
+  :is(#view-season, #snPmod) .gtab { display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; }
+  :is(#view-season, #snPmod) .gtab button { font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); background: transparent; border: 1px solid transparent; border-radius: 5px; padding: 3px 8px; cursor: pointer; }
+  :is(#view-season, #snPmod) .gtab button.on { border-color: var(--line-strong); background: var(--surface); color: var(--ink); }
+  :is(#view-season, #snPmod) .tmc { background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; margin-bottom: 12px; }
+  :is(#view-season, #snPmod) .tmc h3 { margin: 0 0 8px; font-family: var(--display); font-size: 15px; letter-spacing: .1em; text-transform: uppercase; display: flex; align-items: baseline; gap: 8px; color: var(--ink-2); }
+  :is(#view-season, #snPmod) .tseg { display: inline-flex; gap: 2px; border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px; margin-left: auto; }
+  :is(#view-season, #snPmod) .tseg button { font: inherit; font-size: 11px; font-weight: 600; color: var(--ink-2); background: transparent; border: 0; border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+  :is(#view-season, #snPmod) .tseg button.on { background: var(--accent); color: #0c1119; }
+  /* the season grid: one tile per week */
+  :is(#view-season) .wkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 5px; }
+  :is(#view-season) .wkc { border: 1px solid #1a1f29; border-radius: 8px; padding: 5px 7px; background: #0e1116; min-width: 0; }
+  :is(#view-season) .wkc.gm { cursor: pointer; background: var(--raised); }
+  :is(#view-season) .wkc.gm:hover { border-color: var(--line-strong); }
+  :is(#view-season) .wkc.hm { background: linear-gradient(180deg, var(--accent-soft), var(--raised) 70%); }
+  :is(#view-season) .wkc .n { display: block; font-size: 9.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  :is(#view-season) .wkc .op { display: flex; align-items: center; gap: 4px; margin-top: 2px; min-width: 0; }
+  :is(#view-season) .wkc .op img { width: 22px; height: 22px; object-fit: contain; flex: none; }
+  :is(#view-season) .wkc .op i { font-style: normal; color: var(--muted); font-size: 10px; }
+  :is(#view-season) .wkc .op span { font-family: var(--display); font-size: 15px; font-weight: 700; white-space: nowrap; }
+  :is(#view-season) .wkc .rs { font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  :is(#view-season) .wkc .rs b { font-weight: 800; }
+  :is(#view-season) .wkc.W .rs b { color: var(--good); } :is(#view-season) .wkc.L .rs b { color: var(--live); } :is(#view-season) .wkc.T .rs b { color: var(--warn); }
+  :is(#view-season) .wkc.W { box-shadow: inset 0 -3px 0 var(--good); } :is(#view-season) .wkc.L { box-shadow: inset 0 -3px 0 var(--live); } :is(#view-season) .wkc.T { box-shadow: inset 0 -3px 0 var(--warn); }
+  :is(#view-season) .wkc.lv { border-color: var(--live); }
+  :is(#view-season) .wkc.bye { border-style: dashed; opacity: .6; }
+  :is(#view-season) .wkc.bye .op { color: var(--muted); font-size: 12px; }
+  #snPmod .sheet { max-width: 720px; }
+  :is(#view-season, #snPmod) .snab { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; font: 700 10px var(--display); letter-spacing: .04em; color: #fff; flex: none; }
+  @media (max-width: 640px) {
+    :is(#view-season) .wkgrid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+    :is(#view-season) .sn-head .seg { margin-left: 0; }
+    :is(#view-season, #snPmod) .gcard .gb { padding: 10px; }
+  }
+  /* the Season tab makes five links; keep the bar inside a phone */
+  @media (max-width: 560px) {
+    .topbar .nav { flex-wrap: wrap; justify-content: center; border-radius: 14px; }
+    .topbar .nav a { padding: 5px 7px; font-size: 11.5px; letter-spacing: .04em; }
+  }
+  :is(#view-season) .h2h { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
+  :is(#view-season) .h2h span { overflow: hidden; text-overflow: ellipsis; }
+  :is(#view-season,#snPmod) .sn-grid{display:grid; gap:12px; align-items:start; margin-top:12px}
+  :is(#view-season,#snPmod) .sn-g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr)}
+  :is(#view-season,#snPmod) .sn-g2{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
+  :is(#view-season,#snPmod) .sn-col{display:flex; flex-direction:column; gap:12px; min-width:0}
+  :is(#view-season,#snPmod) .sn-note{font-size:11.5px; color:var(--dim)}
+  :is(#view-season,#snPmod) .sn-tag{display:inline-block; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:1px 6px; border-radius:3px; background:#1d222c; color:var(--mute); vertical-align:2px; margin-left:6px}
+  :is(#view-season,#snPmod) .pulse{display:grid; grid-template-columns:repeat(auto-fill,minmax(118px,1fr)); gap:8px}
+  :is(#view-season,#snPmod) .pulse button{font:inherit; text-align:left; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 11px; cursor:pointer; min-width:0; transition:border-color .12s, transform .12s}
+  :is(#view-season,#snPmod) .pulse button:hover{border-color:#4a5569; transform:translateY(-1px)}
+  :is(#view-season,#snPmod) .pulse button.hero{border-color:rgba(31,168,96,.55); background:linear-gradient(160deg,rgba(31,168,96,.16),var(--card) 70%)}
+  :is(#view-season,#snPmod) .pulse b{display:block; font-family:var(--display); font-size:25px; line-height:1.05; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  :is(#view-season,#snPmod) .pulse span{display:block; font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  :is(#view-season,#snPmod) .pulse em{display:block; font-style:normal; font-size:10.5px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  :is(#view-season,#snPmod) .pulse b.up{color:var(--good)} :is(#view-season,#snPmod) .pulse b.dn{color:var(--bad)} :is(#view-season,#snPmod) .pulse b.gr{color:var(--blue)}
+  :is(#view-season,#snPmod) .nx{display:flex; align-items:center; gap:14px; cursor:pointer; padding:4px 0 10px}
+  :is(#view-season,#snPmod) .nx img{width:60px; height:60px; object-fit:contain; flex:none; filter:drop-shadow(0 0 3px rgba(255,255,255,.22))}
+  :is(#view-season,#snPmod) .nx .t{font-family:var(--display); font-size:26px; line-height:1}
+  :is(#view-season,#snPmod) .nx .t small{font-size:15px; color:var(--mute); margin-right:6px}
+  :is(#view-season,#snPmod) .nx .s{font-size:12px; color:var(--mute); margin-top:3px}
+  :is(#view-season,#snPmod) .nx .w{margin-left:auto; text-align:right; flex:none}
+  :is(#view-season,#snPmod) .nx .w b{display:block; font-family:var(--display); font-size:34px; line-height:1; color:var(--blue)}
+  :is(#view-season,#snPmod) .nx .w span{font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim)}
+  :is(#view-season,#snPmod) .nx:hover .t{text-decoration:underline; text-underline-offset:4px}
+  :is(#view-season,#snPmod) .flag{display:inline-block; font-size:9.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:1px 5px; border-radius:3px; margin-left:5px; background:rgba(232,163,61,.17); color:#f0bd73; vertical-align:1px; white-space:nowrap}
+  :is(#view-season,#snPmod) .flag.rt{background:rgba(155,123,255,.16); color:#c4b2ff}
+  :is(#view-season,#snPmod) .flag.hm{background:rgba(31,168,96,.2); color:#7ee2a8}
+  :is(#view-season,#snPmod) .flag.pre{background:#1d222c; color:var(--dim)}
+  :is(#view-season,#snPmod) .snwk{list-style:none; margin:0; padding:0}
+  :is(#view-season,#snPmod) .snwk li{display:grid; grid-template-columns:62px 18px 22px minmax(0,1fr) auto; gap:7px; align-items:center; padding:6px 0; border-top:1px solid #1a1f29; font-size:12.5px; cursor:pointer}
+  :is(#view-season,#snPmod) .snwk li:hover{background:rgba(255,255,255,.035)}
+  :is(#view-season,#snPmod) .snwk li .d{color:var(--mute); font-size:11.5px; font-weight:600}
+  :is(#view-season,#snPmod) .snwk li .va{color:var(--dim); font-size:11px; text-align:center}
+  :is(#view-season,#snPmod) .snwk li img{width:20px; height:20px; object-fit:contain}
+  :is(#view-season,#snPmod) .snwk li .o{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600}
+  :is(#view-season,#snPmod) .snwk li .o i{font-style:normal; font-weight:400; color:var(--dim); font-size:11px; margin-left:5px}
+  :is(#view-season,#snPmod) .snwk li .r{text-align:right; font-variant-numeric:tabular-nums; color:var(--mute); white-space:nowrap}
+  :is(#view-season,#snPmod) .snwk li .r b.W{color:var(--good)} :is(#view-season,#snPmod) .snwk li .r b.L, :is(#view-season,#snPmod) .snwk li .r b.OTL{color:var(--bad)} :is(#view-season,#snPmod) .snwk li .r b.OTL{color:var(--warn)}
+  :is(#view-season,#snPmod) .lr{display:flex; align-items:center; gap:10px; cursor:pointer}
+  :is(#view-season,#snPmod) .lr .sc{font-family:var(--display); font-size:34px; line-height:1}
+  :is(#view-season,#snPmod) .lr .sc.W{color:var(--good)} :is(#view-season,#snPmod) .lr .sc.L{color:var(--bad)} :is(#view-season,#snPmod) .lr .sc.OTL{color:var(--warn)}
+  :is(#view-season,#snPmod) .lr img{width:30px; height:30px; object-fit:contain}
+  :is(#view-season,#snPmod) .lr .m{font-size:12px; color:var(--mute)}
+  :is(#view-season,#snPmod) .lr .m b{color:var(--ink)}
+  :is(#view-season,#snPmod) .lr:hover .m b{text-decoration:underline}
+  :is(#view-season,#snPmod) .rib{display:flex; flex-wrap:wrap; gap:3px; margin:4px 0 2px}
+  :is(#view-season,#snPmod) .rib i{display:block; width:13px; height:19px; border-radius:3px; background:#1d222c; cursor:pointer; position:relative}
+  :is(#view-season,#snPmod) .rib i.W{background:var(--good)} :is(#view-season,#snPmod) .rib i.L{background:var(--bad)} :is(#view-season,#snPmod) .rib i.OTL{background:var(--warn)}
+  :is(#view-season,#snPmod) .rib i.nx{box-shadow:0 0 0 2px var(--blue)} :is(#view-season,#snPmod) .rib i.h::after{content:''; position:absolute; left:4px; right:4px; bottom:3px; height:2px; border-radius:1px; background:rgba(0,0,0,.45)}
+  :is(#view-season,#snPmod) .rib i:hover{transform:scale(1.25); z-index:2}
+  :is(#view-season,#snPmod) .rib i.sep{width:1px; background:transparent; margin:0 3px; cursor:default; border-left:1px dashed #3a4353}
+  :is(#view-season,#snPmod) .rib i.sep:hover{transform:none}
+  :is(#view-season,#snPmod) .ribk{display:flex; gap:12px; flex-wrap:wrap; font-size:10.5px; color:var(--dim); margin-top:6px}
+  :is(#view-season,#snPmod) .ribk span{display:inline-flex; align-items:center; gap:4px}
+  :is(#view-season,#snPmod) .ribk span i{width:9px; height:9px; border-radius:2px; display:inline-block}
+  :is(#view-season,#snPmod) table.spl{width:100%; border-collapse:collapse; font-size:12.5px; font-variant-numeric:tabular-nums}
+  :is(#view-season,#snPmod) table.spl th{font-size:9.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--dim); font-weight:700; text-align:right; padding:4px 5px; border-bottom:1px solid var(--line)}
+  :is(#view-season,#snPmod) table.spl td{text-align:right; padding:6px 5px; border-bottom:1px solid #1a1f29}
+  :is(#view-season,#snPmod) table.spl th:first-child, :is(#view-season,#snPmod) table.spl td:first-child{text-align:left; padding-left:0}
+  :is(#view-season,#snPmod) table.spl tr[data-split]{cursor:pointer}
+  :is(#view-season,#snPmod) table.spl tr[data-split]:hover td{background:rgba(255,255,255,.035)}
+  :is(#view-season,#snPmod) table.spl tr.on td{background:rgba(31,168,96,.14)}
+  :is(#view-season,#snPmod) table.spl td b{font-family:var(--display); font-size:15px; font-weight:600}
+  :is(#view-season,#snPmod) table.spl tr.grp td{color:var(--dim); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; padding-top:10px; border-bottom:0}
+  :is(#view-season,#snPmod) .chips{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px}
+  :is(#view-season,#snPmod) .chips button{font:inherit; font-size:11px; font-weight:600; color:var(--mute); background:transparent; border:1px solid var(--line); border-radius:999px; padding:3px 9px 3px 5px; cursor:pointer; display:inline-flex; align-items:center; gap:5px}
+  :is(#view-season,#snPmod) .chips button img{width:15px; height:15px; object-fit:contain}
+  :is(#view-season,#snPmod) .chips button i{width:9px; height:9px; border-radius:50%; display:inline-block}
+  :is(#view-season,#snPmod) .chips button.on{color:var(--ink); border-color:#4a5569; background:var(--card2)}
+  :is(#view-season,#snPmod) .chips button:not(.on) img, :is(#view-season,#snPmod) .chips button:not(.on) i{opacity:.35}
+  :is(#view-season,#snPmod) .chips select{font:inherit; font-size:11px; color:var(--mute); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:3px 8px}
+  :is(#view-season,#snPmod) .chw{position:relative}
+  :is(#view-season,#snPmod) .chw svg{width:100%; height:auto; display:block}
+  :is(#view-season,#snPmod) .chw .ax{fill:var(--dim); font:600 9px var(--body)}
+  :is(#view-season,#snPmod) .chw .gl{stroke:#232936; stroke-width:1}
+  :is(#view-season,#snPmod) .chw .pl{stroke:#9aa3b2; stroke-dasharray:4 4; stroke-width:1.2; fill:none}
+  :is(#view-season,#snPmod) .chw .cur{stroke:#4a5569; stroke-width:1}
+  :is(#view-season,#snPmod) .chtip{position:absolute; pointer-events:none; background:#0b0e14; border:1px solid var(--line); border-radius:6px; padding:6px 9px; font-size:11px; color:var(--mute); display:none; z-index:5; min-width:130px}
+  :is(#view-season,#snPmod) .chtip b{display:block; color:var(--ink); font-family:var(--display); font-size:14px; margin-bottom:2px}
+  :is(#view-season,#snPmod) .chtip div{display:flex; gap:8px; justify-content:space-between}
+  :is(#view-season,#snPmod) .chtip div span:last-child{color:var(--ink); font-variant-numeric:tabular-nums}
+  :is(#view-season,#snPmod) .h2h{display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px}
+  :is(#view-season,#snPmod) .h2h div{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:6px 7px; cursor:pointer; display:flex; align-items:center; gap:6px; min-width:0}
+  :is(#view-season,#snPmod) .h2h div:hover{border-color:#4a5569}
+  :is(#view-season,#snPmod) .h2h img{width:24px; height:24px; object-fit:contain; flex:none}
+  :is(#view-season,#snPmod) .h2h b{display:block; font-family:var(--display); font-size:14px; line-height:1}
+  :is(#view-season,#snPmod) .h2h span{display:block; font-size:10.5px; color:var(--mute); white-space:nowrap}
+  :is(#view-season,#snPmod) .h2h div.up{box-shadow:inset 3px 0 0 var(--good)} :is(#view-season,#snPmod) .h2h div.dn{box-shadow:inset 3px 0 0 var(--bad)} :is(#view-season,#snPmod) .h2h div.dv{border-color:rgba(31,168,96,.4)}
+  :is(#view-season,#snPmod) table.rs{width:100%; border-collapse:collapse; font-size:12.5px; font-variant-numeric:tabular-nums}
+  :is(#view-season,#snPmod) table.rs th{font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); font-weight:700; text-align:right; padding:6px 5px; border-bottom:1px solid var(--line); cursor:pointer; white-space:nowrap; user-select:none}
+  :is(#view-season,#snPmod) table.rs th:hover{color:var(--ink)}
+  :is(#view-season,#snPmod) table.rs th.on{color:#7ee2a8}
+  :is(#view-season,#snPmod) table.rs th.on::after{content:' \25BE'}
+  :is(#view-season,#snPmod) table.rs th.on.asc::after{content:' \25B4'}
+  :is(#view-season,#snPmod) table.rs td{text-align:right; padding:6px 5px; border-bottom:1px solid #1a1f29; white-space:nowrap}
+  :is(#view-season,#snPmod) table.rs th:first-child, :is(#view-season,#snPmod) table.rs td:first-child{text-align:left; padding-left:0; cursor:default}
+  :is(#view-season,#snPmod) table.rs td.srt{color:var(--ink); font-weight:700; background:rgba(255,255,255,.025)}
+  :is(#view-season,#snPmod) table.rs tr[data-plid], :is(#view-season,#snPmod) table.rs tr[data-tid], :is(#view-season,#snPmod) table.rs tr[data-gid]{cursor:pointer}
+  :is(#view-season,#snPmod) table.rs tr[data-plid]:hover td, :is(#view-season,#snPmod) table.rs tr[data-tid]:hover td, :is(#view-season,#snPmod) table.rs tr[data-gid]:hover td{background:rgba(255,255,255,.04)}
+  :is(#view-season,#snPmod) table.rs .pl{display:flex; align-items:center; gap:7px; min-width:0}
+  :is(#view-season,#snPmod) table.rs .pl img{width:26px; height:26px; border-radius:50%; object-fit:cover; background:#1d222c; flex:none}
+  :is(#view-season,#snPmod) table.rs .pl img.lg{border-radius:0; background:none; object-fit:contain; width:20px; height:20px}
+  :is(#view-season,#snPmod) table.rs .pl b{font-weight:600; max-width:150px; overflow:hidden; text-overflow:ellipsis}
+  :is(#view-season,#snPmod) table.rs .pl i{font-style:normal; color:var(--dim); font-size:10.5px}
+  :is(#view-season,#snPmod) table.rs tr.fav td{background:rgba(31,168,96,.10)}
+  :is(#view-season,#snPmod) table.rs tr.fav td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
+  :is(#view-season,#snPmod) table.rs td.W{color:var(--good); font-weight:700} :is(#view-season,#snPmod) table.rs td.L{color:var(--bad); font-weight:700} :is(#view-season,#snPmod) table.rs td.OTL{color:var(--warn); font-weight:700}
+  :is(#view-season,#snPmod) .ldr{list-style:none; margin:0; padding:0}
+  :is(#view-season,#snPmod) .ldr li{display:grid; grid-template-columns:18px 34px minmax(0,1fr) 20px auto; gap:8px; align-items:center; padding:5px 0; border-top:1px solid #1a1f29; cursor:pointer; font-size:12.5px}
+  :is(#view-season,#snPmod) .ldr li:hover{background:rgba(255,255,255,.035)}
+  :is(#view-season,#snPmod) .ldr li .k{color:var(--dim); font-size:11px; font-weight:700; text-align:right}
+  :is(#view-season,#snPmod) .ldr li img.h{width:34px; height:34px; border-radius:50%; object-fit:cover; background:#1d222c}
+  :is(#view-season,#snPmod) .ldr li img.l{width:20px; height:20px; object-fit:contain}
+  :is(#view-season,#snPmod) .ldr li b{display:block; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  :is(#view-season,#snPmod) .ldr li span{display:block; color:var(--dim); font-size:10.5px}
+  :is(#view-season,#snPmod) .ldr li em{font-style:normal; font-family:var(--display); font-size:22px; color:var(--ink); min-width:48px; text-align:right}
+  :is(#view-season,#snPmod) .ldr li.fav{background:rgba(31,168,96,.12)}
+  :is(#view-season,#snPmod) .ldr li:first-child em{color:var(--blue)}
+  :is(#view-season,#snPmod) .tni{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px}
+  :is(#view-season,#snPmod) .tni div{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:5px 8px; cursor:pointer; font-size:12px}
+  :is(#view-season,#snPmod) .tni div:hover{border-color:#4a5569}
+  :is(#view-season,#snPmod) .tni div.fav{border-color:rgba(31,168,96,.55)}
+  :is(#view-season,#snPmod) .tni div.lv{border-color:rgba(255,59,78,.45)}
+  :is(#view-season,#snPmod) .tni p{margin:0; display:flex; align-items:center; gap:6px; padding:1px 0}
+  :is(#view-season,#snPmod) .tni p img{width:17px; height:17px; object-fit:contain}
+  :is(#view-season,#snPmod) .tni p b{font-family:var(--display); font-size:15px; font-weight:600}
+  :is(#view-season,#snPmod) .tni p span{margin-left:auto; font-family:var(--display); font-size:15px}
+  :is(#view-season,#snPmod) .tni em{display:block; font-style:normal; font-size:10px; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; margin-bottom:1px}
+  :is(#view-season,#snPmod) .tni div.lv em{color:var(--live)}
+  :is(#view-season,#snPmod) /* player pop-up */
+  .pmh{display:flex; align-items:center; gap:14px; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:12px}
+  :is(#view-season,#snPmod) .pmh .hs{width:76px; height:76px; border-radius:50%; object-fit:cover; background:#1d222c; border:1px solid var(--line); flex:none}
+  :is(#view-season,#snPmod) .pmh h2{font-size:30px; line-height:1}
+  :is(#view-season,#snPmod) .pmh .sub{color:var(--mute); font-size:13px; margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+  :is(#view-season,#snPmod) .pmh .sub img{width:18px; height:18px; object-fit:contain}
+  :is(#view-season,#snPmod) .pmh .sub a{cursor:pointer; text-decoration:underline; text-underline-offset:3px}
+  :is(#view-season,#snPmod) .pbars{display:flex; align-items:flex-end; gap:2px; height:70px; margin:6px 0 2px; border-bottom:1px solid var(--line)}
+  :is(#view-season,#snPmod) .pbars i{flex:1; min-width:3px; background:#2a3140; border-radius:2px 2px 0 0; cursor:pointer; position:relative}
+  :is(#view-season,#snPmod) .pbars i.p{background:var(--blue)} :is(#view-season,#snPmod) .pbars i.z{height:3px!important; background:#2a3140}
+  :is(#view-season,#snPmod) .pbars i:hover{outline:1px solid #fff}
+  :is(#view-season,#snPmod) .pbk{font-size:10.5px; color:var(--dim); display:flex; justify-content:space-between}
+  :is(#view-season,#snPmod) .sn-more{font:inherit; font-size:11px; font-weight:600; color:#7ee2a8; background:none; border:0; padding:6px 0 0; cursor:pointer}
+  :is(#view-season,#snPmod) .sn-more:hover{text-decoration:underline}
+  :is(#view-season,#snPmod) .pulse button, :is(#view-season,#snPmod) .nx, :is(#view-season,#snPmod) .lr{-webkit-tap-highlight-color:transparent}
+  @media (max-width:1180px){ :is(#view-season,#snPmod) .sn-g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} :is(#view-season,#snPmod) .sn-g3>.sn-col:last-child{grid-column:1/-1} }
+  @media (max-width:760px){
+    :is(#view-season,#snPmod) .sn-g3, :is(#view-season,#snPmod) .sn-g2{grid-template-columns:minmax(0,1fr)}
+    :is(#view-season,#snPmod) .pulse{grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px}
+    :is(#view-season,#snPmod) .pulse button{padding:6px 8px} :is(#view-season,#snPmod) .pulse b{font-size:20px}
+    :is(#view-season,#snPmod) .nx img{width:44px;height:44px} :is(#view-season,#snPmod) .nx .t{font-size:21px} :is(#view-season,#snPmod) .nx .w b{font-size:26px}
+    :is(#view-season,#snPmod) .pmh h2{font-size:23px} :is(#view-season,#snPmod) .pmh .hs{width:56px;height:56px}
+    :is(#view-season,#snPmod) table.rs .pl b{max-width:110px}
+    :is(#view-season,#snPmod) .snwk li{grid-template-columns:54px 14px 20px minmax(0,1fr) auto}
+  }
 </style>
 </head>
 <body class="v-home">
@@ -919,6 +1131,7 @@
     </div>
     <div class="seg lg" id="lgSeg" role="group" aria-label="League"><button type="button" data-lg="cfb">Saturday</button><button type="button" data-lg="nfl">Sunday</button></div>
     <nav class="nav" id="nav">
+      <a href="#season" data-v="season">Season</a>
       <a href="#home" data-v="home">Home</a>
       <a href="#schedule" data-v="schedule">Schedule</a>
       <a href="#scores" data-v="scores">Scoreboard</a>
@@ -973,6 +1186,34 @@
         <h2 class="sofar-h">Scoring so far <small id="sofarNote">tap a player for their plays</small></h2>
         <ul class="sofar" id="fxSoFar"></ul>
       </section>
+    </div>
+  </main>
+
+
+  <!-- ================= SEASON ================= -->
+  <main class="view" id="view-season">
+    <div class="sn-head">
+      <h2>The Season</h2>
+      <span class="sub" id="snTeamName"></span>
+      <span class="seg" id="snSea" role="group" aria-label="Season"></span>
+    </div>
+    <div class="pulse" id="snPulse"></div>
+    <div class="sn-grid sn-g3">
+      <div class="sn-col"><div id="snNext"></div><div id="snLast"></div></div>
+      <div class="sn-col"><div id="snRib"></div><div id="snSplits"></div></div>
+      <div class="sn-col"><div id="snChart"></div></div>
+    </div>
+    <div class="sn-grid sn-g2">
+      <div class="sn-col"><div id="snWeeks"></div></div>
+      <div class="sn-col"><div id="snToday"></div><div id="snH2H"></div></div>
+    </div>
+    <div class="sn-grid sn-g2">
+      <div class="sn-col"><div id="snRoster"></div></div>
+      <div class="sn-col"><div id="snLeaders"></div></div>
+    </div>
+    <div class="sn-grid sn-g2">
+      <div class="sn-col"><div id="snLeague"></div></div>
+      <div class="sn-col"><div id="snLog"></div></div>
     </div>
   </main>
 
@@ -1073,6 +1314,13 @@
       <button class="btn" id="tmClose" type="button">Close</button>
     </div>
     <div id="tmBody"><div class="empty">Loading the team</div></div>
+  </div>
+</div>
+
+
+<div class="modal" id="snPmod" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Player">
+    <div id="snPmBody"><div class="empty">Loading</div></div>
   </div>
 </div>
 
@@ -2421,6 +2669,7 @@ window.addEventListener("resize", fitBoard);
    ===================================================================== */
 function renderAll() {
   renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderPre(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderSchedule(); renderRegroup();
+  if (S.view === "season") renderSeason();
 }
 let espnTimer, slTimer;
 async function espnLoop() {
@@ -2432,7 +2681,7 @@ async function espnLoop() {
     if (LG.key === "nfl") await loadSeeds();
     try { await loadSummary(); } catch (e) { console.warn("summary", e); }
     try { await loadOpenLine(); } catch (e) { console.warn("open line", e); }
-    renderAll(); S.lastOk = Date.now(); setErr(false); pumpFinals();
+    renderAll(); S.lastOk = Date.now(); setErr(false); pumpFinals(); snAutoRoute();
     if (favLoss()) { await loadNextFav(); renderRegroup(); }
   } catch (e) { console.warn("scoreboard", e); setErr(true); }
   const anyLive = S.events.some(g => g.live);
@@ -2484,16 +2733,18 @@ function tick() {
 function bodyClass() {
   document.body.className = `v-${S.view} lg-${LG.key}${S.grouped && S.view === "scores" ? " grouped" : ""}${offWeek() ? " past" : ""}${rgActive() ? " regroup" : ""}`;
 }
+function defaultView() { return "season"; }
 function route() {
-  let v = (location.hash.replace("#","") || "home");
+  let v = (location.hash.replace("#","") || defaultView());
   if (v === "fantasy" && !LG.fantasy) v = "home";
-  const known = ["home","schedule","scores","fantasy"].includes(v) ? v : "home";
+  const known = ["home","season","schedule","scores","fantasy"].includes(v) ? v : defaultView();
   S.view = known;
   document.querySelectorAll(".view").forEach(m => m.classList.toggle("on", m.id === "view-"+known));
   document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.dataset.v === known));
   bodyClass();
   if (known === "scores" && S.events.length) renderBoard(); else fitBoard();
   if (known === "schedule") renderSchedule();
+  if (known === "season") renderSeason();
 }
 // Saturday / Sunday: same shell, different sport
 function setLeague(k) {
@@ -2503,6 +2754,7 @@ function setLeague(k) {
   clearTimeout(espnTimer); clearTimeout(slTimer);
   Object.assign(S, { events: [], featured: null, favGame: null, summary: null, pickId: null, scoreFeed: [], lastScores: {}, prevState: {}, finishedAt: {}, finals: [], lineTried: {}, week: null, viewWeek: null, curWeek: null, season: null, ranks: null, ranksT: 0, seeds: null, seedsT: 0, sday: null, grouped: false, nextFav: null, nextFavWk: null });
   document.querySelectorAll("#lgSeg button").forEach(b => b.classList.toggle("on", b.dataset.lg === k));
+  Object.assign(SN, { sea: "cur", split: null, onKey: "", logAll: false, rsort: {}, chart: null });
   if (!LG.fantasy && location.hash === "#fantasy") location.hash = "#home";
   route();
   el("#board").innerHTML = `<div class="empty">Loading scores</div>`;
@@ -2946,6 +3198,628 @@ S.sfull = store.get("cc-sfull", false);
 S.hcf = store.get("cc-hcf", "all"); S.hconf = store.get("cc-hconf", "all");
 document.querySelectorAll("#lgSeg button").forEach(b => b.classList.toggle("on", b.dataset.lg === LG.key));
 renderWeekBox(); renderConfPicker(); renderHomePicker();
+
+/* =====================================================================
+   The Season tab: the year in one page, the same shape as The Crease
+   and The Paint. Home team first, then the league.
+   ===================================================================== */
+const SNW = p => `https://site.web.api.espn.com/apis/common/v3/sports/${LG.path}/${p}`;
+const SNS = p => `https://site.web.api.espn.com/apis/site/v2/sports/${LG.path}/${p}`;
+const SNHS = id => `https://a.espncdn.com/i/headshots/${LG.key === "cfb" ? "nfl" : "nfl"}/players/full/${id}.png`;
+const SN = { sea:"cur", sch:{}, stand:{}, byt:{}, roster:{}, lead:{}, leadCat:"pyds", rtab:"passing",
+  rsort:{}, lgv:{sort:"pct",dir:-1,f:"div"}, split:null, on:null, onKey:"", logAll:false, busy:{}, chart:null, autoRouted:false };
+const SP = { id:null, mode:"l10", gl:{}, nm:{} };
+
+const snEl = id => document.getElementById(id);
+const snY = () => (SN.sea === "prev" ? snSeason() - 1 : snSeason());
+const snSeason = () => S.season || new Date().getFullYear();
+const snPrev = () => SN.sea === "prev";
+const snTeam = () => CFG.fav;
+const snLab = y => LG.key === "cfb" ? `${y}` : `${y}`;
+const snTid = ab => TID[ab] || (LG.key === "nfl" ? toEspn(ab).toLowerCase() : ab.toLowerCase());
+const snImg = ab => { const l = logoOf(ab); return l ? `<img src="${esc(l)}" alt="${esc(ab)}" loading="lazy" onerror="this.style.visibility='hidden'">` : `<span class="snab" style="background:${T(ab)[2]}">${esc(toEspn(ab))}</span>`; };
+const snName = ab => dispName(ab);
+const snPctTxt = (w,l,t) => { const g = w + l + (t||0); if (!g) return ".000"; const p = (w + (t||0)/2) / g; return p >= 1 ? "1.000" : p.toFixed(3).replace(/^0/, ""); };
+const snFix = (v,d=1) => v == null || isNaN(+v) ? "-" : (+v).toFixed(d);
+
+/* ---------- schedules ---------- */
+function snCg(ev, ab) {
+  const c = (ev.competitions || [])[0]; if (!c) return null;
+  const me = (c.competitors || []).find(x => (x.team?.abbreviation) === ab) || (c.competitors || [])[0];
+  const op = (c.competitors || []).find(x => x !== me);
+  if (!me || !op) return null;
+  const ty = c.status?.type || ev.status?.type || {};
+  const sc = x => { const v = x?.score; if (v == null) return null; const n = typeof v === "object" ? (v.value ?? v.displayValue) : v; return isNaN(+n) ? null : +n; };
+  const state = ty.state === "post" ? 2 : ty.state === "in" ? 1 : 0;
+  return { id:String(ev.id), date: ev.date || c.date, wk: ev.week?.number ?? c.week ?? null,
+    ab, opp: op.team?.abbreviation || "", home: me.homeAway === "home",
+    ms: state ? sc(me) : null, os: state ? sc(op) : null, st: state,
+    ot: /OT/.test(ty.shortDetail || ""), venue: c.venue?.fullName || "", tv: (c.broadcasts?.[0]?.names || [])[0] || "",
+    bye: false };
+}
+function snLoadSched(ab, y) {
+  const k = `${ab}|${y}|${LG.key}`;
+  if (SN.sch[k] && (y < snSeason() || Date.now() - SN.sch[k].at < 60e3)) return Promise.resolve(SN.sch[k].list);
+  if (SN.busy[k]) return SN.busy[k];
+  SN.busy[k] = getJSON(api(`teams/${snTid(ab)}/schedule?season=${y}&seasontype=2`)).then(d => {
+    const list = (d.events || []).map(ev => snCg(ev, ab)).filter(Boolean).sort((a, b) => new Date(a.date) - new Date(b.date));
+    SN.sch[k] = { at: Date.now(), list }; delete SN.busy[k]; return list;
+  }).catch(() => { SN.sch[k] = { at: Date.now(), list: [] }; delete SN.busy[k]; return SN.sch[k].list; });
+  return SN.busy[k];
+}
+const snGames = (ab, y) => SN.sch[`${ab}|${y}|${LG.key}`]?.list || null;
+const snFav = () => snGames(snTeam(), snY());
+const snRes = x => x.st !== 2 || x.ms == null ? "" : x.ms > x.os ? "W" : x.ms < x.os ? "L" : "T";
+const snScore = x => `${x.ms}-${x.os}`;
+function snRecOf(list) {
+  let w = 0, l = 0, t = 0, pf = 0, pa = 0;
+  list.forEach(x => { const r = snRes(x); if (!r) return; if (r === "W") w++; else if (r === "L") l++; else t++; pf += x.ms; pa += x.os; });
+  return { w, l, t, gp: w + l + t, txt: t ? `${w}-${l}-${t}` : `${w}-${l}`, pf, pa };
+}
+
+/* ---------- standings ---------- */
+function snLoadStand(y) {
+  if (SN.stand[y]) return Promise.resolve(SN.stand[y]);
+  const k = "st" + y + LG.key;
+  if (SN.busy[k]) return SN.busy[k];
+  SN.busy[k] = getJSON(`https://site.api.espn.com/apis/v2/sports/${LG.path}/standings?level=3&season=${y}`).then(d => {
+    const out = {};
+    const walk = n => { if (!n) return; (n.standings?.entries || []).forEach(e => {
+      const ab = e.team?.abbreviation; if (!ab) return;
+      const g = nm => { const s = (e.stats || []).find(x => x.name === nm); return s ? (+s.value || 0) : 0; };
+      const d2 = nm => { const s = (e.stats || []).find(x => x.name === nm); return s ? (s.displayValue || "") : ""; };
+      out[ab] = { ab, w:g("wins"), l:g("losses"), t:g("ties"), pf:g("pointsFor"), pa:g("pointsAgainst"),
+        pct:g("winPercent"), seed:g("playoffSeed"), streak:d2("streak"), home:d2("Home"), road:d2("Road"), div:d2("vs. Div.") };
+    }); (n.children || []).forEach(walk); };
+    walk(d);
+    SN.stand[y] = out; delete SN.busy[k]; return out;
+  }).catch(() => { SN.stand[y] = {}; delete SN.busy[k]; return SN.stand[y]; });
+  return SN.busy[k];
+}
+function snRec(ab) {
+  const y = snPrev() ? snSeason() - 1 : snSeason();
+  const st = SN.stand[y];
+  if (st && st[ab]) return st[ab];
+  const gs = snGames(ab, y);
+  if (gs) { const r = snRecOf(gs); return { ab, w:r.w, l:r.l, t:r.t, pf:r.pf, pa:r.pa, pct:r.gp ? (r.w + r.t/2)/r.gp : 0, seed:0, streak:"", home:"", road:"", div:"" }; }
+  return { ab, w:0, l:0, t:0, pf:0, pa:0, pct:0, seed:0, streak:"", home:"", road:"", div:"" };
+}
+const snDivOf = ab => (divOf(ab) || ["?", []])[0];
+const snConfOf = ab => snDivOf(ab).slice(0, 3);
+const snAllTeams = () => LG.key === "nfl" ? DIVS.flatMap(d => d[1]) : Object.keys(CT);
+const snOrder = list => list.slice().sort((a, b) => { const x = snRec(a), z = snRec(b); return (z.pct - x.pct) || (z.w - x.w) || (a < b ? -1 : 1); });
+
+/* ---------- team stats ---------- */
+function snLoadByt(y) {
+  if (SN.byt[y]) return Promise.resolve(SN.byt[y]);
+  const k = "byt" + y + LG.key;
+  if (SN.busy[k]) return SN.busy[k];
+  SN.busy[k] = getJSON(SNW(`statistics/byteam?season=${y}&seasontype=2&limit=40`)).then(x => {
+    const names = {}; (x.categories || []).forEach(c => { if (c.names?.length) names[c.name] = c.names; });
+    const out = {};
+    (x.teams || []).forEach(t => {
+      const ab = t.team?.abbreviation; if (!ab) return;
+      const m = { own:{}, opp:{} };
+      (t.categories || []).forEach(c => { const nm = names[c.name]; if (!nm) return;
+        const side = /Opponent/i.test(c.displayName || "") ? "opp" : "own";
+        nm.forEach((n, i) => { if (c.values?.[i] != null) m[side][n] = +c.values[i]; }); });
+      out[ab] = m;
+    });
+    SN.byt[y] = out; delete SN.busy[k]; return out;
+  }).catch(() => { SN.byt[y] = {}; delete SN.busy[k]; return SN.byt[y]; });
+  return SN.busy[k];
+}
+function snBytRank(y, ab, side, key, low) {
+  const m = SN.byt[y]; if (!m || !m[ab]) return null;
+  const v = m[ab][side]?.[key]; if (v == null) return null;
+  let r = 1; Object.keys(m).forEach(k => { const o = m[k][side]?.[key]; if (o != null && (low ? o < v : o > v)) r++; });
+  return r;
+}
+
+/* ---------- roster stats ---------- */
+function snLoadRoster(y) {
+  const k = "r" + y + LG.key;
+  if (SN.roster[k] && (y < snSeason() || Date.now() - SN.roster[k].at < 10 * 60e3)) return Promise.resolve(SN.roster[k]);
+  if (SN.busy[k]) return SN.busy[k];
+  SN.busy[k] = getJSON(SNS(`teams/${snTid(snTeam())}/athletes/statistics${y === snSeason() ? "" : "?season=" + y}`)).then(x => {
+    const groups = {};
+    (x.results || []).forEach(r => {
+      groups[r.name] = (r.leaders || []).map(l => {
+        const a = l.athlete || {}, st = {};
+        (l.statistics || []).forEach(g => (g.stats || []).forEach(s => { if (!(s.name in st)) st[s.name] = s.displayValue; }));
+        return { id:String(a.id), name:a.displayName, short:a.shortName, pos:a.position?.abbreviation || "", st };
+      });
+    });
+    const out = { groups, y: x.requestedSeason?.year || y, at: Date.now() };
+    SN.roster[k] = out; delete SN.busy[k]; return out;
+  }).catch(() => { SN.roster[k] = { groups:{}, y, at: Date.now() }; delete SN.busy[k]; return SN.roster[k]; });
+  return SN.busy[k];
+}
+
+/* ---------- league leaders ---------- */
+const SN_LEADS = [
+  ["pyds","Passing yards","passing.passingYards"], ["ptd","Passing TD","passing.passingTouchdowns"],
+  ["ryds","Rushing yards","rushing.rushingYards"], ["rtd","Rushing TD","rushing.rushingTouchdowns"],
+  ["recy","Receiving yards","receiving.receivingYards"], ["rec","Receptions","receiving.receptions"],
+  ["rectd","Receiving TD","receiving.receivingTouchdowns"], ["sacks","Sacks","defensive.sacks"],
+  ["int","Interceptions","defensiveInterceptions.interceptions"], ["tkl","Tackles","defensive.totalTackles"],
+];
+const snLeadDef = k => SN_LEADS.find(x => x[0] === k) || SN_LEADS[0];
+function snLoadLead(k, y) {
+  const key = `${k}|${y}|${LG.key}`;
+  if (SN.lead[key]) return Promise.resolve(SN.lead[key]);
+  if (SN.busy[key]) return SN.busy[key];
+  const d = snLeadDef(k);
+  const go = yy => getJSON(SNW(`statistics/byathlete?limit=10&season=${yy}&seasontype=2&sort=${encodeURIComponent(d[2] + ":desc")}`)).then(x => {
+    const names = {}; (x.categories || []).forEach(c => { names[c.name] = c.names || []; });
+    return { y: yy, list: (x.athletes || []).map(z => {
+      const a = z.athlete || {}, st = {};
+      (z.categories || []).forEach(c => (names[c.name] || []).forEach((n, i) => { st[`${c.name}.${n}`] = c.values?.[i]; }));
+      return { id:String(a.id), name:a.displayName, pos:a.position?.abbreviation || "", ab:a.teamShortName || "", v: st[d[2]], gp: st["general.gamesPlayed"] };
+    })};
+  });
+  SN.busy[key] = go(y).then(r => (!r.list.length && y === snSeason()) ? go(y - 1) : r)
+    .then(r => { SN.lead[key] = r; delete SN.busy[key]; return r; })
+    .catch(() => { SN.lead[key] = { y, list: [] }; delete SN.busy[key]; return SN.lead[key]; });
+  return SN.busy[key];
+}
+
+/* ---------- render ---------- */
+const snCard = (title, body, extra, note) =>
+  `<div class="gcard"><div class="gh"><h3>${title}</h3>${extra || ""}${note ? `<span class="gn">${note}</span>` : ""}</div><div class="gb">${body}</div></div>`;
+function renderSeason() {
+  if (S.view !== "season") return;
+  const y = snY(), ab = snTeam();
+  snEl("snSea").innerHTML = ["cur","prev"].map(k => {
+    const yy = k === "cur" ? snSeason() : snSeason() - 1;
+    return `<button data-sea="${k}" class="${SN.sea === k ? "on" : ""}">${snLab(yy)}</button>`;
+  }).join("");
+  snEl("snTeamName").textContent = `${snName(ab)} · ${LG.label}`;
+  const need = [];
+  if (!snGames(ab, y)) need.push(snLoadSched(ab, y));
+  if (!SN.stand[y]) need.push(snLoadStand(y));
+  if (!SN.stand[snSeason() - 1]) need.push(snLoadStand(snSeason() - 1));
+  if (!SN.byt[y]) need.push(snLoadByt(y));
+  if (!SN.roster["r" + y + LG.key]) need.push(snLoadRoster(y));
+  if (!SN.lead[`${SN.leadCat}|${y}|${LG.key}`]) need.push(snLoadLead(SN.leadCat, y));
+  if (need.length) Promise.all(need).then(() => { if (S.view === "season") renderSeason(); });
+  [snPulse, snNext, snLast, snRib, snSplits, snChart, snWeeks, snToday, snH2H, snRoster, snLeaders, snLeague, snLog]
+    .forEach(f => { try { f(); } catch (e) { console.warn("season", f.name, e); } });
+}
+function snPulse() {
+  const ab = snTeam(), y = snY(), r = snRec(ab), gs = snFav() || [], done = gs.filter(x => x.st === 2);
+  const byt = SN.byt[y], o = byt?.[ab];
+  const cells = [];
+  const games = LG.weeks - 1;
+  const divTeams = LG.key === "nfl" ? (divOf(ab)?.[1] || [ab]) : [];
+  const dv = snOrder(divTeams), seed = r.seed || 0;
+  const conf = LG.key === "nfl" ? snOrder(snAllTeams().filter(t => snConfOf(t) === snConfOf(ab))) : [];
+  cells.push([r.t ? `${r.w}-${r.l}-${r.t}` : `${r.w}-${r.l}`, "Record", `${done.length} played`, "hero", "", "log:all"]);
+  cells.push([snPctTxt(r.w, r.l, r.t), "Win %", "", "", "gr", "lg:pct"]);
+  if (done.length) cells.push([`${Math.round((r.w + r.t/2) / done.length * games)}-${games - Math.round((r.w + r.t/2) / done.length * games)}`, "Pace", `over ${games}`, "", "", "chart"]);
+  if (LG.key === "nfl") {
+    cells.push([ordinalN(dv.indexOf(ab) + 1), snDivOf(ab), dv[0] === ab ? "leading" : `behind ${snName(dv[0])}`, "", "", "lg:pct"]);
+    if (seed) cells.push([ordinalN(seed), `${snConfOf(ab)} seed`, seed <= 7 ? "in the field" : "outside", "", seed <= 7 ? "up" : "", "#home"]);
+    else if (conf.length) cells.push([ordinalN(conf.indexOf(ab) + 1), `In the ${snConfOf(ab)}`, "by record", "", "", "lg:pct"]);
+  }
+  const gp = done.length || 1;
+  if (r.pf) cells.push([snFix(r.pf / gp), "Points / game", LG.key === "nfl" ? ordinalN(snRankOf("pf")) + " in the league" : "", "", "", "lg:pf"]);
+  if (r.pa) cells.push([snFix(r.pa / gp), "Allowed / game", LG.key === "nfl" ? ordinalN(snRankOf("pa", true)) + " in the league" : "", "", "", "lg:pa"]);
+  if (r.pf || r.pa) { const d = r.pf - r.pa; cells.push([(d > 0 ? "+" : "") + d, "Point diff", "", "", d > 0 ? "up" : d < 0 ? "dn" : "", "lg:diff"]); }
+  if (o) {
+    if (o.own.totalYardsPerGame != null) cells.push([snFix(o.own.totalYardsPerGame), "Yards / game", ordinalN(snBytRank(y, ab, "own", "totalYardsPerGame")) + " in the league", "", "", "lg:ypg"]);
+    if (o.opp?.totalYardsPerGame != null) cells.push([snFix(o.opp.totalYardsPerGame), "Yards allowed", ordinalN(snBytRank(y, ab, "opp", "totalYardsPerGame", true)) + " in the league", "", "", "lg:oypg"]);
+    if (o.own.thirdDownConvPct != null) cells.push([snFix(o.own.thirdDownConvPct) + "%", "Third downs", "", "", "", "lg:third"]);
+    if (o.own.turnOverDifferential != null) cells.push([(o.own.turnOverDifferential > 0 ? "+" : "") + o.own.turnOverDifferential, "Turnover margin", "", "", o.own.turnOverDifferential > 0 ? "up" : o.own.turnOverDifferential < 0 ? "dn" : "", "lg:to"]);
+  }
+  if (r.home) cells.push([r.home, "Home", "", "", "", "log:home"]);
+  if (r.road) cells.push([r.road, "Road", "", "", "", "log:road"]);
+  if (r.div) cells.push([r.div, "In the division", "", "", "", "log:div"]);
+  if (r.streak) cells.push([r.streak, "Streak", "", "", /^W|^\d+W/.test(r.streak) ? "up" : "dn", "rib"]);
+  const one = done.filter(x => Math.abs(x.ms - x.os) <= 8);
+  if (one.length) cells.push([snRecOf(one).txt, "One-score games", "", "", "", "log:one"]);
+  snEl("snPulse").innerHTML = cells.map(c =>
+    `<button data-snto="${esc(c[5])}" class="${c[3]}"><b class="${c[4]}">${esc(c[0])}</b><span>${esc(c[1])}</span>${c[2] ? `<em>${esc(c[2])}</em>` : ""}</button>`).join("");
+}
+const ordinalN = n => { if (!n) return "-"; const s = ["th","st","nd","rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+function snRankOf(key, low) {
+  const y = snPrev() ? snSeason() - 1 : snSeason(), st = SN.stand[y]; if (!st) return 0;
+  const me = st[snTeam()]; if (!me) return 0;
+  let r = 1; Object.values(st).forEach(x => { if (low ? x[key] < me[key] : x[key] > me[key]) r++; });
+  return r;
+}
+function snWinP(opp, home) {
+  const a = snRec(snTeam()), b = snRec(opp);
+  const pa = (a.w + a.t/2 + 4) / (a.w + a.l + a.t + 8), pb = (b.w + b.t/2 + 4) / (b.w + b.l + b.t + 8);
+  let p = pa * (1 - pb) / (pa * (1 - pb) + pb * (1 - pa));
+  p = p + (home ? 0.05 : -0.05);
+  return Math.min(0.92, Math.max(0.08, p));
+}
+const snWkRow = x => {
+  const r = snRes(x);
+  const right = x.st === 2 ? `<b class="${r}">${r}</b> ${snScore(x)}`
+    : x.st === 1 ? `<b style="color:var(--live)">Live</b> ${snScore(x)}`
+    : fmtCT(x.date, { hour:"numeric", minute:"2-digit" });
+  return `<li data-gid="${x.id}"><span class="d">Wk ${x.wk || ""}</span><span class="va">${x.home ? "vs" : "@"}</span>${snImg(x.opp)}<span class="o">${esc(snName(x.opp))}</span><span class="r">${right}</span></li>`;
+};
+function snNext() {
+  const gs = snFav();
+  if (!gs) { snEl("snNext").innerHTML = snCard("Next up", `<div class="empty">Loading the schedule</div>`); return; }
+  const up = gs.filter(x => x.st !== 2);
+  if (snPrev() || !up.length) {
+    const rr = snRecOf(gs);
+    snEl("snNext").innerHTML = snCard("Season in a box",
+      `<div class="nx" data-snto="log:all">${snImg(snTeam())}<div><div class="t">${rr.txt}</div><div class="s">${rr.gp ? `${snFix(rr.pf / rr.gp)} scored, ${snFix(rr.pa / rr.gp)} allowed per game` : ""}</div></div></div>
+       <div class="sn-note">Tap any game in the season grid for the full breakdown.</div>`);
+    return;
+  }
+  const nx = up[0], live = nx.st === 1, o = snRec(nx.opp), p = snWinP(nx.opp, nx.home);
+  const head = `<div class="nx" data-gid="${nx.id}">${snImg(nx.opp)}<div style="min-width:0">
+      <div class="t"><small>${nx.home ? "vs" : "at"}</small>${esc(snName(nx.opp))}</div>
+      <div class="s">${live ? `<b style="color:var(--live)">Live ${snScore(nx)}</b>` : `${fmtCT(nx.date, { weekday:"short", month:"short", day:"numeric" })} · ${fmtCT(nx.date, { hour:"numeric", minute:"2-digit" })}`}${nx.tv ? ` · ${esc(nx.tv)}` : ""}</div>
+      <div class="s">${o.w + o.l ? `${o.w}-${o.l}${o.t ? "-" + o.t : ""}` : ""}${nx.venue ? ` · ${esc(nx.venue)}` : ""}</div></div>
+    <div class="w"><b>${Math.round(p * 100)}%</b><span>win chance</span></div></div>`;
+  snEl("snNext").innerHTML = snCard(live ? "Right now" : "Next up", head + `<ul class="snwk">${up.slice(1, 6).map(snWkRow).join("")}</ul>`);
+}
+function snLast() {
+  const gs = snFav(); if (!gs) { snEl("snLast").innerHTML = ""; return; }
+  const done = gs.filter(x => x.st === 2);
+  if (!done.length) { snEl("snLast").innerHTML = ""; return; }
+  const l = done[done.length - 1], r = snRes(l);
+  snEl("snLast").innerHTML = snCard(snPrev() || !gs.some(x => x.st !== 2) ? "Last game" : "Last result",
+    `<div class="lr" data-gid="${l.id}"><span class="sc ${r}">${r} ${snScore(l)}</span>${snImg(l.opp)}
+      <div class="m"><b>${l.home ? "vs " : "at "}${esc(snName(l.opp))}</b><br>${fmtCT(l.date, { weekday:"short", month:"short", day:"numeric" })}${l.ot ? " · OT" : ""} · breakdown &rsaquo;</div></div>
+     <ul class="snwk" style="margin-top:8px">${done.slice(-5, -1).reverse().map(snWkRow).join("")}</ul>`);
+}
+function snRib() {
+  const gs = snFav(); if (!gs) { snEl("snRib").innerHTML = ""; return; }
+  const nextId = (gs.find(x => x.st !== 2) || {}).id;
+  const html = gs.map(x => {
+    const r = snRes(x);
+    return `<i class="${r}${x.id === nextId ? " nx" : ""}${x.home ? " h" : ""}" data-gid="${x.id}" title="${esc(`Wk ${x.wk || ""} ${x.home ? "vs " : "@ "}${x.opp}${r ? ` ${r} ${snScore(x)}` : ""}`)}"></i>`;
+  }).join("");
+  const rr = snRecOf(gs);
+  let run = 0, best = 0, lrun = 0, worst = 0;
+  gs.forEach(x => { const r = snRes(x); if (!r) return; if (r === "W") { run++; lrun = 0; } else if (r === "L") { lrun++; run = 0; } best = Math.max(best, run); worst = Math.max(worst, lrun); });
+  snEl("snRib").innerHTML = snCard(`All ${gs.length}`,
+    `<div class="rib">${html}</div>
+     <div class="ribk"><span><i style="background:var(--good)"></i>Win</span><span><i style="background:var(--bad)"></i>Loss</span><span><i style="background:#1d222c"></i>To play</span><span>Notch = home</span></div>
+     ${rr.gp ? `<div class="sn-note" style="margin-top:6px">Longest win streak <b style="color:var(--ink)">${best}</b> · longest skid <b style="color:var(--ink)">${worst}</b></div>` : ""}`,
+    "", rr.gp ? rr.txt : "");
+}
+const SN_SPLITS = [
+  ["grp","Where"], ["home","Home", x => x.home], ["road","Road", x => !x.home],
+  ["grp","Who"], ["div","In the division", x => LG.key === "nfl" && snDivOf(x.opp) === snDivOf(snTeam())],
+  ["conf","In the conference", x => LG.key === "nfl" && snConfOf(x.opp) === snConfOf(snTeam()) && snDivOf(x.opp) !== snDivOf(snTeam())],
+  ["inter","Out of conference", x => LG.key === "nfl" && snConfOf(x.opp) !== snConfOf(snTeam())],
+  ["winners","Winning teams", x => { const r = snRec(x.opp); return r.w > r.l; }],
+  ["grp","How"], ["one","One score or less", x => x.st === 2 && Math.abs(x.ms - x.os) <= 8],
+  ["blow","Decided by 17+", x => x.st === 2 && Math.abs(x.ms - x.os) >= 17],
+  ["ot","Overtime", x => x.ot], ["twenty","Scored 27+", x => x.st === 2 && x.ms >= 27],
+];
+const snSplitFn = k => { if (!k || k === "all") return () => true; const s = SN_SPLITS.find(x => x[0] === k); return s ? s[2] : () => true; };
+const snSplitName = k => { const s = SN_SPLITS.find(x => x[0] === k); return s ? s[1] : "All games"; };
+function snSplits() {
+  const gs = snFav(); if (!gs) { snEl("snSplits").innerHTML = ""; return; }
+  const done = gs.filter(x => x.st === 2);
+  if (!done.length) { snEl("snSplits").innerHTML = snCard("Splits", `<div class="empty">Splits fill in once games count. Flip to ${snSeason() - 1} for last year's.</div>`); return; }
+  const row = (k, label, list) => { const r = snRecOf(list);
+    return `<tr data-split="${k}" class="${SN.split === k ? "on" : ""}"><td>${esc(label)}</td><td>${r.gp}</td><td><b>${r.txt}</b></td><td>${snPctTxt(r.w, r.l, r.t)}</td><td>${snFix(r.pf / r.gp)}</td><td>${snFix(r.pa / r.gp)}</td></tr>`; };
+  let html = "";
+  SN_SPLITS.forEach(s => {
+    if (s[0] === "grp") { html += `<tr class="grp"><td colspan="6">${s[1]}</td></tr>`; return; }
+    const l = done.filter(s[2]); if (l.length) html += row(s[0], s[1], l);
+  });
+  snEl("snSplits").innerHTML = snCard("Splits",
+    `<div class="scroll"><table class="spl"><tr><th></th><th>G</th><th>Record</th><th>PCT</th><th>PF</th><th>PA</th></tr>${html}</table></div>
+     <div class="sn-note" style="margin-top:6px">Tap a row to filter the game log.</div>`);
+}
+/* the race: games over .500 by game played */
+function snSeries(ab, y) {
+  const l = snGames(ab, y); if (!l) return null;
+  const a = [0];
+  l.filter(x => x.st === 2).forEach(x => { const r = snRes(x); a.push(a[a.length - 1] + (r === "W" ? 1 : r === "L" ? -1 : 0)); });
+  return a;
+}
+function snChart() {
+  if (LG.key !== "nfl") { snEl("snChart").innerHTML = ""; return; }
+  const ab = snTeam(), y = snY(), live = y === snSeason(), cy = y;
+  const div = divOf(ab)?.[1] || [ab];
+  if (SN.onKey !== `${cy}|${LG.key}`) { SN.onKey = `${cy}|${LG.key}`; SN.on = {}; div.forEach(t => SN.on[t] = 1); }
+  const want = Object.keys(SN.on), ser = {}, miss = [];
+  want.forEach(t => { const s = snSeries(t, cy); if (s) ser[t] = s; else miss.push(t); });
+  if (miss.length) Promise.all(miss.map(t => snLoadSched(t, cy))).then(() => { if (S.view === "season") snChart(); });
+  // last season's 7th seed sets the playoff pace line
+  const pst = SN.stand[snSeason() - 1];
+  let cut = null;
+  if (pst) { const c = Object.values(pst).filter(x => snConfOf(x.ab) === snConfOf(ab)).sort((a, b) => b.pct - a.pct); cut = c[6] || null; }
+  const W = 560, H = 260, L = 30, T = 10, B = 24, R = 34, NG = LG.weeks - 1;
+  const maxX = Math.min(NG, Math.max(6, Math.max(...want.map(t => (ser[t] || [0]).length - 1)) + 2));
+  let lim = 4;
+  want.forEach(t => (ser[t] || []).forEach(v => { lim = Math.max(lim, Math.abs(v)); }));
+  if (cut) lim = Math.max(lim, Math.abs((cut.w - cut.l) / NG * maxX));
+  lim = Math.ceil(lim / 2) * 2;
+  const X = n => L + n / maxX * (W - L - R), Y = v => T + (lim - v) / (2 * lim) * (H - B - T);
+  let g = "";
+  for (let v = -lim; v <= lim; v += 2) g += `<line class="gl" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"${v === 0 ? ' style="stroke:#3a4353"' : ""}/><text class="ax" x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${v > 0 ? "+" : ""}${v}</text>`;
+  for (let n = 0; n <= maxX; n += 2) g += `<text class="ax" x="${X(n)}" y="${H - 8}" text-anchor="middle">${n}</text>`;
+  g += `<text class="ax" x="${W - R}" y="${H - 8}" text-anchor="end">G</text>`;
+  if (cut) { const e = (cut.w - cut.l) / NG * maxX; g += `<line class="pl" x1="${X(0)}" y1="${Y(0)}" x2="${X(maxX)}" y2="${Y(e)}"/><text class="ax" x="${X(maxX) + 3}" y="${Y(e) + 3}">7th</text>`; }
+  const cols = {}; let paths = "";
+  want.sort((a, b) => a === ab ? 1 : b === ab ? -1 : 0).forEach(t => {
+    const a = ser[t]; if (!a || a.length < 2) return;
+    const c = t === ab ? "#5b9cff" : chartColor(t); cols[t] = c;
+    paths += `<path d="${a.map((v, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1)).join("")}" fill="none" stroke="${c}" stroke-width="${t === ab ? 3 : 1.6}" stroke-linejoin="round" opacity="${t === ab ? 1 : .85}"/>`;
+    paths += `<text x="${X(a.length - 1) + 3}" y="${Y(a[a.length - 1]) + 3}" style="font:700 9px var(--body)" fill="${c}">${esc(t)}</text>`;
+  });
+  SN.chart = { ser, want, maxX, L, W, R, cols, cut };
+  const svg = `<svg viewBox="0 0 ${W} ${H}" id="snSvg">${g}${paths}<line class="cur" id="snCur" x1="0" x2="0" y1="${T}" y2="${H - B}" style="display:none"/></svg>`;
+  const chips = `<div class="chips">${div.map(t => `<button data-chart="${t}" class="${SN.on[t] ? "on" : ""}"><i style="background:${t === ab ? "#5b9cff" : chartColor(t)}"></i>${snImg(t)}${esc(t)}</button>`).join("")}
+    <select data-chadd aria-label="Add a team"><option value="">+ add a team</option>${snAllTeams().filter(t => !div.includes(t)).sort().map(t => `<option value="${t}">${esc(t)}</option>`).join("")}</select></div>`;
+  snEl("snChart").innerHTML = snCard("The race", chips +
+    `<div class="chw" id="snChw">${svg}<div class="chtip" id="snTip"></div></div>
+     ${miss.length ? `<div class="sn-note">Loading ${miss.join(", ")}</div>` : ""}
+     <div class="sn-note" style="margin-top:4px">Games over .500 by game played. Dashed line: last year's seventh seed pace in the ${snConfOf(ab)}.</div>`, "", live ? "" : String(cy));
+}
+function snHover(ev) {
+  const c = SN.chart, svg = snEl("snSvg"), tip = snEl("snTip"); if (!c || !svg || !tip) return;
+  const b = svg.getBoundingClientRect(), sx = (ev.clientX - b.left) / b.width * c.W;
+  const n = Math.round((sx - c.L) / (c.W - c.L - c.R) * c.maxX);
+  if (n < 1 || n > c.maxX) { tip.style.display = "none"; snEl("snCur").style.display = "none"; return; }
+  const rows = c.want.filter(t => c.ser[t]?.[n] != null).sort((a, b2) => c.ser[b2][n] - c.ser[a][n]);
+  if (!rows.length) { tip.style.display = "none"; return; }
+  const x = c.L + n / c.maxX * (c.W - c.L - c.R), cl = snEl("snCur");
+  cl.style.display = ""; cl.setAttribute("x1", x); cl.setAttribute("x2", x);
+  const wl = v => `${(n + v) / 2}-${n - (n + v) / 2}`;
+  tip.innerHTML = `<b>After game ${n}</b>` + rows.map(t => `<div><span style="color:${c.cols[t]}">${esc(t)}</span><span>${wl(c.ser[t][n])}</span></div>`).join("");
+  tip.style.display = "block";
+  const w = snEl("snChw").getBoundingClientRect();
+  let px = ev.clientX - w.left + 14; if (px > w.width - 150) px -= 170;
+  tip.style.left = px + "px"; tip.style.top = Math.max(0, ev.clientY - w.top - 20) + "px";
+}
+/* the season grid: one tile per week */
+function snWeeks() {
+  const gs = snFav(); if (!gs) { snEl("snWeeks").innerHTML = snCard("The season", `<div class="empty">Loading the schedule</div>`); return; }
+  const byWk = {}; gs.forEach(x => { if (x.wk) byWk[x.wk] = x; });
+  const weeks = LG.weeks;
+  let cells = "";
+  for (let w = 1; w <= weeks; w++) {
+    const x = byWk[w];
+    if (!x) { cells += `<div class="wkc bye"><span class="n">Week ${w}</span><div class="op">Bye</div></div>`; continue; }
+    const r = snRes(x);
+    const line = x.st === 2 ? `<b>${r}</b> ${snScore(x)}` : x.st === 1 ? `<b style="color:var(--live)">LIVE</b> ${snScore(x)}`
+      : fmtCT(x.date, { weekday:"short" }) + " " + fmtCT(x.date, { hour:"numeric", minute:"2-digit" });
+    cells += `<div class="wkc gm${x.home ? " hm" : ""}${r ? " " + r : ""}${x.st === 1 ? " lv" : ""}" data-gid="${x.id}" title="${esc((x.home ? "vs " : "at ") + snName(x.opp) + (x.venue ? ", " + x.venue : ""))}">
+      <span class="n">Week ${w}</span><div class="op"><i>${x.home ? "vs" : "@"}</i>${snImg(x.opp)}<span>${esc(x.opp)}</span></div><div class="rs">${line}</div></div>`;
+  }
+  const rr = snRecOf(gs), hm = gs.filter(x => x.home).length;
+  snEl("snWeeks").innerHTML = `<div class="gcard"><div class="gh"><h3>The season</h3><span class="gn">${gs.length} games · ${hm} home, ${gs.length - hm} road${rr.gp ? ` · ${rr.txt}` : ""}</span></div>
+    <div class="gb"><div class="wkgrid">${cells}</div><div class="sn-note" style="margin-top:8px">Blue tint = home. Tap a week for the game.</div></div></div>`;
+}
+function snToday() {
+  const list = (S.events || []).slice().sort((a, b) => (b.live ? 1 : 0) - (a.live ? 1 : 0) || new Date(a.date) - new Date(b.date));
+  const body = !list.length ? `<div class="empty">No games on the board right now. The Schedule tab has the week.</div>`
+    : `<div class="tni">${list.slice(0, 16).map(g => {
+        const fav = g.home === toEspn(snTeam()) || g.away === toEspn(snTeam());
+        const txt = g.state === "post" ? "Final" : g.live ? `${ordinal(g.period)} ${g.clock || ""}` : fmtCT(g.date, { weekday:"short", hour:"numeric", minute:"2-digit" });
+        const p = ab2 => `<p>${snImg(ab2)}<b>${esc(ab2)}</b><span>${g.state === "pre" ? "" : (ab2 === g.home ? g.hs : g.as)}</span></p>`;
+        return `<div data-gid="${g.id}" class="${fav ? "fav" : ""}${g.live ? " lv" : ""}"><em>${esc(txt)}</em>${p(g.away)}${p(g.home)}</div>`;
+      }).join("")}</div>`;
+  snEl("snToday").innerHTML = snCard("Around the league", body, "", `<a href="#scores" style="color:var(--accent)">scoreboard &rsaquo;</a>`);
+}
+function snH2H() {
+  if (LG.key !== "nfl") { snEl("snH2H").innerHTML = ""; return; }
+  const ab = snTeam(), y = snY(), gs = snFav(); if (!gs) { snEl("snH2H").innerHTML = ""; return; }
+  const by = {}; gs.forEach(x => { (by[x.opp] = by[x.opp] || []).push(x); });
+  const ids = Object.keys(by).sort((a, b) => {
+    const da = snDivOf(a) === snDivOf(ab), db = snDivOf(b) === snDivOf(ab);
+    return (db ? 1 : 0) - (da ? 1 : 0) || by[b].length - by[a].length || (a < b ? -1 : 1);
+  });
+  snEl("snH2H").innerHTML = snCard("Opponents",
+    `<div class="h2h">${ids.map(t => {
+      const l = by[t], r = snRecOf(l), left = l.filter(x => x.st !== 2).length;
+      return `<div data-team="${t}" class="${r.gp ? (r.w > r.l ? "up" : r.w < r.l ? "dn" : "") : ""}${snDivOf(t) === snDivOf(ab) ? " dv" : ""}">${snImg(t)}
+        <div style="min-width:0"><b>${esc(t)}</b><span>${r.gp ? r.txt : ""}${left ? `${r.gp ? " · " : ""}${left} left` : ""}</span></div></div>`;
+    }).join("")}</div>`, "", "season series, division first");
+}
+const SN_RCOLS = {
+  passing: [["completions","CMP"],["passingAttempts","ATT"],["completionPct","PCT"],["passingYards","YDS"],["yardsPerPassAttempt","Y/A"],["passingTouchdowns","TD"],["interceptions","INT"],["QBRating","RTG"],["sacks","SCK",1]],
+  rushing: [["rushingAttempts","ATT"],["rushingYards","YDS"],["yardsPerRushAttempt","AVG"],["rushingTouchdowns","TD"],["longRushing","LNG"],["rushingFirstDowns","1ST"],["rushingFumbles","FUM",1]],
+  receiving: [["receptions","REC"],["receivingTargets","TGT"],["receivingYards","YDS"],["yardsPerReception","AVG"],["receivingTouchdowns","TD"],["longReception","LNG"],["receivingFirstDowns","1ST"]],
+  defensive: [["totalTackles","TCK"],["soloTackles","SOLO"],["sacks","SCK"],["tacklesForLoss","TFL"],["passesDefended","PD"],["QBHits","QBH"],["interceptions","INT"],["fumblesForced","FF"]],
+  kicking: [["fieldGoalsMade","FGM"],["fieldGoalAttempts","FGA"],["fieldGoalPct","PCT"],["longFieldGoalMade","LNG"],["extraPointsMade","XPM"],["totalKickingPoints","PTS"]],
+};
+const SN_RTABS = [["passing","Passing"],["rushing","Rushing"],["receiving","Receiving"],["defensive","Defense"],["kicking","Kicking"]];
+const snStv = (p, k) => { const v = parseFloat(String(p.st[k] ?? "").replace(/[^0-9.\-]/g, "")); return isNaN(v) ? -1e9 : v; };
+function snRoster() {
+  const y = snY(), ro = SN.roster["r" + y + LG.key], tab = SN.rtab;
+  const tabs = `<span class="gtab">${SN_RTABS.map(t => `<button data-rtab="${t[0]}" class="${tab === t[0] ? "on" : ""}">${t[1]}</button>`).join("")}</span>`;
+  if (!ro) { snEl("snRoster").innerHTML = snCard(`${snName(snTeam())} stats`, `<div class="empty">${SN.busy["r" + y + LG.key] ? "Loading player stats" : "No player stats yet."}</div>`, tabs); return; }
+  const cols = SN_RCOLS[tab] || SN_RCOLS.passing;
+  const list = (ro.groups[tab] || []).slice();
+  const def = { passing:"passingYards", rushing:"rushingYards", receiving:"receivingYards", defensive:"totalTackles", kicking:"totalKickingPoints" }[tab];
+  const so = SN.rsort[tab] || [def, -1], k = so[0], dir = so[1];
+  list.sort((a, b) => (snStv(b, k) - snStv(a, k)));
+  if (dir === 1) list.reverse();
+  const head = `<tr><th>Player</th>${cols.map(c => `<th data-rsort="${c[0]}" class="${c[0] === k ? "on" + (dir === 1 ? " asc" : "") : ""}">${c[1]}</th>`).join("")}</tr>`;
+  const rows = list.map(p => `<tr data-plid="${p.id}"><td><div class="pl"><img src="${SNHS(p.id)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><b>${esc(p.short || p.name)}</b><i>${esc(p.pos)}</i></div></td>${cols.map(c => `<td class="${c[0] === k ? "srt" : ""}">${esc(p.st[c[0]] ?? "-")}</td>`).join("")}</tr>`).join("");
+  snEl("snRoster").innerHTML = snCard(`${snName(snTeam())} stats`,
+    `<div class="scroll"><table class="rs">${head}${rows || `<tr><td colspan="9" class="empty">Nothing here yet.</td></tr>`}</table></div>
+     <div class="sn-note" style="margin-top:6px">Tap a column to sort, a player for his game log.</div>`, tabs, `${ro.y}${ro.y < snSeason() && !snPrev() ? " (last season)" : ""}`);
+}
+function snLeaders() {
+  const y = snY(), k = SN.leadCat, L = SN.lead[`${k}|${y}|${LG.key}`];
+  const chips = `<div class="chips">${SN_LEADS.map(c => `<button data-lead="${c[0]}" class="${c[0] === k ? "on" : ""}" style="padding-left:9px">${c[1]}</button>`).join("")}</div>`;
+  const body = !L ? `<div class="empty">${SN.busy[`${k}|${y}|${LG.key}`] ? "Loading leaders" : "Leaders not available right now."}</div>`
+    : `<ol class="ldr">${L.list.map((p, i) => `<li data-plid="${p.id}" class="${p.ab === toEspn(snTeam()) ? "fav" : ""}"><span class="k">${i + 1}</span>
+        <img class="h" src="${SNHS(p.id)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <div style="min-width:0"><b>${esc(p.name)}</b><span>${esc(p.pos)}${p.ab ? " · " + esc(p.ab) : ""}</span></div>
+        <span></span><em>${esc(p.v == null ? "-" : Math.round(p.v))}</em></li>`).join("")}</ol>`;
+  snEl("snLeaders").innerHTML = snCard(`${LG.label} leaders`, chips + body, "", L ? `${L.y}${L.y < snSeason() && !snPrev() ? " (last season)" : ""}` : "");
+}
+const SN_LG = [["pct","PCT"],["w","W"],["l","L",1],["pf","PF"],["pa","PA",1],["diff","DIFF"],["ppg","PF/G"],["papg","PA/G",1],["ypg","YDS/G"],["oypg","OPP YDS",1],["to","TO"],["streak","STRK"]];
+function snLgRow(ab, y) {
+  const r = snRec(ab), byt = SN.byt[y]?.[ab] || { own:{}, opp:{} };
+  const gp = (r.w + r.l + r.t) || 1;
+  const sk = String(r.streak || ""), sn = (parseInt(sk.replace(/\D/g, "")) || 0) * (/W/i.test(sk) ? 1 : -1);
+  return { ab, r, pct: r.pct || (r.w + r.t/2) / gp, w:r.w, l:r.l, pf:r.pf, pa:r.pa, diff:r.pf - r.pa, ppg:r.pf / gp, papg:r.pa / gp,
+    ypg: byt.own.totalYardsPerGame ?? null, oypg: byt.opp?.totalYardsPerGame ?? null, to: byt.own.turnOverDifferential ?? null,
+    streak: sn, streakt: sk || "-" };
+}
+function snLeague() {
+  if (LG.key !== "nfl") { snEl("snLeague").innerHTML = ""; return; }
+  const ab = snTeam(), y = snY(), f = SN.lgv.f, so = SN.lgv.sort, dir = SN.lgv.dir;
+  const tabs = `<span class="gtab">${[["div", snDivOf(ab)],["conf", snConfOf(ab)],["all","League"]].map(b => `<button data-lgf="${b[0]}" class="${f === b[0] ? "on" : ""}">${esc(b[1])}</button>`).join("")}</span>`;
+  let ids = snAllTeams();
+  if (f === "div") ids = divOf(ab)?.[1] || [ab];
+  else if (f === "conf") ids = ids.filter(t => snConfOf(t) === snConfOf(ab));
+  const rows = ids.map(t => snLgRow(t, y));
+  rows.sort((a, b) => { const x = a[so], z = b[so]; if (x == null) return 1; if (z == null) return -1; return (x - z) * dir || (b.pct - a.pct); });
+  const fmt = { pct:(v, x) => snPctTxt(x.w, x.l, x.r.t), diff:v => (v > 0 ? "+" : "") + v, ppg:v => snFix(v), papg:v => snFix(v),
+    ypg:v => v == null ? "-" : snFix(v), oypg:v => v == null ? "-" : snFix(v), to:v => v == null ? "-" : (v > 0 ? "+" : "") + v, streak:(v, x) => x.streakt };
+  const head = `<tr><th>#</th><th style="text-align:left">Team</th>${SN_LG.map(c => `<th data-lg="${c[0]}" class="${c[0] === so ? "on" + (dir === 1 ? " asc" : "") : ""}">${c[1]}</th>`).join("")}</tr>`;
+  const body = rows.map((x, i) => `<tr data-team="${x.ab}" class="${x.ab === ab ? "fav" : ""}"><td style="color:var(--dim)">${i + 1}</td>
+    <td style="text-align:left"><div class="pl lgo">${snImg(x.ab)}<b>${esc(snName(x.ab))}</b></div></td>
+    ${SN_LG.map(c => { const v = x[c[0]]; return `<td class="${c[0] === so ? "srt" : ""}">${esc(fmt[c[0]] ? fmt[c[0]](v, x) : (v == null ? "-" : v))}</td>`; }).join("")}</tr>`).join("");
+  snEl("snLeague").innerHTML = snCard("League at a glance", `<div class="scroll"><table class="rs"><thead>${head}</thead><tbody>${body}</tbody></table></div>`, tabs,
+    `${y}${y < snSeason() && !snPrev() ? " (last season)" : ""}`);
+}
+function snLog() {
+  const gs = snFav(); if (!gs) { snEl("snLog").innerHTML = ""; return; }
+  const k = SN.split || "all", fn = snSplitFn(k);
+  let list = gs.filter(fn);
+  const done = list.filter(x => x.st === 2);
+  let w = 0, l = 0, t = 0; const after = {};
+  gs.forEach(x => { const r = snRes(x); if (!r) return; if (r === "W") w++; else if (r === "L") l++; else t++; after[x.id] = t ? `${w}-${l}-${t}` : `${w}-${l}`; });
+  const show = SN.logAll ? list.slice().reverse() : (done.length ? done.slice(-12).reverse() : list.slice(0, 12));
+  const rows = show.map(x => { const r = snRes(x);
+    return `<tr data-gid="${x.id}"><td>Wk ${x.wk || ""}</td><td style="text-align:left"><div class="pl lgo"><i style="width:14px">${x.home ? "vs" : "@"}</i>${snImg(x.opp)}<b>${esc(x.opp)}</b></div></td>
+      <td class="${r}">${r || (x.st === 1 ? "LIVE" : fmtCT(x.date, { weekday:"short" }))}${x.ot && r ? " OT" : ""}</td><td>${x.st ? snScore(x) : ""}</td><td>${after[x.id] || ""}</td></tr>`; }).join("");
+  const rr = snRecOf(done);
+  const clear = k !== "all" ? ` <button class="lnk" data-split="all">clear filter</button>` : "";
+  const more = list.length > 12 ? `<button class="sn-more" data-logall>${SN.logAll ? "Show fewer" : `Show all ${list.length}`}</button>` : "";
+  snEl("snLog").innerHTML = snCard("Game log",
+    `<div class="sn-note" style="margin-bottom:4px">${esc(snSplitName(k))}${rr.gp ? `: ${rr.txt}` : ""}${clear}</div>
+     <div class="scroll"><table class="rs"><tr><th>Week</th><th style="text-align:left">Opponent</th><th>Result</th><th>Score</th><th>Record</th></tr>
+     ${rows || `<tr><td colspan="5" class="empty">No games in this split.</td></tr>`}</table></div>${more}`, "", done.length ? "newest first" : "upcoming");
+}
+
+/* ---------- player pop-up ---------- */
+function snOpenPlayer(id) {
+  if (!id) return;
+  SP.id = String(id); SP.mode = "l10";
+  snEl("snPmod").hidden = false; snEl("snPmod").querySelector(".sheet").scrollTop = 0;
+  snPlRender();
+  snLoadGL(SP.id, snY()).then(g => { if (g && !g.rows.length && snY() === snSeason()) return snLoadGL(SP.id, snSeason() - 1); }).then(snPlRender);
+}
+function snClosePlayer() { SP.id = null; snEl("snPmod").hidden = true; }
+function snLoadGL(id, y) {
+  const k = `${id}|${y}|${LG.key}`;
+  if (SP.gl[k]) return Promise.resolve(SP.gl[k]);
+  return getJSON(SNW(`athletes/${id}/gamelog?season=${y}`)).then(x => {
+    const names = x.names || [], labels = x.labels || [], evs = x.events || {}, rows = [];
+    let team = null;
+    (x.seasonTypes || []).forEach(s => {
+      if (!/Regular Season$/i.test(s.displayName || "")) return;
+      (s.categories || []).forEach(c => (c.events || []).forEach(e => {
+        const m = evs[e.eventId] || {}, o = {};
+        names.forEach((n, i) => { o[n] = (e.stats || [])[i]; });
+        if (!team && m.team?.abbreviation) team = m.team.abbreviation;
+        rows.push({ id:String(e.eventId), date:m.gameDate, at:m.atVs || "", opp:m.opponent?.abbreviation || "", score:m.score || "", res:m.gameResult || "", wk:m.week || null, st:o });
+      }));
+    });
+    rows.sort((a, b) => new Date(a.date) - new Date(b.date));
+    SP.gl[k] = { rows, names, labels, y, team };
+    return SP.gl[k];
+  }).catch(() => { SP.gl[k] = { rows:[], names:[], labels:[], y, team:null }; return SP.gl[k]; });
+}
+function snPlInfo(id) {
+  let hit = null;
+  Object.values(SN.roster).forEach(r => { if (!r?.groups) return; Object.values(r.groups).forEach(list => list.forEach(p => { if (p.id === id && !hit) hit = { name:p.name, pos:p.pos, ab:snTeam() }; })); });
+  Object.values(SN.lead).forEach(r => { if (!r?.list) return; r.list.forEach(p => { if (p.id === id && !hit) hit = { name:p.name, pos:p.pos, ab:p.ab }; }); });
+  return hit || {};
+}
+function snPlRender() {
+  const id = SP.id; if (!id) return;
+  let g = SP.gl[`${id}|${snY()}|${LG.key}`];
+  const prevG = SP.gl[`${id}|${snSeason() - 1}|${LG.key}`];
+  if (g && !g.rows.length && prevG?.rows.length) g = prevG;
+  const info = snPlInfo(id);
+  const name = info.name || SP.nm[id] || "Player";
+  const tAb = info.ab || g?.team || "";
+  let h = `<div class="pmh"><img class="hs" src="${SNHS(id)}" alt="" onerror="this.style.visibility='hidden'">
+    <div style="min-width:0"><h2>${esc(name)}</h2><div class="sub">${esc(info.pos || "")}${tAb ? ` ${snImg(tAb)}<a data-team="${tAb}">${esc(snName(tAb))}</a>` : ""}</div></div>
+    <button class="btn" type="button" data-plclose style="margin-left:auto">Close</button></div>`;
+  if (!g) h += `<div class="tmc"><h3>Game log</h3><div class="empty">Loading the game log</div></div>`;
+  else if (!g.rows.length) h += `<div class="tmc"><h3>Game log</h3><div class="empty">No regular-season games logged yet.</div></div>`;
+  else {
+    const pick = ["receivingYards","rushingYards","passingYards","totalTackles","fieldGoalsMade"].find(n => g.names.includes(n)) || g.names[0];
+    const num = v => { const n = parseFloat(String(v ?? "").replace(/[^0-9.\-]/g, "")); return isNaN(n) ? 0 : n; };
+    const mx = Math.max(1, ...g.rows.map(r => num(r.st[pick])));
+    const bars = `<div class="pbars">${g.rows.map(r => { const v = num(r.st[pick]);
+      return `<i data-gid="${r.id}" class="${v ? "p" : "z"}" style="height:${v / mx * 100}%" title="${esc(`${r.at} ${r.opp}: ${v} ${pick}`)}"></i>`; }).join("")}</div>
+      <div class="pbk"><span>Week ${g.rows[0].wk || 1}</span><span>${esc(g.labels[g.names.indexOf(pick)] || pick)} per game, tap a bar</span><span>Week ${g.rows[g.rows.length - 1].wk || g.rows.length}</span></div>`;
+    const idx = g.names.map((n, i) => i).slice(0, 12);
+    const list = SP.mode === "l10" ? g.rows.slice(-10).reverse() : g.rows.slice().reverse();
+    const seg = `<span class="tseg"><button data-plm="l10" class="${SP.mode === "l10" ? "on" : ""}">Last 10</button><button data-plm="all" class="${SP.mode === "all" ? "on" : ""}">All ${g.rows.length}</button></span>`;
+    h += `<div class="tmc"><h3>Game log ${g.y}${seg}</h3>${bars}
+      <div class="scroll" style="margin-top:8px"><table class="rs"><tr><th>Wk</th><th style="text-align:left">Opp</th><th>Result</th>${idx.map(i => `<th style="cursor:default">${esc(g.labels[i] || g.names[i])}</th>`).join("")}</tr>
+      ${list.map(r => `<tr data-gid="${r.id}"><td>${r.wk || ""}</td><td style="text-align:left"><div class="pl lgo"><i style="width:14px">${esc(r.at)}</i>${r.opp ? snImg(r.opp) : ""}<b>${esc(r.opp)}</b></div></td>
+        <td class="${r.res === "W" ? "W" : r.res === "L" ? "L" : ""}">${esc(`${r.res} ${r.score}`)}</td>${idx.map(i => `<td>${esc(r.st[g.names[i]] ?? "")}</td>`).join("")}</tr>`).join("")}</table></div></div>`;
+  }
+  snEl("snPmBody").innerHTML = h;
+}
+
+/* ---------- wiring ---------- */
+function snScroll(id) { const e = snEl(id); if (e) window.scrollTo({ top: e.getBoundingClientRect().top + window.scrollY - 70, behavior:"smooth" }); }
+function snGo(to) {
+  if (!to) return;
+  if (to[0] === "#") { location.hash = to; return; }
+  const [a, b] = to.split(":");
+  if (a === "log") { SN.split = b === "all" ? null : b; renderSeason(); snScroll("snLog"); return; }
+  if (a === "lg") { const m = { pct:"pct", diff:"diff", pf:"ppg", pa:"papg", ypg:"ypg", oypg:"oypg", to:"to", third:"ypg" };
+    SN.lgv.sort = m[b] || "pct"; SN.lgv.dir = (SN_LG.find(c => c[0] === SN.lgv.sort) || [])[2] ? 1 : -1; SN.lgv.f = "all"; renderSeason(); snScroll("snLeague"); return; }
+  snScroll({ rib:"snRib", chart:"snChart", cal:"snWeeks" }[a] || "snPulse");
+}
+function snClick(e) {
+  const t = e.target; let b;
+  if (t.closest("[data-plclose]") || t === snEl("snPmod")) { snClosePlayer(); return true; }
+  if ((b = t.closest("[data-plm]"))) { SP.mode = b.dataset.plm; snPlRender(); return true; }
+  if ((b = t.closest("#snPmod [data-team]"))) { const ab = b.dataset.team; snClosePlayer(); openTeam(ab); return true; }
+  if ((b = t.closest("#snPmod [data-gid]"))) { const id = b.dataset.gid; snClosePlayer(); openGame(id); return true; }
+  if ((b = t.closest("[data-plid]"))) { const nm = b.querySelector("b"); if (nm) SP.nm[b.dataset.plid] = nm.textContent; snOpenPlayer(b.dataset.plid); return true; }
+  if ((b = t.closest("[data-sea]"))) { SN.sea = b.dataset.sea; SN.split = null; SN.onKey = ""; renderSeason(); return true; }
+  if ((b = t.closest("[data-snto]"))) { snGo(b.dataset.snto); return true; }
+  if ((b = t.closest("[data-split]"))) { const k = b.dataset.split; SN.split = (k === "all" || SN.split === k) ? null : k; SN.logAll = false; snSplits(); snLog(); if (SN.split && innerWidth < 1180) snScroll("snLog"); return true; }
+  if (t.closest("[data-logall]")) { SN.logAll = !SN.logAll; snLog(); return true; }
+  if ((b = t.closest("[data-chart]"))) { const ab = b.dataset.chart; if (SN.on[ab] && ab !== snTeam()) delete SN.on[ab]; else SN.on[ab] = 1; snChart(); return true; }
+  if ((b = t.closest("[data-rtab]"))) { SN.rtab = b.dataset.rtab; snRoster(); return true; }
+  if ((b = t.closest("[data-rsort]"))) { const k = b.dataset.rsort, cur = SN.rsort[SN.rtab], low = (SN_RCOLS[SN.rtab] || []).find(c => c[0] === k)?.[2];
+    SN.rsort[SN.rtab] = cur && cur[0] === k ? [k, -cur[1]] : [k, low ? 1 : -1]; snRoster(); return true; }
+  if ((b = t.closest("[data-lead]"))) { SN.leadCat = b.dataset.lead; snLeaders(); snLoadLead(SN.leadCat, snY()).then(snLeaders); return true; }
+  if ((b = t.closest("[data-lg]"))) { const k = b.dataset.lg, low = (SN_LG.find(c => c[0] === k) || [])[2];
+    if (SN.lgv.sort === k) SN.lgv.dir = -SN.lgv.dir; else { SN.lgv.sort = k; SN.lgv.dir = low ? 1 : -1; } snLeague(); return true; }
+  if ((b = t.closest("[data-lgf]"))) { SN.lgv.f = b.dataset.lgf; snLeague(); return true; }
+  if (S.view === "season") {
+    if ((b = t.closest("#view-season [data-gid]"))) { openGame(b.dataset.gid); return true; }
+    if ((b = t.closest("#view-season [data-team]"))) { openTeam(b.dataset.team); return true; }
+  }
+  return false;
+}
+document.addEventListener("click", e => { if (snClick(e)) { e.stopPropagation(); e.preventDefault(); } }, true);
+document.addEventListener("change", e => { const s = e.target.closest?.("[data-chadd]"); if (!s || !s.value) return; const ab = s.value; if (SN.on[ab]) delete SN.on[ab]; else SN.on[ab] = 1; snChart(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && SP.id) { e.stopImmediatePropagation(); snClosePlayer(); } }, true);
+document.addEventListener("mousemove", e => {
+  if (S.view === "season" && e.target.closest?.("#snChw")) snHover(e);
+  else { const tp = snEl("snTip"); if (tp && tp.style.display === "block") { tp.style.display = "none"; const c = snEl("snCur"); if (c) c.style.display = "none"; } }
+});
+/* the board takes over when something is live and the person has not picked a tab */
+function snAutoRoute() {
+  if (SN.autoRouted || location.hash) return;
+  SN.autoRouted = true;
+  if ((S.events || []).some(g => g.live)) location.replace("#scores");
+}
+
 route(); tick(); setInterval(tick, 1000);
 espnLoop(); if (LG.fantasy) sleeperLoop();
 </script>
