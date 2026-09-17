@@ -949,18 +949,6 @@
   :is(#view-season) .wkc.bye .op { color: var(--muted); font-size: 12px; }
   #snPmod .sheet { max-width: 720px; }
   :is(#view-season, #snPmod) .snab { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; font: 700 10px var(--display); letter-spacing: .04em; color: #fff; flex: none; }
-  @media (max-width: 640px) {
-    :is(#view-season) .wkgrid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
-    :is(#view-season) .sn-head .seg { margin-left: 0; }
-    :is(#view-season, #snPmod) .gcard .gb { padding: 10px; }
-  }
-  /* the Season tab makes five links; keep the bar inside a phone */
-  @media (max-width: 560px) {
-    .topbar .nav { flex-wrap: wrap; justify-content: center; border-radius: 14px; }
-    .topbar .nav a { padding: 5px 7px; font-size: 11.5px; letter-spacing: .04em; }
-  }
-  :is(#view-season) .h2h { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); }
-  :is(#view-season) .h2h span { overflow: hidden; text-overflow: ellipsis; }
   :is(#view-season,#snPmod) .sn-grid{display:grid; gap:12px; align-items:start; margin-top:12px}
   :is(#view-season,#snPmod) .sn-g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr)}
   :is(#view-season,#snPmod) .sn-g2{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
@@ -1114,6 +1102,19 @@
     :is(#view-season,#snPmod) table.rs .pl b{max-width:110px}
     :is(#view-season,#snPmod) .snwk li{grid-template-columns:54px 14px 20px minmax(0,1fr) auto}
   }
+  @media (max-width: 640px) {
+    :is(#view-season) .wkgrid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+    :is(#view-season) .sn-head .seg { margin-left: 0; }
+    :is(#view-season, #snPmod) .gcard .gb { padding: 10px; }
+  }
+  /* the Season tab makes five links; keep the bar inside a phone */
+  @media (max-width: 560px) {
+    .topbar .nav { flex-wrap: wrap; justify-content: center; border-radius: 14px; }
+    .topbar .nav a { padding: 5px 7px; font-size: 11.5px; letter-spacing: .04em; }
+  }
+  :is(#view-season) .h2h { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
+  :is(#view-season) .h2h span { font-size: 10px; overflow: hidden; text-overflow: ellipsis; }
+  :is(#view-season) .h2h div { padding: 6px 8px; }
 </style>
 </head>
 <body class="v-home">
@@ -1204,8 +1205,8 @@
       <div class="sn-col"><div id="snChart"></div></div>
     </div>
     <div class="sn-grid sn-g2">
-      <div class="sn-col"><div id="snWeeks"></div></div>
-      <div class="sn-col"><div id="snToday"></div><div id="snH2H"></div></div>
+      <div class="sn-col"><div id="snWeeks"></div><div id="snH2H"></div></div>
+      <div class="sn-col"><div id="snToday"></div></div>
     </div>
     <div class="sn-grid sn-g2">
       <div class="sn-col"><div id="snRoster"></div></div>
@@ -3303,6 +3304,8 @@ function snLoadByt(y) {
       (t.categories || []).forEach(c => { const nm = names[c.name]; if (!nm) return;
         const side = /Opponent/i.test(c.displayName || "") ? "opp" : "own";
         nm.forEach((n, i) => { if (c.values?.[i] != null) m[side][n] = +c.values[i]; }); });
+      ["own","opp"].forEach(k => { const v = m[k];
+        if (v.netYardsPerGame == null) v.netYardsPerGame = v.totalYardsPerGame ?? v.yardsPerGame; });
       out[ab] = m;
     });
     SN.byt[y] = out; delete SN.busy[k]; return out;
@@ -3407,8 +3410,8 @@ function snPulse() {
   if (r.pa) cells.push([snFix(r.pa / gp), "Allowed / game", LG.key === "nfl" ? ordinalN(snRankOf("pa", true)) + " in the league" : "", "", "", "lg:pa"]);
   if (r.pf || r.pa) { const d = r.pf - r.pa; cells.push([(d > 0 ? "+" : "") + d, "Point diff", "", "", d > 0 ? "up" : d < 0 ? "dn" : "", "lg:diff"]); }
   if (o) {
-    if (o.own.totalYardsPerGame != null) cells.push([snFix(o.own.totalYardsPerGame), "Yards / game", ordinalN(snBytRank(y, ab, "own", "totalYardsPerGame")) + " in the league", "", "", "lg:ypg"]);
-    if (o.opp?.totalYardsPerGame != null) cells.push([snFix(o.opp.totalYardsPerGame), "Yards allowed", ordinalN(snBytRank(y, ab, "opp", "totalYardsPerGame", true)) + " in the league", "", "", "lg:oypg"]);
+    if (o.own.netYardsPerGame != null) cells.push([snFix(o.own.netYardsPerGame), "Yards / game", ordinalN(snBytRank(y, ab, "own", "netYardsPerGame")) + " in the league", "", "", "lg:ypg"]);
+    if (o.opp?.netYardsPerGame != null) cells.push([snFix(o.opp.netYardsPerGame), "Yards allowed", ordinalN(snBytRank(y, ab, "opp", "netYardsPerGame", true)) + " in the league", "", "", "lg:oypg"]);
     if (o.own.thirdDownConvPct != null) cells.push([snFix(o.own.thirdDownConvPct) + "%", "Third downs", "", "", "", "lg:third"]);
     if (o.own.turnOverDifferential != null) cells.push([(o.own.turnOverDifferential > 0 ? "+" : "") + o.own.turnOverDifferential, "Turnover margin", "", "", o.own.turnOverDifferential > 0 ? "up" : o.own.turnOverDifferential < 0 ? "dn" : "", "lg:to"]);
   }
@@ -3545,13 +3548,19 @@ function snChart() {
   for (let n = 0; n <= maxX; n += 2) g += `<text class="ax" x="${X(n)}" y="${H - 8}" text-anchor="middle">${n}</text>`;
   g += `<text class="ax" x="${W - R}" y="${H - 8}" text-anchor="end">G</text>`;
   if (cut) { const e = (cut.w - cut.l) / NG * maxX; g += `<line class="pl" x1="${X(0)}" y1="${Y(0)}" x2="${X(maxX)}" y2="${Y(e)}"/><text class="ax" x="${X(maxX) + 3}" y="${Y(e) + 3}">7th</text>`; }
-  const cols = {}; let paths = "";
+  const cols = {}; let paths = ""; const ends = [];
   want.sort((a, b) => a === ab ? 1 : b === ab ? -1 : 0).forEach(t => {
     const a = ser[t]; if (!a || a.length < 2) return;
     const c = t === ab ? "#5b9cff" : chartColor(t); cols[t] = c;
     paths += `<path d="${a.map((v, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1)).join("")}" fill="none" stroke="${c}" stroke-width="${t === ab ? 3 : 1.6}" stroke-linejoin="round" opacity="${t === ab ? 1 : .85}"/>`;
-    paths += `<text x="${X(a.length - 1) + 3}" y="${Y(a[a.length - 1]) + 3}" style="font:700 9px var(--body)" fill="${c}">${esc(t)}</text>`;
+    ends.push({ t, c, x: X(a.length - 1) + 3, y: Y(a[a.length - 1]) + 3, fav: t === ab });
   });
+  /* teams on the same record land on the same line, so nudge the labels apart */
+  ends.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i-1].y < 9) ends[i].y = ends[i-1].y + 9;
+  const drop = ends.length ? ends[ends.length - 1].y - (H - B) : 0;
+  if (drop > 0) ends.forEach(e => e.y -= drop);
+  ends.forEach(e => { paths += `<text x="${e.x.toFixed(1)}" y="${e.y.toFixed(1)}" style="font:700 9px var(--body)" fill="${e.c}">${esc(e.t)}</text>`; });
   SN.chart = { ser, want, maxX, L, W, R, cols, cut };
   const svg = `<svg viewBox="0 0 ${W} ${H}" id="snSvg">${g}${paths}<line class="cur" id="snCur" x1="0" x2="0" y1="${T}" y2="${H - B}" style="display:none"/></svg>`;
   const chips = `<div class="chips">${div.map(t => `<button data-chart="${t}" class="${SN.on[t] ? "on" : ""}"><i style="background:${t === ab ? "#5b9cff" : chartColor(t)}"></i>${snImg(t)}${esc(t)}</button>`).join("")}
@@ -3663,7 +3672,7 @@ function snLgRow(ab, y) {
   const gp = (r.w + r.l + r.t) || 1;
   const sk = String(r.streak || ""), sn = (parseInt(sk.replace(/\D/g, "")) || 0) * (/W/i.test(sk) ? 1 : -1);
   return { ab, r, pct: r.pct || (r.w + r.t/2) / gp, w:r.w, l:r.l, pf:r.pf, pa:r.pa, diff:r.pf - r.pa, ppg:r.pf / gp, papg:r.pa / gp,
-    ypg: byt.own.totalYardsPerGame ?? null, oypg: byt.opp?.totalYardsPerGame ?? null, to: byt.own.turnOverDifferential ?? null,
+    ypg: byt.own.netYardsPerGame ?? null, oypg: byt.opp?.netYardsPerGame ?? null, to: byt.own.turnOverDifferential ?? null,
     streak: sn, streakt: sk || "-" };
 }
 function snLeague() {
