@@ -750,6 +750,30 @@
   .gc-wpbar { height: 10px; border-radius: 5px; display: flex; overflow: hidden; background: var(--line); }
   .gc-wpbar i { display: block; height: 100%; }
   .gc-spark { display: block; width: 100%; height: 70px; margin-top: 8px; }
+  /* v60: pregame side panels and a clickable hero */
+  .featured .side .pre-p { display: none; }
+  .featured .side.pre .pre-p { display: block; }
+  .featured .side.pre .live-p { display: none; }
+  .pre-p .mini, .hero .pre-lead .mini { display: inline-grid; place-items: center; border-radius: 4px; overflow: hidden; font-size: 8px; font-weight: 800; color: #fff; width: 18px; height: 18px; }
+  .pre-p .mini img, .hero .pre-lead .mini img { width: 100%; height: 100%; object-fit: contain; }
+  .pre-p .mini.lgo, .hero .pre-lead .mini.lgo { background: transparent !important; }
+  .pre-p .gc-ts td { padding: 5px 4px; }
+  .pre-p .gc-ts th { padding: 0 4px 4px; font-weight: 400; } .pre-p .gc-ts th.a { text-align: left; } .pre-p .gc-ts th.h { text-align: right; }
+  .pre-sec { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 14px 0 6px; }
+  .pre-sec:first-child { margin-top: 0; }
+  .inj { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+  .inj li { display: flex; gap: 8px; padding: 4px 0; border-top: 1px solid var(--line); color: var(--ink-2); align-items: baseline; }
+  .inj li b { color: var(--ink); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .inj li i { font-style: normal; color: var(--muted); font-size: 11px; }
+  .inj li .st { margin-left: auto; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  .inj .st.out { color: var(--live); } .inj .st.dbt { color: #f59e0b; } .inj .st.q { color: var(--ink-2); }
+  .hero .pre-lead { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .hero .team[data-team] { cursor: pointer; }
+  .hero .team[data-team]:hover .name { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+  .hero .scoreblock { cursor: pointer; border-radius: 12px; }
+  .hero .scoreblock:hover .status .q { text-decoration: underline; text-underline-offset: 3px; }
+  #heroGC { margin-left: auto; }
+  #heroGC + .net { margin-left: 6px; }
   .gc-ts { width: 100%; border-collapse: collapse; font-size: 13px; }
   .gc-ts td { padding: 5px 0; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
   .gc-ts td.a { text-align: left; width: 26%; font-weight: 600; } .gc-ts td.h { text-align: right; width: 26%; font-weight: 600; }
@@ -919,16 +943,18 @@
     <section class="featured">
       <article class="hero" id="hero"><div class="empty">Loading the Cowboys game</div></article>
       <div class="side">
-        <section class="panel">
+        <section class="panel live-p">
           <h2>Game flow <small>win probability by play</small></h2>
           <div class="wp-head gf" id="wpHead"></div>
           <div class="wp-delta" id="wpDelta"></div>
           <div class="chart" id="wpChart"><div class="tip" id="wpTip"></div></div>
         </section>
-        <section class="panel">
+        <section class="panel live-p">
           <h2>Current drive <small id="driveWho"></small></h2>
           <div class="drive" id="drive"><div class="empty">No drive in progress</div></div>
         </section>
+        <section class="panel pre-p" id="preMatch"><h2>Matchup <small>season to date</small></h2><div id="preMatchBody"><div class="empty">Loading the matchup</div></div></section>
+        <section class="panel pre-p" id="preForm"><h2>Form and health <small>last five · injury report</small></h2><div id="preFormBody"><div class="empty">Loading form and injuries</div></div></section>
       </div>
     </section>
 
@@ -1255,8 +1281,87 @@ function deriveScoreFeed() {
 }
 
 async function loadSummary() {
-  if (!S.featured || S.featured.state === "pre") { S.summary = null; return; }
-  S.summary = await getJSON(api("summary?event=" + S.featured.id));
+  const g = S.featured;
+  if (!g) { S.summary = null; return; }
+  if (g.state === "pre") {   // v60: pregame reads the preview (predictor, last five, injuries, leaders), every 5 min
+    loadTape(g).then(() => { if (S.featured === g) renderPre(g); });
+    if (S.preSum && S.preSum.id === g.id && Date.now() - S.preSum.t < 300e3) { S.summary = S.preSum.d; return; }
+    S.summary = null;
+    const d = await getJSON(api("summary?event=" + g.id));
+    S.preSum = { id: g.id, t: Date.now(), d };
+    if (S.featured === g) S.summary = d;
+    return;
+  }
+  S.summary = await getJSON(api("summary?event=" + g.id));
+}
+const TAPE = {};
+async function loadTape(g) {
+  await Promise.all([g.away, g.home].map(async ab => {
+    if (TAPE[LG.key + ab] && Date.now() - TAPE[LG.key + ab].t < 1800e3) return;
+    const id = TID[ab] || (LG.key === "nfl" ? toEspn(ab).toLowerCase() : "");
+    if (!id) return;
+    try { const d = await getJSON(api(`teams/${id}/statistics`)); TAPE[LG.key + ab] = { t: Date.now(), cats: d?.results?.stats?.categories || [] }; }
+    catch (e) { TAPE[LG.key + ab] = { t: Date.now() - 1500e3, cats: [] }; }
+  }));
+}
+function renderPre(g) {
+  const side = document.querySelector(".featured .side");
+  const pre = !!g && g.state === "pre";
+  side.classList.toggle("pre", pre);
+  if (!pre) return;
+  const sum = S.summary && S.preSum && S.preSum.id === g.id ? S.summary : null;
+  const { hc, ac } = matchupColors(g.home, g.away);
+  // win chances
+  let wc = "";
+  const p = sum?.predictor;
+  if (p) { const h = numOf(p.homeTeam?.gameProjection), a = numOf(p.awayTeam?.gameProjection); if (h || a) { const hp = h / ((h + a) || 100) * 100, ap = 100 - hp; wc = `<div class="pre-sec">Win chances <span style="text-transform:none;letter-spacing:0">· matchup predictor</span></div><div class="gc-wp"><span style="color:${ac}">${esc(g.away)} ${Math.round(ap)}%</span><span style="color:${hc}">${Math.round(hp)}% ${esc(g.home)}</span></div><div class="gc-wpbar"><i style="width:${ap}%;background:${ac}"></i><i style="width:${hp}%;background:${hc}"></i></div>`; } }
+  // tale of the tape
+  let tape = "";
+  const A = TAPE[LG.key + g.away]?.cats || [], H = TAPE[LG.key + g.home]?.cats || [];
+  if (A.length || H.length) {
+    const f = (cats, list) => { for (const [c, n] of list) { const x = cats.find(k => k.name === c)?.stats?.find(s => s.name === n); if (x) return x; } return null; };
+    const rows = [
+      ["Points / game", [["scoring", "totalPointsPerGame"], ["passing", "totalPointsPerGame"]]],
+      ["Yards / game", [["passing", "yardsPerGame"], ["passing", "totalYardsPerGame"]]],
+      ["Pass yards / game", [["passing", "netPassingYardsPerGame"], ["passing", "passingYardsPerGame"]]],
+      ["Rush yards / game", [["rushing", "rushingYardsPerGame"]]],
+      ["3rd down %", [["miscellaneous", "thirdDownConvPct"]]],
+      ["Red zone TD %", [["miscellaneous", "redzoneTouchdownPct"]]],
+      ["Turnover diff", [["miscellaneous", "turnOverDifferential"]]],
+      ["Sacks", [["defensive", "sacks"]]],
+    ];
+    const body = rows.map(([k, list]) => {
+      const a = f(A, list), h = f(H, list); if (!a && !h) return "";
+      const na = a ? numOf(a.value ?? a.displayValue) : null, nh = h ? numOf(h.value ?? h.displayValue) : null;
+      const better = na != null && nh != null ? (na > nh ? "a" : nh > na ? "h" : "") : "";
+      const fmt = x => x ? esc(x.displayValue ?? String(x.value)) : "–";
+      return `<tr><td class="a ${better === "a" ? "up" : ""}">${fmt(a)}</td><td class="k">${k}</td><td class="h ${better === "h" ? "up" : ""}">${fmt(h)}</td></tr>`;
+    }).join("");
+    if (body) tape = `<div class="pre-sec">Tale of the tape</div><table class="gc-ts"><thead><tr><th class="a">${mark(g.away, "mini")}</th><th></th><th class="h">${mark(g.home, "mini")}</th></tr></thead><tbody>${body}</tbody></table>`;
+  }
+  const w = sum?.gameInfo?.weather;
+  const notes = [w && !sum?.gameInfo?.venue?.indoor ? `Forecast ${w.temperature ?? w.highTemperature ?? ""}${w.temperature != null || w.highTemperature != null ? "°" : ""} ${w.displayValue || w.conditionId || ""}`.trim() : "", sum?.gameInfo?.venue?.indoor ? "Indoors" : ""].filter(Boolean);
+  const series = (sum?.seasonseries || []).find(x => x.summary)?.summary;
+  if (series) notes.push(series);
+  el("#preMatchBody").innerHTML = (wc + tape) ? wc + tape + (notes.length ? `<p class="gc-note">${esc(notes.join(" · "))}</p>` : "") : `<div class="empty">${sum ? "Matchup numbers post closer to kickoff" : "Loading the matchup"}</div>`;
+  // last five and injuries
+  let l5 = "";
+  if (sum?.lastFiveGames?.length) {
+    const col = ab => { const L = sum.lastFiveGames.find(x => x.team?.abbreviation === ab); return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div>${L?.events?.length ? `<ul class="gc-l5">${L.events.slice(0, 5).map(e => `<li><b class="${esc(e.gameResult || "")}">${esc(e.gameResult || "")}</b><span>${e.atVs === "@" ? "@" : "vs"} ${esc(e.opponent?.abbreviation || "")}</span><span style="margin-left:auto">${esc(e.score || "")}</span></li>`).join("")}</ul>` : `<p class="gc-note" style="margin:4px 0 0">No games yet</p>`}</div>`; };
+    l5 = `<div class="pre-sec">Last five</div><div class="gc-lead">${col(g.away)}${col(g.home)}</div>`;
+  }
+  let inj = "";
+  if (sum && Array.isArray(sum.injuries)) {
+    const rank = s => /out|ir|reserve|pup/i.test(s) ? 0 : /doubt/i.test(s) ? 1 : /quest/i.test(s) ? 2 : 3;
+    const col = ab => {
+      const T0 = sum.injuries.find(x => x.team?.abbreviation === ab);
+      const list = (T0?.injuries || []).map(x => ({ n: x.athlete?.displayName || x.athlete?.shortName || "", pos: x.athlete?.position?.abbreviation || "", st: x.status || x.type?.description || "", what: x.details?.type || "" }))
+        .filter(x => x.n && rank(x.st) < 3).sort((a, b) => rank(a.st) - rank(b.st)).slice(0, 6);
+      return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div>${list.length ? `<ul class="inj">${list.map(x => `<li><b>${esc(x.n)}</b><i>${esc([x.pos, x.what].filter(Boolean).join(" · "))}</i><span class="st ${["out", "dbt", "q"][rank(x.st)]}">${esc(x.st)}</span></li>`).join("")}</ul>` : `<p class="gc-note" style="margin:4px 0 0">Nobody listed</p>`}</div>`;
+    };
+    inj = `<div class="pre-sec">Injury report</div><div class="gc-lead">${col(g.away)}${col(g.home)}</div>`;
+  }
+  el("#preFormBody").innerHTML = l5 + inj || `<div class="empty">${sum ? "Nothing posted yet" : "Loading form and injuries"}</div>`;
 }
 
 /* =====================================================================
@@ -1692,7 +1797,7 @@ function renderHero(g) {
   if (sum?.pickcenter?.length && (!g.odds || g.odds.mlA == null || !g.odds.details || !g._pcOpen)) { mergeLine(g, bestPick(sum.pickcenter)); g._pcOpen = true; }
   const lead = (g.hs ?? 0) >= (g.as ?? 0);
   const team = (ab, side, rec, poss) => { const rk = ab === g.home ? g.homeRank : g.awayRank; return `
-    <div class="team ${side} ${poss?'has-ball':''}">
+    <div class="team ${side} ${poss?'has-ball':''}" data-team="${esc(ab)}" role="button" tabindex="0" title="${esc(dispName(ab))}: schedule, standings and stats">
       ${mark(ab)}
       <div class="names">
         <div class="city">${rk ? `<em class="rk">#${rk}</em>` : ""}${esc(T(ab)[0])}</div>
@@ -1716,7 +1821,7 @@ function renderHero(g) {
   // stats from boxscore
   let stats = "";
   const bt = sum?.boxscore?.teams;
-  if (bt && bt.length === 2) {
+  if (!pre && bt && bt.length === 2) {
     const get = (t, name) => (t.statistics||[]).find(s => s.name === name)?.displayValue ?? "–";
     const a = bt.find(t => t.team.abbreviation === g.away) || bt[0], h = bt.find(t => t.team.abbreviation === g.home) || bt[1];
     const rows = [["Total yards","totalYards"],["Turnovers","turnovers"],["Time of poss.","possessionTime"],["3rd down","thirdDownEff"]];
@@ -1732,11 +1837,12 @@ function renderHero(g) {
       <span class="label">${g.home===CFG.fav||g.away===CFG.fav ? dispName(CFG.fav) + " game" : "Featured game"}</span>
       <span class="venue">${esc(g.venue)}</span>
       ${S.pickId && S.favGame && S.favGame.id !== g.id ? `<button class="btn" id="backFav" type="button">Back to ${esc(dispName(CFG.fav))}</button>` : ""}
+      <button class="btn" id="heroGC" type="button">${pre ? "Preview" : g.state === "post" ? "Game breakdown" : "Game center"}</button>
       ${g.net ? `<span class="chip net">${esc(g.net)}</span>` : ""}
     </div>
     <div class="matchup">
       ${team(g.away,"away",g.awayRec,g.poss===g.away)}
-      <div class="scoreblock">
+      <div class="scoreblock" role="button" tabindex="0" title="Open the ${pre ? "preview" : g.state === "post" ? "game breakdown" : "game center"}">
         <span class="big ${lead?'trail':'lead'}">${pre ? "" : g.as}</span>
         <div class="status">${status}</div>
         <span class="big ${lead?'lead':'trail'}">${pre ? "" : g.hs}</span>
@@ -1746,9 +1852,17 @@ function renderHero(g) {
     ${pre ? "" : `<div class="linescore"><table><thead><tr><th></th>${heads}<th>T</th></tr></thead><tbody>${line(g.away,g.as)}${line(g.home,g.hs)}</tbody></table></div>`}
     ${stats}
     ${linesHTML(g, false)}
+    ${pre ? preLeaders(g, sum) : ""}
     ${g.lastPlay ? `<div class="lastplay"><b>Last play</b> ${esc(g.lastPlay)}</div>` : ""}`;
 }
 
+function preLeaders(g, sum) {   // v60: season leaders on the pregame hero
+  if (!sum?.leaders?.length) return "";
+  const want = [["passingYards", "Pass"], ["rushingYards", "Rush"], ["receivingYards", "Rec"]];
+  const col = ab => { const L = sum.leaders.find(x => x.team?.abbreviation === ab); if (!L) return ""; return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div>${want.map(([k, lab]) => { const x = (L.leaders || []).find(y => y.name === k)?.leaders?.[0]; return x?.athlete ? `<div class="ld"><b><i>${lab}</i>${esc(x.athlete.displayName || x.athlete.fullName || "")}</b><span>${esc(x.displayValue || "")}</span></div>` : ""; }).join("")}</div>`; };
+  const b = col(g.away) + col(g.home);
+  return b ? `<div class="pre-lead"><div class="pre-sec">Season leaders</div><div class="gc-lead">${b}</div></div>` : "";
+}
 function renderWP(g) {
   const sum = S.summary, box = el("#wpChart");
   box.querySelectorAll("svg").forEach(s => s.remove());
@@ -2260,7 +2374,7 @@ window.addEventListener("resize", fitBoard);
    LOOPS
    ===================================================================== */
 function renderAll() {
-  renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderSchedule(); renderRegroup();
+  renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderPre(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderSchedule(); renderRegroup();
 }
 let espnTimer, slTimer;
 async function espnLoop() {
@@ -2651,9 +2765,12 @@ document.addEventListener("click", e => {
   const tGame = e.target.closest(".tm-sch tr[data-game]"); if (tGame) return openGame(tGame.dataset.game);
   const scard = e.target.closest("#sched .g[data-id]"); if (scard) return openGame(scard.dataset.id);
   const card = e.target.closest("#slots .g[data-id]"); if (card) return openGame(card.dataset.id);   // v58: home cards open the game center too
+  // v60: the featured game opens its game center / preview; its teams open the team pop-up
+  const hTeam = e.target.closest("#hero .team[data-team]"); if (hTeam) return openTeam(hTeam.dataset.team);
+  if (e.target.closest("#heroGC, #hero .scoreblock") && S.featured) return openGame(S.featured.id);
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!el("#tmodal").hidden) return closeTeam(); if (!el("#gmodal").hidden) return closeGame(); closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) openGame(e.target.dataset.id); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!el("#tmodal").hidden) return closeTeam(); if (!el("#gmodal").hidden) return closeGame(); closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#hero .team[data-team]")) openTeam(e.target.dataset.team); if (e.key === "Enter" && e.target.matches("#hero .scoreblock") && S.featured) openGame(S.featured.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) openGame(e.target.dataset.id); });
 /* v46: full screen is desktop only. iOS and most touch browsers ignore the API,
    so the buttons are removed rather than left on screen doing nothing. */
 (function () {
