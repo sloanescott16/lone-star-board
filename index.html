@@ -1340,7 +1340,7 @@ function renderPre(g) {
     if (body) tape = `<div class="pre-sec">Tale of the tape</div><table class="gc-ts"><thead><tr><th class="a">${mark(g.away, "mini")}</th><th></th><th class="h">${mark(g.home, "mini")}</th></tr></thead><tbody>${body}</tbody></table>`;
   }
   const w = sum?.gameInfo?.weather;
-  const notes = [w && !sum?.gameInfo?.venue?.indoor ? `Forecast ${w.temperature ?? w.highTemperature ?? ""}${w.temperature != null || w.highTemperature != null ? "°" : ""} ${w.displayValue || w.conditionId || ""}`.trim() : "", sum?.gameInfo?.venue?.indoor ? "Indoors" : ""].filter(Boolean);
+  const notes = [w && !sum?.gameInfo?.venue?.indoor ? `Forecast ${w.temperature ?? w.highTemperature ?? ""}${w.temperature != null || w.highTemperature != null ? "°" : ""} ${typeof w.displayValue === "string" ? w.displayValue : ""}`.trim() : "", sum?.gameInfo?.venue?.indoor ? "Indoors" : ""].filter(Boolean);
   const series = (sum?.seasonseries || []).find(x => x.summary)?.summary;
   if (series) notes.push(series);
   el("#preMatchBody").innerHTML = (wc + tape) ? wc + tape + (notes.length ? `<p class="gc-note">${esc(notes.join(" · "))}</p>` : "") : `<div class="empty">${sum ? "Matchup numbers post closer to kickoff" : "Loading the matchup"}</div>`;
