@@ -774,6 +774,48 @@
   .hero .scoreblock:hover .status .q { text-decoration: underline; text-underline-offset: 3px; }
   #heroGC { margin-left: auto; }
   #heroGC + .net { margin-left: 6px; }
+  /* v62: full pregame preview in the game modal */
+  .sheet.wide.pv { width: min(1360px, 100%); }
+  .pv-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.1fr) minmax(0, .9fr); gap: 12px; align-items: start; }
+  .pv-cmp { display: grid; gap: 2px; }
+  .pv-cmp .r { display: grid; grid-template-columns: 64px 1fr 64px; align-items: center; gap: 10px; padding: 5px 0; border-top: 1px solid var(--line); }
+  .pv-cmp .r:first-child { border-top: 0; }
+  .pv-cmp .v { font-family: var(--display); font-size: 20px; font-weight: 700; line-height: 1; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .pv-cmp .v.h { text-align: right; } .pv-cmp .v.up { color: var(--ink); }
+  .pv-cmp .v small { display: block; font-family: var(--body); font-size: 10px; font-weight: 400; color: var(--muted); margin-top: 3px; }
+  .pv-cmp .k { font-size: 11px; text-align: center; color: var(--muted); letter-spacing: .04em; margin-bottom: 4px; }
+  .pv-cmp .b { display: flex; gap: 3px; height: 6px; }
+  .pv-cmp .b i { display: block; height: 100%; border-radius: 3px; opacity: .45; } .pv-cmp .b i.up { opacity: 1; }
+  .pv-cmp .b i:first-child { margin-left: auto; }
+  .pv-sub { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin: 12px 0 2px; font-weight: 700; }
+  .pv-sub:first-child { margin-top: 0; }
+  .pv-big { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .pv-big b { font-family: var(--display); font-size: 40px; line-height: 1; }
+  .pv-big span { font-size: 12px; color: var(--muted); display: block; }
+  .pv-pl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  .pv-pl .p { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); min-width: 0; }
+  .pv-pl .hs { width: 44px; height: 44px; border-radius: 50%; background: var(--surface); overflow: hidden; flex: none; display: grid; place-items: center; font-size: 11px; color: var(--muted); }
+  .pv-pl .hs img { width: 130%; height: 100%; object-fit: cover; }
+  .pv-pl .t { min-width: 0; }
+  .pv-pl .t i { font-style: normal; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; }
+  .pv-pl .t b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pv-pl .t span { font-size: 12px; color: var(--ink-2); }
+  .pv-pl .t em { font-style: normal; font-family: var(--display); font-size: 18px; font-weight: 700; color: var(--ink); margin-right: 4px; }
+  .pv-info { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pv-info td { padding: 5px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  .pv-info td:first-child { color: var(--muted); width: 38%; }
+  .pv-info tr:first-child td { border-top: 0; }
+  .pv-news { list-style: none; margin: 0; padding: 0; }
+  .pv-news li { padding: 7px 0; border-top: 1px solid var(--line); }
+  .pv-news li:first-child { border-top: 0; }
+  .pv-news a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 13px; }
+  .pv-news a:hover { text-decoration: underline; }
+  .pv-news p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+  .pv-inj li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px; }
+  .pv-inj li b { white-space: normal; } .pv-inj li i { grid-column: 1; grid-row: 2; } .pv-inj li .st { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  .gc-l5 .dt { color: var(--muted); font-size: 11px; width: 44px; flex: none; }
+  @media (max-width: 1100px) { .pv-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 860px) { .pv-grid, .pv-pl { grid-template-columns: 1fr; } }
   .gc-ts { width: 100%; border-collapse: collapse; font-size: 13px; }
   .gc-ts td { padding: 5px 0; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
   .gc-ts td.a { text-align: left; width: 26%; font-weight: 600; } .gc-ts td.h { text-align: right; width: 26%; font-weight: 600; }
@@ -2486,6 +2528,7 @@ async function openGame(id) {
   GC.id = id; GC.sum = null; GC.err = ""; GC.g = S.events.find(x => x.id === id) || null;
   el("#gmodal").hidden = false; el("#gmodal .sheet").scrollTop = 0;
   renderGC();
+  if (GC.g && GC.g.state === "pre") loadTape(GC.g).then(() => { if (GC.id === id) renderGC(); });
   await refreshGC();
 }
 async function refreshGC() {
@@ -2605,6 +2648,8 @@ function renderGC() {
     const b = col(g.away) + col(g.home);
     if (b) l5 = `<div class="gc-lead">${b}</div>`;
   }
+  el("#gmodal .sheet").classList.toggle("pv", pre);
+  if (pre) { box.innerHTML = top + previewHTML(g, sum) + `<p class="gc-note">Tap a team for its schedule, standings and stats. Refreshes every minute until kickoff.</p>`; return; }
   const lines = g.odds ? `<div class="gc-card"><h3>Lines${fin ? "<small>how they landed</small>" : ""}</h3>${linesHTML(g, false)}</div>` : "";
   const left = [
     live ? card("On the field", drive) : "",
@@ -2623,6 +2668,115 @@ function renderGC() {
     + `<p class="gc-note">Tap a team for its schedule, standings and stats.${live ? " Updates every few seconds." : ""}</p>`;
 }
 
+function previewHTML(g, sum) {   // v62
+  const { hc, ac } = matchupColors(g.home, g.away);
+  const card = (title, body, note) => body ? `<section class="gc-card"><h3>${title}${note ? `<small>${note}</small>` : ""}</h3>${body}</section>` : "";
+  if (!sum) return `<div class="empty">Loading the preview</div>`;
+  const nm = ab => esc(LG.key === "nfl" ? T(ab)[1] : dispName(ab));
+  // win chances
+  let wc = "";
+  const p = sum.predictor;
+  if (p) { const h = numOf(p.homeTeam?.gameProjection), a = numOf(p.awayTeam?.gameProjection); if (h || a) { const hp = h / ((h + a) || 100) * 100, ap = 100 - hp;
+    wc = `<div class="pv-big"><div><b style="color:${ac}">${Math.round(ap)}%</b><span>${nm(g.away)}</span></div><div style="text-align:right"><b style="color:${hc}">${Math.round(hp)}%</b><span>${nm(g.home)}</span></div></div><div class="gc-wpbar"><i style="width:${ap}%;background:${ac}"></i><i style="width:${hp}%;background:${hc}"></i></div>`; } }
+  // comparison rows
+  const row = (k, a, h, lowGood) => {
+    if (!a && !h) return "";
+    const na = a ? numOf(a.v) : null, nh = h ? numOf(h.v) : null;
+    let up = "";
+    if (na != null && nh != null && na !== nh) up = (lowGood ? na < nh : na > nh) ? "a" : "h";
+    const tot = Math.abs(na || 0) + Math.abs(nh || 0), pa = tot ? Math.abs(na || 0) / tot * 100 : 50;
+    const rk = x => x?.r ? `<small>${esc(x.r)}</small>` : "";
+    return `<div class="r"><div class="v a ${up === "a" ? "up" : ""}">${a ? esc(a.d) : "–"}${rk(a)}</div><div><div class="k">${k}</div><div class="b"><i class="${up === "a" ? "up" : ""}" style="width:${pa}%;background:${ac}"></i><i class="${up === "h" ? "up" : ""}" style="width:${100 - pa}%;background:${hc}"></i></div></div><div class="v h ${up === "h" ? "up" : ""}">${h ? esc(h.d) : "–"}${rk(h)}</div></div>`;
+  };
+  const bt = sum.boxscore?.teams || [];
+  const bs = (ab, n) => { const t = bt.find(x => x.team?.abbreviation === ab); const x = (t?.statistics || []).find(y => y.name === n); return x ? { v: x.value ?? x.displayValue, d: x.displayValue } : null; };
+  const tp = (ab, list) => { const cats = TAPE[LG.key + ab]?.cats || []; for (const [c, n] of list) { const x = cats.find(k => k.name === c)?.stats?.find(y => y.name === n); if (x) return { v: x.value ?? x.displayValue, d: x.displayValue ?? String(x.value), r: x.rankDisplayValue && !/^0/.test(x.rankDisplayValue) ? x.rankDisplayValue : "" }; } return null; };
+  const both = (k, f, low) => row(k, f(g.away), f(g.home), low);
+  const br = (ab, bn, list) => { const a = bs(ab, bn), b = tp(ab, list); return a ? { ...a, r: b?.r || "" } : b; };
+  const off = [
+    both("Points / game", ab => br(ab, "totalPointsPerGame", [["scoring", "totalPointsPerGame"], ["passing", "totalPointsPerGame"]])),
+    both("Yards / game", ab => br(ab, "yardsPerGame", [["passing", "yardsPerGame"]])),
+    both("Pass yards / game", ab => br(ab, "passingYardsPerGame", [["passing", "netPassingYardsPerGame"]])),
+    both("Rush yards / game", ab => br(ab, "rushingYardsPerGame", [["rushing", "rushingYardsPerGame"]])),
+    both("Yards / play", ab => tp(ab, [["passing", "yardsPerPlay"], ["general", "yardsPerPlay"]])),
+    both("Completion %", ab => tp(ab, [["passing", "completionPct"]])),
+    both("3rd down %", ab => tp(ab, [["miscellaneous", "thirdDownConvPct"]])),
+    both("Red zone TD %", ab => tp(ab, [["miscellaneous", "redzoneTouchdownPct"]])),
+  ].join("");
+  const def = [
+    both("Points allowed / game", ab => bs(ab, "totalPointsPerGameAllowed"), true),
+    both("Yards allowed / game", ab => bs(ab, "yardsPerGameAllowed"), true),
+    both("Pass yards allowed", ab => bs(ab, "passingYardsPerGameAllowed"), true),
+    both("Rush yards allowed", ab => bs(ab, "rushingYardsPerGameAllowed"), true),
+    both("Sacks", ab => tp(ab, [["defensive", "sacks"]])),
+    both("Interceptions", ab => tp(ab, [["defensiveInterceptions", "interceptions"]])),
+  ].join("");
+  const misc = [
+    both("Turnover diff", ab => tp(ab, [["miscellaneous", "turnOverDifferential"]])),
+    both("Giveaways", ab => tp(ab, [["miscellaneous", "totalGiveaways"]]), true),
+    both("Penalty yards / game", ab => { const x = tp(ab, [["miscellaneous", "totalPenaltyYards"]]); const gp = numOf(tp(ab, [["passing", "teamGamesPlayed"], ["general", "gamesPlayed"]])?.v) || 0; return x && gp ? { v: numOf(x.v) / gp, d: (numOf(x.v) / gp).toFixed(1) } : null; }, true),
+    both("Time of possession", ab => tp(ab, [["miscellaneous", "possessionTimeSeconds"]]) && (() => { const x = tp(ab, [["miscellaneous", "possessionTimeSeconds"]]); const gp = numOf(tp(ab, [["passing", "teamGamesPlayed"], ["general", "gamesPlayed"]])?.v) || 1; const sec = numOf(x.v) / gp; return { v: sec, d: `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, "0")}` }; })()),
+  ].join("");
+  const head = `<div class="r" style="border:0;padding-top:0"><div class="v a">${mark(g.away, "mini")}</div><div></div><div class="v h">${mark(g.home, "mini")}</div></div>`;
+  const tape = (off || def || misc) ? `<div class="pv-cmp">${head}${off ? `<div class="pv-sub">Offense</div>${off}` : ""}${def ? `<div class="pv-sub">Defense</div>${def}` : ""}${misc ? `<div class="pv-sub">Ball security and the rest</div>${misc}` : ""}</div>` : "";
+  // players to watch
+  let pl = "";
+  if (sum.leaders?.length) {
+    const lab = { passingYards: "Passing", rushingYards: "Rushing", receivingYards: "Receiving", sacks: "Sacks", totalTackles: "Tackles", interceptions: "Interceptions" };
+    const col = ab => { const L = sum.leaders.find(x => x.team?.abbreviation === ab); if (!L) return ""; return `<div><div class="gc-lead"><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div></div>${(L.leaders || []).map(c => { const x = c.leaders?.[0]; if (!x?.athlete) return ""; const a = x.athlete; const hs = a.headshot?.href; return `<div class="p"><span class="hs">${hs ? `<img src="${esc(hs)}" alt="" loading="lazy" onerror="this.remove()">` : esc(a.jersey ? "#" + a.jersey : "")}</span><span class="t"><i>${esc(lab[c.name] || c.displayName || c.name)}</i><b>${esc(a.displayName || a.fullName || "")} <span>${esc([a.position?.abbreviation, a.jersey ? "#" + a.jersey : ""].filter(Boolean).join(" "))}</span></b><span>${x.mainStat ? `<em>${esc(x.mainStat.value)}</em>${esc(x.mainStat.label || "")}${x.summary ? " · " + esc(x.summary) : ""}` : esc(x.displayValue || "")}</span></span></div>`; }).join("")}</div>`; };
+    const b = col(g.away) + col(g.home);
+    if (b) pl = `<div class="pv-pl">${b}</div>`;
+  }
+  // injuries, full
+  let inj = "";
+  if (Array.isArray(sum.injuries)) {
+    const rank = s => /out|ir|reserve|pup|suspend/i.test(s) ? 0 : /doubt/i.test(s) ? 1 : /quest/i.test(s) ? 2 : 3;
+    const col = ab => {
+      const T0 = sum.injuries.find(x => x.team?.abbreviation === ab);
+      const list = (T0?.injuries || []).map(x => ({ n: x.athlete?.displayName || "", pos: x.athlete?.position?.abbreviation || "", st: x.status || x.type?.description || "", what: x.details?.type || "", side: x.details?.side && !/not/i.test(x.details.side) ? x.details.side : "" }))
+        .filter(x => x.n && !/^active$/i.test(x.st)).sort((a, b) => rank(a.st) - rank(b.st));
+      return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))} <span style="margin-left:auto">${list.length || ""}</span></div>${list.length ? `<ul class="inj pv-inj">${list.map(x => `<li><b>${esc(x.n)}</b><i>${esc([x.pos, [x.side, x.what].filter(Boolean).join(" ")].filter(Boolean).join(" · "))}</i><span class="st ${["out", "dbt", "q", "q"][rank(x.st)]}">${esc(x.st)}</span></li>`).join("")}</ul>` : `<p class="gc-note" style="margin:4px 0 0">Nobody listed</p>`}</div>`;
+    };
+    inj = `<div class="gc-lead">${col(g.away)}${col(g.home)}</div>`;
+  }
+  // last five
+  let l5 = "";
+  if (sum.lastFiveGames?.length) {
+    const col = ab => { const L = sum.lastFiveGames.find(x => x.team?.abbreviation === ab); return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div>${L?.events?.length ? `<ul class="gc-l5">${L.events.slice(0, 5).map(e => `<li><span class="dt">${e.gameDate ? esc(fmtCT(e.gameDate, { month: "numeric", day: "numeric", year: "2-digit" })) : ""}</span><b class="${esc(e.gameResult || "")}">${esc(e.gameResult || "")}</b><span>${e.atVs === "@" ? "@" : "vs"} ${esc(e.opponent?.abbreviation || "")}</span><span style="margin-left:auto">${esc(e.score || "")}</span></li>`).join("")}</ul>` : `<p class="gc-note" style="margin:4px 0 0">No games yet</p>`}</div>`; };
+    l5 = `<div class="gc-lead">${col(g.away)}${col(g.home)}</div>`;
+  }
+  // game info
+  const gi = sum.gameInfo || {}, v = gi.venue || {}, w = gi.weather;
+  const comps = sum.header?.competitions?.[0]?.competitors || [];
+  const recs = ab => { const c = comps.find(x => x.team?.abbreviation === ab); const r = c?.record || c?.records || []; const f = t => r.find(x => x.type === t)?.summary || r.find(x => x.type === t)?.displayValue; return [f("total"), c?.homeAway === "home" ? (f("home") ? f("home") + " home" : "") : (f("road") || f("away") ? (f("road") || f("away")) + " road" : "")].filter(Boolean).join(" · "); };
+  const info = [
+    ["Kickoff", fmtCT(g.date, { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " CT"],
+    ["Watch", g.net || ""],
+    ["Venue", [v.fullName || g.venue, [v.address?.city, v.address?.state].filter(Boolean).join(", ")].filter(Boolean).join(" · ")],
+    ["Surface", v.grass == null ? "" : v.grass ? "Grass" : "Turf"],
+    ["Roof", v.indoor ? "Indoors" : ""],
+    ["Forecast", w && !v.indoor ? [(w.highTemperature ?? w.temperature) != null ? `${w.highTemperature ?? w.temperature}°` : "", typeof w.displayValue === "string" ? w.displayValue : "", w.precipitation != null ? `${w.precipitation}% rain` : "", w.gust ? `gusts ${w.gust} mph` : ""].filter(Boolean).join(" · ") : ""],
+    [nm(g.away), recs(g.away)], [nm(g.home), recs(g.home)],
+  ].filter(r => r[1]);
+  const infoT = `<table class="pv-info"><tbody>${info.map(([k, x]) => `<tr><td>${k}</td><td>${esc(x)}</td></tr>`).join("")}</tbody></table>`;
+  // standings from the summary
+  let st = "";
+  for (const grp of sum.standings?.groups || []) {
+    const ents = grp.standings?.entries || []; if (!ents.length) continue;
+    const idAb = id => Object.keys(TID).find(k => String(TID[k]) === String(id));
+    const sv = (e, t) => (e.stats || []).find(x => x.type === t || x.name === t)?.displayValue ?? "";
+    st += `<div class="pv-sub">${esc((grp.header || "").replace(/^\d{4}\s+/, "").replace(/ Standings$/, ""))}</div><table class="tm-st"><thead><tr><th>Team</th><th>W-L${LG.key === "nfl" ? "-T" : ""}</th><th class="hm">PF</th><th class="hm">PA</th></tr></thead><tbody>${ents.map(e => { const ab = idAb(e.id) || ""; const me = ab === g.home || ab === g.away; return `<tr ${ab ? `data-team="${esc(ab)}"` : ""} class="${me ? "me" : ""}"><td>${ab ? mark(ab, "mini") : ""}${esc(e.team || ab)}</td><td>${esc(sv(e, "total") || [sv(e, "wins"), sv(e, "losses")].join("-"))}</td><td class="hm">${esc(sv(e, "pointsfor"))}</td><td class="hm">${esc(sv(e, "pointsagainst"))}</td></tr>`; }).join("")}</tbody></table>`;
+  }
+  // headlines
+  let news = "";
+  const arts = (sum.news?.articles || []).filter(a => a.headline).slice(0, 5);
+  if (arts.length) news = `<ul class="pv-news">${arts.map(a => { const href = a.links?.web?.href; return `<li>${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(a.headline)}</a>` : `<b>${esc(a.headline)}</b>`}${a.description ? `<p>${esc(a.description)}</p>` : ""}</li>`; }).join("")}</ul>`;
+  const lines = g.odds ? `<section class="gc-card"><h3>Lines</h3>${linesHTML(g, false)}</section>` : "";
+  const c1 = card("Tale of the tape", tape, "season to date · league rank") + card("Last five", l5);
+  const c2 = lines + card("Players to watch", pl, "team leaders") + card("Injury report", inj);
+  const c3 = card("Win chances", wc, "matchup predictor") + card("Game info", infoT) + card("Standings", st) + card("Headlines", news);
+  return `<div class="pv-grid"><div class="gc-col">${c1 || `<div class="empty">Numbers post closer to kickoff</div>`}</div><div class="gc-col">${c2}</div><div class="gc-col">${c3}</div></div>`;
+}
 async function standingsFor(key) {
   if (TM.stand[key] && Date.now() - TM.standT[key] < 600e3) return TM.stand[key];
   const url = LG.key === "cfb" ? `https://site.api.espn.com/apis/v2/sports/football/college-football/standings?group=${key}` : `https://site.api.espn.com/apis/v2/sports/football/nfl/standings?level=3`;
