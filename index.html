@@ -746,10 +746,21 @@
   .gc-ls td:first-child, .gc-ls th:first-child { text-align: left; padding-left: 0; }
   .gc-ls td.tot { font-family: var(--display); font-weight: 800; font-size: 18px; color: var(--ink); }
   .gc-ls .now { color: var(--live); }
-  .gc-wp { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-  .gc-wpbar { height: 10px; border-radius: 5px; display: flex; overflow: hidden; background: var(--line); }
-  .gc-wpbar i { display: block; height: 100%; }
-  .gc-spark { display: block; width: 100%; height: 70px; margin-top: 8px; }
+  .gc-wp { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+  .gc-wp span { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+  .gc-wp b { font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: .1em; opacity: .85; }
+  .gc-wp i { font-style: normal; font-family: var(--display); font-weight: 800; font-size: 21px; line-height: 1; }
+  .gc-wpbar { position: relative; height: 12px; border-radius: 6px; display: flex; overflow: hidden; background: var(--line); }
+  .gc-wpbar i { display: block; height: 100%; transition: width .45s ease; }
+  .gc-wpbar::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.3); }
+  .gc-spark { display: block; width: 100%; height: auto; margin-top: 10px; }
+  .gc-fld { display: block; width: 100%; height: auto; border-radius: 8px; margin: -2px 0 9px; }
+  .gc-sit { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); padding-bottom: 9px; margin-bottom: 3px; border-bottom: 1px solid var(--line); }
+  .gc-sit .who { display: flex; align-items: center; gap: 7px; }
+  .gc-sit .who b { font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
+  .gc-sit .dd b { color: var(--ink); font-weight: 600; }
+  .gc-sit .rz { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--redzone); border: 1px solid rgba(255,90,95,.45); border-radius: 999px; padding: 1px 8px; }
+  .gc-sit .pw { margin-left: auto; font-family: var(--display); font-weight: 800; font-size: 16px; letter-spacing: .04em; white-space: nowrap; }
   /* v60: pregame side panels and a clickable hero */
   .featured .side .pre-p { display: none; }
   .featured .side.pre .pre-p { display: block; }
@@ -1621,7 +1632,7 @@ function renderPre(g) {
   // win chances
   let wc = "";
   const p = sum?.predictor;
-  if (p) { const h = numOf(p.homeTeam?.gameProjection), a = numOf(p.awayTeam?.gameProjection); if (h || a) { const hp = h / ((h + a) || 100) * 100, ap = 100 - hp; wc = `<div class="pre-sec">Win chances <span style="text-transform:none;letter-spacing:0">· matchup predictor</span></div><div class="gc-wp"><span style="color:${ac}">${esc(g.away)} ${Math.round(ap)}%</span><span style="color:${hc}">${Math.round(hp)}% ${esc(g.home)}</span></div><div class="gc-wpbar"><i style="width:${ap}%;background:${ac}"></i><i style="width:${hp}%;background:${hc}"></i></div>`; } }
+  if (p) { const h = numOf(p.homeTeam?.gameProjection), a = numOf(p.awayTeam?.gameProjection); if (h || a) { const hp = h / ((h + a) || 100) * 100, ap = 100 - hp; wc = `<div class="pre-sec">Win chances <span style="text-transform:none;letter-spacing:0">· matchup predictor</span></div><div class="gc-wp"><span style="color:${ac}"><b>${esc(g.away)}</b><i>${Math.round(ap)}%</i></span><span style="color:${hc}"><i>${Math.round(hp)}%</i><b>${esc(g.home)}</b></span></div><div class="gc-wpbar"><i style="width:${ap}%;background:${ac}"></i><i style="width:${hp}%;background:${hc}"></i></div>`; } }
   // tale of the tape
   let tape = "";
   const A = TAPE[LG.key + g.away]?.cats || [], H = TAPE[LG.key + g.home]?.cats || [];
@@ -2170,24 +2181,14 @@ function preLeaders(g, sum) {   // v60: season leaders on the pregame hero
   const b = col(g.away) + col(g.home);
   return b ? `<div class="pre-lead"><div class="pre-sec">Season leaders</div><div class="gc-lead">${b}</div></div>` : "";
 }
-function renderWP(g) {
-  const sum = S.summary, box = el("#wpChart");
-  box.querySelectorAll("svg").forEach(s => s.remove());
-  if (!g) return;
-  const { hc, ac } = matchupColors(g.home, g.away);
-  const wp = sum?.winprobability;
-  const head = (hp) => `
-    <span class="side"><span class="tm" style="color:${ac}">${esc(g.away)}</span><span class="n" style="color:${ac}">${hp == null ? "–" : Math.round(100-hp) + "%"}</span></span>
-    <span class="mid">to win</span>
-    <span class="side r"><span class="n" style="color:${hc}">${hp == null ? "–" : Math.round(hp) + "%"}</span><span class="tm" style="color:${hc}">${esc(g.home)}</span></span>`;
-  if (!wp || !wp.length) { el("#wpHead").innerHTML = head(null); el("#wpDelta").textContent = g.state === "pre" ? "Kickoff pending" : "No game flow yet"; return; }
+function wpTrack(sum, g, wp, maxPts) {
   const raw = wp.map(x => x.homeWinPercentage*100);
-  const step = Math.max(1, Math.ceil(raw.length / 140));
+  const step = Math.max(1, Math.ceil(raw.length / maxPts));
   const keep = (_, i) => i % step === 0 || i === raw.length - 1;
   const series = raw.filter(keep);
   // where each play sits in game time, so the line only reaches the right edge when the game is actually over
   const periodOf = {}, clockOf = {};
-  for (const d of [...(sum.drives?.previous||[]), sum.drives?.current].filter(Boolean)) for (const p of d.plays||[]) { periodOf[p.id] = p.period?.number; clockOf[p.id] = p.clock?.displayValue ?? p.clock?.value; }
+  for (const d of [...(sum?.drives?.previous||[]), sum?.drives?.current].filter(Boolean)) for (const p of d.plays||[]) { periodOf[p.id] = p.period?.number; clockOf[p.id] = p.clock?.displayValue ?? p.clock?.value; }
   const kept = wp.filter(keep);
   const periods = kept.map(x => periodOf[x.playId] || 0);
   const maxP = Math.max(4, g.period || 0, ...periods);
@@ -2202,6 +2203,20 @@ function renderWP(g) {
   for (let i = 0; i < fr.length; i++) if (fr[i] == null) { let a = i-1; while (a >= 0 && fr[a] == null) a--; let b = i+1; while (b < fr.length && fr[b] == null) b++; const av = a >= 0 ? fr[a] : 0, bv = b < fr.length ? fr[b] : (g.state === "post" ? 1 : (g.period ? (g.period - 1 + (1 - Math.min(1, (secs(g.clock) ?? 0)/(g.period > 4 ? 600 : 900))))/maxP : av)); fr[i] = av + (bv - av) * ((i - a) / (b - a)); }
   for (let i = 1; i < fr.length; i++) if (fr[i] < fr[i-1]) fr[i] = fr[i-1];
   if (g.state === "post") fr[fr.length-1] = 1;
+  return { series, fr, periods, maxP, step };
+}
+function renderWP(g) {
+  const sum = S.summary, box = el("#wpChart");
+  box.querySelectorAll("svg").forEach(s => s.remove());
+  if (!g) return;
+  const { hc, ac } = matchupColors(g.home, g.away);
+  const wp = sum?.winprobability;
+  const head = (hp) => `
+    <span class="side"><span class="tm" style="color:${ac}">${esc(g.away)}</span><span class="n" style="color:${ac}">${hp == null ? "–" : Math.round(100-hp) + "%"}</span></span>
+    <span class="mid">to win</span>
+    <span class="side r"><span class="n" style="color:${hc}">${hp == null ? "–" : Math.round(hp) + "%"}</span><span class="tm" style="color:${hc}">${esc(g.home)}</span></span>`;
+  if (!wp || !wp.length) { el("#wpHead").innerHTML = head(null); el("#wpDelta").textContent = g.state === "pre" ? "Kickoff pending" : "No game flow yet"; return; }
+  const { series, fr, periods, maxP, step } = wpTrack(sum, g, wp, 140);
   const n = series.length, W=420, H=170, px=6, py=12;
   const x = i => px + Math.min(1, Math.max(0, fr[i] ?? 0))*(W-2*px), y = v => py + (100-v)*(H-2*py)/100;
   const pts = series.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`), path = "M"+pts.join(" L");
@@ -2843,18 +2858,92 @@ async function refreshGC() {
   else if (GC.g.state !== "post") GC.timer = setTimeout(refreshGC, GC.g.live ? CFG.pollLive : 60000);
 }
 function closeGame() { GC.id = null; clearTimeout(GC.timer); if (S.view === "game") location.hash = "#" + gcFrom(); }
-function gcSpark(wp, g, hc, ac) {
+function gcSpark(wp, g, hc, ac, sum) {
   if (!wp || wp.length < 2) return "";
-  const W = 400, H = 70, raw = wp.map(x => x.homeWinPercentage * 100), step = Math.max(1, Math.ceil(raw.length / 160));
-  const s = raw.filter((_, i) => i % step === 0 || i === raw.length - 1), n = s.length;
-  const x = i => (i / (n - 1)) * W, y = v => 4 + (100 - v) * (H - 8) / 100, mid = y(50);
-  const path = "M" + s.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" L");
-  const area = path + ` L${W},${mid} L0,${mid} Z`;
-  return `<svg class="gc-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Win probability through the game">
-    <defs><clipPath id="gcT"><rect x="0" y="0" width="${W}" height="${mid}"/></clipPath><clipPath id="gcB"><rect x="0" y="${mid}" width="${W}" height="${H - mid}"/></clipPath></defs>
-    <line x1="0" x2="${W}" y1="${mid}" y2="${mid}" stroke="var(--line-strong)"/>
-    <path d="${area}" fill="${hc}" fill-opacity=".2" clip-path="url(#gcT)"/><path d="${area}" fill="${ac}" fill-opacity=".2" clip-path="url(#gcB)"/>
-    <path d="${path}" fill="none" stroke="${hc}" stroke-width="2" vector-effect="non-scaling-stroke" clip-path="url(#gcT)"/><path d="${path}" fill="none" stroke="${ac}" stroke-width="2" vector-effect="non-scaling-stroke" clip-path="url(#gcB)"/></svg>`;
+  const { series, fr, maxP } = wpTrack(sum, g, wp, 160);
+  const n = series.length, W = 640, H = 110, px = 6, py = 10, bot = 16;
+  const x = i => px + Math.min(1, Math.max(0, fr[i] ?? 0)) * (W - 2 * px), y = v => py + (100 - v) * (H - py - bot) / 100;
+  const mid = y(50), cfb = LG.key === "cfb";
+  const gl = cfb ? "#2d2429" : "#26303f", gl2 = cfb ? "#453338" : "#3c4a5e", gt = cfb ? "#8b7f84" : "#7f8ba0", gbg = cfb ? "#1a161b" : "#1b2431";
+  const path = "M" + series.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" L");
+  const area = path + ` L${x(n - 1).toFixed(1)},${mid.toFixed(1)} L${x(0).toFixed(1)},${mid.toFixed(1)} Z`;
+  let q = "";
+  for (let i = 1; i <= maxP; i++) { const qx = px + ((i - 1) / maxP) * (W - 2 * px); if (i > 1) q += `<line x1="${qx.toFixed(1)}" x2="${qx.toFixed(1)}" y1="${py}" y2="${H - bot}" stroke="${gl}"/>`; q += `<text x="${(qx + 4).toFixed(1)}" y="${H - 4}" font-size="9" fill="${gt}">${ordinal(i)}</text>`; }
+  const grid = [25, 75].map(v => `<line x1="${px}" x2="${W - px}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="${gl}" stroke-dasharray="3 4"/>`).join("");
+  const last = series[n - 1], lc = last >= 50 ? hc : ac;
+  return `<svg class="gc-spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Win probability through the game">
+    <defs>
+      <clipPath id="gcT"><rect x="0" y="0" width="${W}" height="${mid.toFixed(1)}"/></clipPath>
+      <clipPath id="gcB"><rect x="0" y="${mid.toFixed(1)}" width="${W}" height="${(H - mid).toFixed(1)}"/></clipPath>
+      <linearGradient id="gcFH" gradientUnits="userSpaceOnUse" x1="0" y1="${py}" x2="0" y2="${mid.toFixed(1)}"><stop offset="0" stop-color="${hc}" stop-opacity=".36"/><stop offset="1" stop-color="${hc}" stop-opacity=".05"/></linearGradient>
+      <linearGradient id="gcFA" gradientUnits="userSpaceOnUse" x1="0" y1="${mid.toFixed(1)}" x2="0" y2="${H - bot}"><stop offset="0" stop-color="${ac}" stop-opacity=".05"/><stop offset="1" stop-color="${ac}" stop-opacity=".36"/></linearGradient>
+    </defs>
+    ${grid}${q}
+    <path d="${area}" fill="url(#gcFH)" clip-path="url(#gcT)"/><path d="${area}" fill="url(#gcFA)" clip-path="url(#gcB)"/>
+    <line x1="${px}" x2="${W - px}" y1="${mid.toFixed(1)}" y2="${mid.toFixed(1)}" stroke="${gl2}"/>
+    <text x="${W - px}" y="${(mid - 5).toFixed(1)}" text-anchor="end" font-size="9" fill="${gt}" letter-spacing="1">EVEN</text>
+    <path d="${path}" fill="none" stroke="${hc}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#gcT)"/>
+    <path d="${path}" fill="none" stroke="${ac}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#gcB)"/>
+    <circle cx="${x(n - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="4" fill="${lc}" stroke="${gbg}" stroke-width="2"/></svg>`;
+}
+function fieldSpot(txt, g) {   // "DET 40" -> yards from the away team's own goal line
+  const m = String(txt || "").match(/\b([A-Z]{2,4})\s+(\d+)/);
+  if (!m) return null;
+  const n = Math.max(0, Math.min(50, +m[2]));
+  if (m[1] === g.away) return n;
+  if (m[1] === g.home) return 100 - n;
+  return null;
+}
+function gcSit(g, hp) {
+  const poss = g.poss;
+  const pw = hp == null || !poss ? null : Math.round(poss === g.home ? hp : 100 - hp);
+  const bits = [];
+  if (poss) bits.push(`<span class="who">${mark(poss, "mini")}<b>${esc(dispName(poss))} ball</b></span>`);
+  if (g.dd) bits.push(`<span class="dd"><b>${esc(g.dd)}</b>${g.spot ? " at " + esc(g.spot) : ""}</span>`);
+  if (g.rz) bits.push(`<span class="rz">Red zone</span>`);
+  if (pw != null) bits.push(`<span class="pw" style="color:${chartColor(poss)}">Win ${pw}%</span>`);
+  return bits.length ? `<div class="gc-sit">${bits.join("")}</div>` : "";
+}
+function gcField(g, cur) {
+  const poss = cur?.team?.abbreviation || g.poss;
+  if (!poss || (poss !== g.away && poss !== g.home)) return "";
+  const dir = poss === g.away ? 1 : -1;   // the away team drives left to right
+  const un = yl => yl == null ? null : (dir === 1 ? yl : 100 - yl);
+  let ball = fieldSpot(g.spot, g);
+  if (ball == null) ball = un(cur?.end?.yardLine ?? cur?.start?.yardLine);
+  if (ball == null) return "";
+  let start = fieldSpot(cur?.start?.text, g);
+  if (start == null) start = un(cur?.start?.yardLine);
+  if (start == null) start = ball;
+  ball = Math.max(0, Math.min(100, ball)); start = Math.max(0, Math.min(100, start));
+  const goal = /goal/i.test(g.dd || ""), dm = String(g.dd || "").match(/&\s*(\d+)/);
+  const gain = !goal && dm ? Math.max(0, Math.min(100, ball + dir * +dm[1])) : null;
+  const W = 680, H = 104, EZ = 44, top = 8, bot = H - 20, F = W - 2 * EZ;
+  const X = v => EZ + (v / 100) * F;
+  const pc = chartColor(poss), cfb = LG.key === "cfb";
+  const line = cfb ? "#3a2f34" : "#2c3647", gt = cfb ? "#8b7f84" : "#7f8ba0";
+  let grid = "";
+  for (let v = 0; v < 100; v += 10) if ((v / 10) % 2) grid += `<rect x="${X(v).toFixed(1)}" y="${top}" width="${(F * 0.1).toFixed(1)}" height="${bot - top}" fill="#ffffff" fill-opacity=".028"/>`;
+  for (let v = 5; v < 100; v += 5) grid += `<line x1="${X(v).toFixed(1)}" x2="${X(v).toFixed(1)}" y1="${top}" y2="${bot}" stroke="rgba(255,255,255,${v % 10 ? ".06" : ".13"})"/>`;
+  for (const f of [0.3, 0.66]) for (let v = 1; v < 100; v++) if (v % 5) grid += `<line x1="${X(v).toFixed(1)}" x2="${X(v).toFixed(1)}" y1="${(top + (bot - top) * f).toFixed(1)}" y2="${(top + (bot - top) * f + 4).toFixed(1)}" stroke="rgba(255,255,255,.11)"/>`;
+  let nums = "";
+  for (let v = 10; v <= 90; v += 10) nums += `<text x="${X(v).toFixed(1)}" y="${bot - 5}" text-anchor="middle" font-size="10" fill="${gt}">${v > 50 ? 100 - v : v}</text>`;
+  const ez = (ab, left) => { const c = lift(T(ab)[2] || "#334"), cx = left ? EZ / 2 : W - EZ / 2;
+    return `<rect x="${left ? 0 : W - EZ}" y="${top}" width="${EZ}" height="${bot - top}" fill="${c}" fill-opacity=".9" rx="3"/>` +
+      `<text x="${cx}" y="${(top + bot) / 2}" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="700" fill="#fff" fill-opacity=".92" transform="rotate(${left ? -90 : 90} ${cx} ${(top + bot) / 2})">${esc(ab)}</text>`; };
+  const rz = g.rz ? `<rect x="${dir === 1 ? X(80) : X(0)}" y="${top}" width="${(F * 0.2).toFixed(1)}" height="${bot - top}" fill="var(--redzone)" fill-opacity=".14"/>` : "";
+  const prog = `<rect x="${Math.min(X(start), X(ball)).toFixed(1)}" y="${top}" width="${Math.abs(X(ball) - X(start)).toFixed(1)}" height="${bot - top}" fill="${pc}" fill-opacity=".2"/>`
+    + `<line x1="${X(start).toFixed(1)}" x2="${X(start).toFixed(1)}" y1="${top}" y2="${bot}" stroke="${pc}" stroke-opacity=".55" stroke-dasharray="3 3"/>`;
+  const stick = gain != null ? `<line x1="${X(gain).toFixed(1)}" x2="${X(gain).toFixed(1)}" y1="${top}" y2="${bot}" stroke="var(--warn)" stroke-width="2"/>` : "";
+  const bx = X(ball), my = (top + bot) / 2;
+  const arrow = `<path d="M${(bx + dir * 19).toFixed(1)},${my} l${-dir * 8},-5.5 v11 Z" fill="${pc}" fill-opacity=".9"/>`;
+  const marker = `<line x1="${bx.toFixed(1)}" x2="${bx.toFixed(1)}" y1="${top}" y2="${bot}" stroke="#fff" stroke-opacity=".9" stroke-width="2"/>`
+    + `<circle cx="${bx.toFixed(1)}" cy="${my}" r="6.5" fill="${pc}" stroke="#0c1119" stroke-width="2"/>${arrow}`;
+  return `<svg class="gc-fld" viewBox="0 0 ${W} ${H}" role="img" aria-label="Field position: ${esc(poss)} ball at ${esc(g.spot || "")}">
+    <rect x="${EZ}" y="${top}" width="${F}" height="${bot - top}" fill="#122029"/>${rz}${grid}${nums}
+    <line x1="${X(50).toFixed(1)}" x2="${X(50).toFixed(1)}" y1="${top}" y2="${bot}" stroke="rgba(255,255,255,.22)"/>
+    ${prog}${ez(g.away, true)}${ez(g.home, false)}${stick}${marker}
+    <text x="${X(50).toFixed(1)}" y="${H - 3}" text-anchor="middle" font-size="9" fill="${gt}">${esc(dispName(poss))} driving ${dir === 1 ? "&#8594;" : "&#8592;"}</text></svg>`;
 }
 const GCBACK = { home: "Home", scores: "Scoreboard", schedule: "Schedule", season: "Season", fantasy: "Fantasy" };
 function renderGC() {
@@ -2891,7 +2980,7 @@ function renderGC() {
   if (hp == null && sum?.predictor) { const p = sum.predictor; const h = numOf(p.homeTeam?.gameProjection), a = numOf(p.awayTeam?.gameProjection); if (h || a) { hp = h / ((h + a) || 100) * 100; wpNote = "matchup predictor"; } }
   if (hp != null && !(fin && !wpl?.length)) {
     const ap = 100 - hp;
-    wp = `<div class="gc-wp"><span style="color:${ac}">${esc(g.away)} ${Math.round(ap)}%</span><span style="color:${hc}">${Math.round(hp)}% ${esc(g.home)}</span></div><div class="gc-wpbar"><i style="width:${ap}%;background:${ac}"></i><i style="width:${hp}%;background:${hc}"></i></div>${gcSpark(wpl, g, hc, ac)}`;
+    wp = `<div class="gc-wp"><span style="color:${ac}"><b>${esc(g.away)}</b><i>${Math.round(ap)}%</i></span><span style="color:${hc}"><i>${Math.round(hp)}%</i><b>${esc(g.home)}</b></span></div><div class="gc-wpbar"><i style="width:${ap}%;background:${ac}"></i><i style="width:${hp}%;background:${hc}"></i></div>${gcSpark(wpl, g, hc, ac, sum)}`;
     if (!wpNote) wpNote = fin ? "how it swung" : "live";
   }
   // current drive
@@ -2899,9 +2988,9 @@ function renderGC() {
   const cur = sum?.drives?.current;
   if (live && cur) {
     const plays = (cur.plays || []).slice(-6).reverse();
-    drive = `<ul class="gc-plays">${plays.map((p, i) => `<li class="${i === 0 ? "hl" : ""}"><span>${esc(p.start?.shortDownDistanceText || p.start?.downDistanceText || ordinal(p.period?.number) + " " + (p.clock?.displayValue || ""))}</span><span>${esc(p.text)}</span></li>`).join("") || `<li><span></span><span>Drive starting</span></li>`}</ul>
+    drive = `${gcField(g, cur)}${gcSit(g, hp)}<ul class="gc-plays">${plays.map((p, i) => `<li class="${i === 0 ? "hl" : ""}"><span>${esc(p.start?.shortDownDistanceText || p.start?.downDistanceText || ordinal(p.period?.number) + " " + (p.clock?.displayValue || ""))}</span><span>${esc(p.text)}</span></li>`).join("") || `<li><span></span><span>Drive starting</span></li>`}</ul>
       <p class="gc-note">${esc(dispName(cur.team?.abbreviation || g.poss || ""))} · ${cur.offensivePlays ?? (cur.plays || []).length} plays, ${cur.yards ?? 0} yds${cur.timeElapsed?.displayValue ? " · " + esc(cur.timeElapsed.displayValue) : ""}</p>`;
-  } else if (live && g.lastPlay) drive = `<ul class="gc-plays"><li class="hl"><span>Last play</span><span>${esc(g.lastPlay)}</span></li></ul>`;
+  } else if (live && (g.lastPlay || g.spot)) drive = `${gcField(g, null)}${gcSit(g, hp)}<ul class="gc-plays">${g.lastPlay ? `<li class="hl"><span>Last play</span><span>${esc(g.lastPlay)}</span></li>` : ""}</ul>`;
   // team stats
   let ts = "";
   const bt = sum?.boxscore?.teams;
