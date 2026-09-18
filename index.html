@@ -1115,6 +1115,16 @@
   :is(#view-season) .h2h { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
   :is(#view-season) .h2h span { font-size: 10px; overflow: hidden; text-overflow: ellipsis; }
   :is(#view-season) .h2h div { padding: 6px 8px; }
+
+  /* ---------- v68: the game center is a page, so its sheet loses the dialog chrome ---------- */
+  #view-game.on { display: block; }
+  #view-game .sheet { width: 100%; max-width: none; max-height: none; overflow: visible; background: transparent; border: 0; border-radius: 0; padding: 0; }
+  #view-game .gc-bar { position: sticky; top: 0; z-index: 6; background: var(--ground); padding: 8px 0 10px; margin-bottom: 14px; }
+  #view-game .gc-bar .back { color: var(--ink); border-color: var(--line-strong); }
+  #view-game .gc-bar .back:hover { border-color: var(--accent); color: var(--accent); }
+  #board .bg[data-id] { cursor: pointer; transition: border-color .15s, transform .15s; }
+  #board .bg[data-id]:hover { border-color: var(--accent); transform: translateY(-1px); }
+  #board .bg .mp[data-pid] { cursor: pointer; }
 </style>
 </head>
 <body class="v-home">
@@ -1270,6 +1280,19 @@
 
     <p class="foot-note settings">Scores and drives from ESPN.<span class="fx"> Fantasy from Sleeper, league <code id="cfgLeague"></code> · team <code id="cfgTeam"></code>.</span> Refreshes every 5s while games are live.</p>
   </main>
+
+  <!-- ================= GAME CENTER (v68: its own page, not a pop-up) ================= -->
+  <main class="view gcv" id="view-game">
+    <div class="sheet wide" id="gcSheet">
+      <div class="gc-bar">
+        <button class="btn back" id="gcBack" type="button">&#8249; Back</button>
+        <span class="gc-kick" id="gcKick">Game center</span>
+        <span class="gc-meta" id="gcMeta"></span>
+        <span class="sp"><button class="btn" id="gcFeature" type="button">Feature on Home</button></span>
+      </div>
+      <div id="gcBody"><div class="empty">Loading the game</div></div>
+    </div>
+  </main>
 </div>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
@@ -1293,17 +1316,6 @@
       <button class="btn pm-close" id="pmClose" type="button" aria-label="Close">Close</button>
     </div>
     <div id="pmBody" class="pm-body"><div class="empty">Loading stats</div></div>
-  </div>
-</div>
-
-<div class="modal gcm" id="gmodal" hidden>
-  <div class="sheet wide" role="dialog" aria-modal="true" aria-labelledby="gcKick">
-    <div class="gc-bar">
-      <span class="gc-kick" id="gcKick">Game center</span>
-      <span class="gc-meta" id="gcMeta"></span>
-      <span class="sp"><button class="btn" id="gcFeature" type="button">Feature on Home</button><button class="btn" id="gcClose" type="button">Close</button></span>
-    </div>
-    <div id="gcBody"><div class="empty">Loading the game</div></div>
   </div>
 </div>
 
@@ -2282,7 +2294,8 @@ function gameCard(g, big, ex) {
   const chips = arr => arr.map(m => `<span class="mp" data-pid="${esc(m.pid)}" role="button" title="Points breakdown"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
   const mineRow = (mine.length ? `<div class="mine">${chips(mine)}</div>` : "") + (theirs.length ? `<div class="mine opp">${chips(theirs)}</div>` : "");
   const rzc = g.rz && g.poss ? chartColor(g.poss) : "";
-  return `<article class="${cls} ${g.rz ? "rz" : ""}" ${rzc ? `style="--rzc:${rzc}"` : ""} ${big ? "" : `data-id="${g.id}" role="button" tabindex="0" title="${ex.gc ? (g.live ? "Open the game center" : g.state === "post" ? "Open the game breakdown" : "Open the preview") : "Show this game up top"}"`}>${row(g.away,g.as,g.hs,g.awayRec)}${row(g.home,g.hs,g.as,g.homeRec)}${mineRow}${lm}${foot}</article>`;
+  const gcT = g.live ? "Open the game center" : fin ? "Open the game breakdown" : "Open the preview";   // v68: board tiles open it too
+  return `<article class="${cls} ${g.rz ? "rz" : ""}" ${rzc ? `style="--rzc:${rzc}"` : ""} data-id="${g.id}" role="button" tabindex="0" title="${big || ex.gc ? gcT : "Show this game up top"}">${row(g.away,g.as,g.hs,g.awayRec)}${row(g.home,g.hs,g.as,g.homeRec)}${mineRow}${lm}${foot}</article>`;
 }
 
 // home cards: same three filters as the scoreboard, kept separately so the two pages do not yank each other around
@@ -2735,9 +2748,24 @@ function bodyClass() {
   document.body.className = `v-${S.view} lg-${LG.key}${S.grouped && S.view === "scores" ? " grouped" : ""}${offWeek() ? " past" : ""}${rgActive() ? " regroup" : ""}`;
 }
 function defaultView() { return "season"; }
+function gcFrom() {
+  const f = S.gcFrom;
+  return f && f !== "game" && (f !== "fantasy" || LG.fantasy) ? f : "home";
+}
 function route() {
   let v = (location.hash.replace("#","") || defaultView());
   if (v === "fantasy" && !LG.fantasy) v = "home";
+  // v68: the game center is a page of its own, #game-<id>, with a back button to wherever you came from
+  const gm = /^game-(.+)$/.exec(v);
+  if (gm) {
+    S.view = "game";
+    document.querySelectorAll(".view").forEach(m => m.classList.toggle("on", m.id === "view-game"));
+    document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.dataset.v === gcFrom()));
+    bodyClass();
+    showGame(gm[1]);
+    return;
+  }
+  if (GC.id) { GC.id = null; clearTimeout(GC.timer); }
   const known = ["home","season","schedule","scores","fantasy"].includes(v) ? v : defaultView();
   S.view = known;
   document.querySelectorAll(".view").forEach(m => m.classList.toggle("on", m.id === "view-"+known));
@@ -2750,7 +2778,8 @@ function route() {
 // Saturday / Sunday: same shell, different sport
 function setLeague(k) {
   if (!LEAGUES[k] || k === LG.key) return;
-  closeGame(); closeTeam();   // v57
+  closeTeam(); GC.id = null; clearTimeout(GC.timer);   // v57, v68
+  if (location.hash.startsWith("#game-")) location.hash = "#" + gcFrom();
   LG = LEAGUES[k]; store.set("cc-league", k);
   clearTimeout(espnTimer); clearTimeout(slTimer);
   Object.assign(S, { events: [], featured: null, favGame: null, summary: null, pickId: null, scoreFeed: [], lastScores: {}, prevState: {}, finishedAt: {}, finals: [], lineTried: {}, week: null, viewWeek: null, curWeek: null, season: null, ranks: null, ranksT: 0, seeds: null, seedsT: 0, sday: null, grouped: false, nextFav: null, nextFavWk: null });
@@ -2779,11 +2808,18 @@ function gameFromHeader(sum, id) {
   const ev = { id, date: c.date || sum.header?.date, status: c.status || { type: { state: "pre" } }, competitions: [{ ...c, competitors: comps, situation: c.situation, venue: sum.gameInfo?.venue || c.venue, broadcasts: c.broadcasts, odds: sum.pickcenter?.length ? [bestPick(sum.pickcenter)] : [] }] };
   try { return normGame(ev); } catch (e) { console.warn("header game", e); return null; }
 }
-async function openGame(id) {
+// v68: opening a game is a navigation; route() renders the page
+function openGame(id) {
   if (!id) return;
+  if (S.view !== "game") S.gcFrom = S.view;
+  const h = "#game-" + id;
+  if (location.hash === h) { GC.id = null; showGame(id); } else location.hash = h;
+}
+async function showGame(id) {
+  if (!id || GC.id === id) { if (id) renderGC(); return; }
   closeTeam();
   GC.id = id; GC.sum = null; GC.err = ""; GC.g = S.events.find(x => x.id === id) || null;
-  el("#gmodal").hidden = false; el("#gmodal .sheet").scrollTop = 0;
+  window.scrollTo(0, 0);
   renderGC();
   if (GC.g && GC.g.state === "pre") loadTape(GC.g).then(() => { if (GC.id === id) renderGC(); });
   await refreshGC();
@@ -2802,11 +2838,11 @@ async function refreshGC() {
   } catch (e) { if (GC.id === id) GC.err = e.message; console.warn("game center", e); }
   if (GC.id !== id) return;
   renderGC();
-  if (el("#gmodal").hidden) return;
+  if (S.view !== "game") return;
   if (!GC.g) GC.timer = setTimeout(refreshGC, 15000);
   else if (GC.g.state !== "post") GC.timer = setTimeout(refreshGC, GC.g.live ? CFG.pollLive : 60000);
 }
-function closeGame() { GC.id = null; clearTimeout(GC.timer); el("#gmodal").hidden = true; }
+function closeGame() { GC.id = null; clearTimeout(GC.timer); if (S.view === "game") location.hash = "#" + gcFrom(); }
 function gcSpark(wp, g, hc, ac) {
   if (!wp || wp.length < 2) return "";
   const W = 400, H = 70, raw = wp.map(x => x.homeWinPercentage * 100), step = Math.max(1, Math.ceil(raw.length / 160));
@@ -2820,8 +2856,10 @@ function gcSpark(wp, g, hc, ac) {
     <path d="${area}" fill="${hc}" fill-opacity=".2" clip-path="url(#gcT)"/><path d="${area}" fill="${ac}" fill-opacity=".2" clip-path="url(#gcB)"/>
     <path d="${path}" fill="none" stroke="${hc}" stroke-width="2" vector-effect="non-scaling-stroke" clip-path="url(#gcT)"/><path d="${path}" fill="none" stroke="${ac}" stroke-width="2" vector-effect="non-scaling-stroke" clip-path="url(#gcB)"/></svg>`;
 }
+const GCBACK = { home: "Home", scores: "Scoreboard", schedule: "Schedule", season: "Season", fantasy: "Fantasy" };
 function renderGC() {
   const g = GC.g, sum = GC.sum, box = el("#gcBody");
+  el("#gcBack").innerHTML = "&#8249; Back to " + esc(GCBACK[gcFrom()] || "Home");
   el("#gcFeature").hidden = !(g && S.events.some(x => x.id === g.id));
   if (!g) { el("#gcKick").textContent = "Game center"; el("#gcMeta").textContent = ""; box.innerHTML = `<div class="empty">${GC.err ? "Couldn't load this game. Trying again shortly" : "Loading the game"}</div>`; return; }
   const pre = g.state === "pre", fin = g.state === "post", live = g.live;
@@ -2905,7 +2943,7 @@ function renderGC() {
     const b = col(g.away) + col(g.home);
     if (b) l5 = `<div class="gc-lead">${b}</div>`;
   }
-  el("#gmodal .sheet").classList.toggle("pv", pre);
+  el("#gcSheet").classList.toggle("pv", pre);
   if (pre) { box.innerHTML = top + previewHTML(g, sum) + `<p class="gc-note">Tap a team for its schedule, standings and stats. Refreshes every minute until kickoff.</p>`; return; }
   const lines = g.odds ? `<div class="gc-card"><h3>Lines${fin ? "<small>how they landed</small>" : ""}</h3>${linesHTML(g, false)}</div>` : "";
   const left = [
@@ -3168,20 +3206,21 @@ document.addEventListener("click", e => {
   const dayb = e.target.closest("#dayseg button"); if (dayb) { S.sday = dayb.dataset.day; S.sfull = dayb.dataset.day === "all"; store.set("cc-sfull", S.sfull); return renderSchedule(); }
   const sortb = e.target.closest("#sortSeg button"); if (sortb) { S.ssort = sortb.dataset.sort; store.set("cc-sort-" + LG.key, S.ssort); return renderSchedule(); }
   // v57: team names and logos open the team; a schedule card opens its game center / breakdown / preview
-  if (e.target.closest("#gcClose") || e.target === el("#gmodal")) return closeGame();
+  if (e.target.closest("#gcBack")) return closeGame();
   if (e.target.closest("#tmClose") || e.target === el("#tmodal")) return closeTeam();
-  if (e.target.closest("#gcFeature")) { const id = GC.id; closeGame(); if (location.hash !== "#home") location.hash = "#home"; return pickGame(id); }
+  if (e.target.closest("#gcFeature")) { const id = GC.id; GC.id = null; clearTimeout(GC.timer); location.hash = "#home"; return pickGame(id); }
   const tBtn = e.target.closest(".gc-team[data-team], .tm-st tr[data-team], #standings tr[data-team]"); if (tBtn) return openTeam(tBtn.dataset.team);
   const tRow = e.target.closest(".g .row[data-team]"); if (tRow && e.target.closest(".abbr, .tn")) return openTeam(tRow.dataset.team);
   const tGame = e.target.closest(".tm-sch tr[data-game]"); if (tGame) return openGame(tGame.dataset.game);
   const scard = e.target.closest("#sched .g[data-id]"); if (scard) return openGame(scard.dataset.id);
   const card = e.target.closest("#slots .g[data-id]"); if (card) return openGame(card.dataset.id);   // v58: home cards open the game center too
+  const bcard = e.target.closest("#board .bg[data-id]"); if (bcard) return openGame(bcard.dataset.id);   // v68: so do the scoreboard tiles
   // v60: the featured game opens its game center / preview; its teams open the team pop-up
   const hTeam = e.target.closest("#hero .team[data-team]"); if (hTeam) return openTeam(hTeam.dataset.team);
   if (e.target.closest("#heroGC, #hero .scoreblock") && S.featured) return openGame(S.featured.id);
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!el("#tmodal").hidden) return closeTeam(); if (!el("#gmodal").hidden) return closeGame(); closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#hero .team[data-team]")) openTeam(e.target.dataset.team); if (e.key === "Enter" && e.target.matches("#hero .scoreblock") && S.featured) openGame(S.featured.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) openGame(e.target.dataset.id); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!el("#tmodal").hidden) return closeTeam(); if (S.view === "game") return closeGame(); closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#hero .team[data-team]")) openTeam(e.target.dataset.team); if (e.key === "Enter" && e.target.matches("#hero .scoreblock") && S.featured) openGame(S.featured.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#board .bg[data-id]")) openGame(e.target.dataset.id); });
 /* v46: full screen is desktop only. iOS and most touch browsers ignore the API,
    so the buttons are removed rather than left on screen doing nothing. */
 (function () {
