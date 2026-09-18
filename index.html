@@ -3806,7 +3806,7 @@ function snClick(e) {
   if ((b = t.closest("[data-rsort]"))) { const k = b.dataset.rsort, cur = SN.rsort[SN.rtab], low = (SN_RCOLS[SN.rtab] || []).find(c => c[0] === k)?.[2];
     SN.rsort[SN.rtab] = cur && cur[0] === k ? [k, -cur[1]] : [k, low ? 1 : -1]; snRoster(); return true; }
   if ((b = t.closest("[data-lead]"))) { SN.leadCat = b.dataset.lead; snLeaders(); snLoadLead(SN.leadCat, snY()).then(snLeaders); return true; }
-  if ((b = t.closest("[data-lg]"))) { const k = b.dataset.lg, low = (SN_LG.find(c => c[0] === k) || [])[2];
+  if ((b = t.closest("#snLeague [data-lg]"))) { /* v67: scoped, the bare selector swallowed the Saturday / Sunday toggle */ const k = b.dataset.lg, low = (SN_LG.find(c => c[0] === k) || [])[2];
     if (SN.lgv.sort === k) SN.lgv.dir = -SN.lgv.dir; else { SN.lgv.sort = k; SN.lgv.dir = low ? 1 : -1; } snLeague(); return true; }
   if ((b = t.closest("[data-lgf]"))) { SN.lgv.f = b.dataset.lgf; snLeague(); return true; }
   if (S.view === "season") {
