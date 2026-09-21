@@ -1136,6 +1136,110 @@
   #board .bg[data-id] { cursor: pointer; transition: border-color .15s, transform .15s; }
   #board .bg[data-id]:hover { border-color: var(--accent); transform: translateY(-1px); }
   #board .bg .mp[data-pid] { cursor: pointer; }
+
+  /* ---------- v70: game center, the trip list ---------- */
+  /* the sticky block: other live scores, the back bar, then the pinned score once the big header scrolls away */
+  #view-game .gc-bar { position: static; padding: 6px 0 10px; margin-bottom: 0; border-bottom: 0; }
+  .gc-sticky { position: sticky; top: 0; z-index: 6; background: var(--ground); margin-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .gc-strip { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 6px 0 8px; border-bottom: 1px solid var(--line); }
+  .gc-strip::-webkit-scrollbar { display: none; }
+  .gc-strip[hidden] { display: none; }
+  .gc-strip button { flex: none; font: inherit; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px 4px 7px; display: grid; grid-template-columns: auto auto; gap: 1px 8px; cursor: pointer; text-align: left; line-height: 1.15; }
+  .gc-strip button:hover { border-color: var(--accent); color: var(--ink); }
+  .gc-strip button.fav { border-color: rgba(91,156,255,.55); background: linear-gradient(180deg, #17233a, var(--surface)); }
+  body.lg-cfb .gc-strip button.fav { border-color: rgba(232,35,42,.65); background: linear-gradient(180deg, #2c1418, var(--surface)); }
+  .gc-strip .tm { display: flex; align-items: center; gap: 5px; font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .04em; min-width: 92px; }
+  .gc-strip .tm .mini { width: 16px; height: 16px; display: inline-grid; place-items: center; border-radius: 3px; font-size: 7px; font-weight: 800; color: #fff; overflow: hidden; flex: none; }
+  .gc-strip .tm .mini img { width: 100%; height: 100%; object-fit: contain; }
+  .gc-strip .tm .mini.lgo { background: transparent !important; }
+  .gc-strip .tm.lead { color: var(--ink); }
+  .gc-strip .tm b { margin-left: auto; font-weight: 800; padding-left: 8px; font-size: 14px; }
+  .gc-strip .tm .poss { width: 6px; height: 6px; border-radius: 50%; background: var(--warn); display: inline-block; }
+  .gc-strip .st { grid-row: 1 / span 2; align-self: center; font-size: 11px; font-weight: 600; letter-spacing: .04em; white-space: nowrap; color: var(--live); border-left: 1px solid var(--line); padding-left: 8px; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+  .gc-strip .st .rz { font-size: 9px; letter-spacing: .1em; color: var(--redzone); border: 1px solid rgba(255,90,95,.45); border-radius: 999px; padding: 0 5px; }
+  .gc-pin { display: none; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px 14px; padding: 4px 0 8px; }
+  .gc-sticky.pinned .gc-pin { display: grid; }
+  .gc-pin .side { display: flex; align-items: center; gap: 8px; min-width: 0; font-family: var(--display); }
+  .gc-pin .side.home { flex-direction: row-reverse; }
+  .gc-pin .side .mark { width: 30px; height: 30px; border-radius: 7px; font-size: 12px; flex: none; }
+  .gc-pin .side b { font-size: 15px; font-weight: 700; letter-spacing: .06em; color: var(--ink-2); display: inline-flex; align-items: center; gap: 5px; }
+  .gc-pin .side i { font-style: normal; font-size: 30px; font-weight: 800; line-height: 1; }
+  .gc-pin .side.dim i { color: var(--ink-2); }
+  .gc-pin .mid { text-align: center; font-family: var(--display); display: flex; flex-direction: column; align-items: center; }
+  .gc-pin .mid .q { font-weight: 700; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; }
+  .gc-pin .mid .q.live { color: var(--live); }
+  .gc-pin .mid .dd { font-family: var(--body); font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .gc-pin .poss { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+  .gc-dbar { display: block; width: 100%; height: 9px; grid-column: 1 / -1; border-radius: 2px; overflow: hidden; }
+  /* the possession logo in the situation strip had no size (v69), so it drew at the logo's native size */
+  .gc-sit .who .mini { width: 20px; height: 20px; flex: none; }
+  /* drive list, newest on top, each one opens into its plays */
+  .gc-drives { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .gc-dr { border-bottom: 1px solid var(--line); }
+  .gc-dr .dr-head { width: 100%; font: inherit; color: inherit; background: transparent; border: 0; padding: 7px 0; display: grid; grid-template-columns: 20px minmax(0, 1fr) auto auto 14px; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
+  .gc-dr .dr-head:hover .dr-main span { color: var(--ink-2); }
+  .gc-dr .dr-head .mini { width: 20px; height: 20px; }
+  .gc-dr .dr-main { display: flex; flex-direction: column; min-width: 0; }
+  .gc-dr .dr-main b { font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gc-dr.score .dr-main b { color: var(--good); } .gc-dr.to .dr-main b { color: var(--warn); } .gc-dr.cur .dr-main b { color: var(--live); }
+  .gc-dr .dr-main span { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gc-dr .dr-side { display: flex; flex-direction: column; align-items: flex-end; font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .gc-dr .dr-sc { font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--ink-2); min-width: 3.4ch; text-align: right; white-space: nowrap; }
+  .gc-dr .dr-caret { width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .2s; justify-self: center; margin-top: -4px; }
+  .gc-dr.open .dr-caret { transform: rotate(-135deg); margin-top: 4px; }
+  .gc-dr .dr-plays { display: none; list-style: none; margin: 0 0 6px; padding: 0 0 0 30px; }
+  .gc-dr.open .dr-plays { display: block; }
+  .gc-dr .dr-plays li { display: grid; grid-template-columns: 104px minmax(0, 1fr) auto; gap: 8px; padding: 5px 0; border-top: 1px dashed var(--line); font-size: 13px; color: var(--ink-2); align-items: baseline; }
+  .gc-dr .dr-plays li.hl .pl-tx { color: var(--ink); font-weight: 500; }
+  .gc-dr .dr-plays li.empty { display: block; }
+  .gc-dr .dr-plays .pl-dd { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; }
+  .gc-dr .dr-plays .pl-dd small { font-size: 10px; opacity: .8; }
+  .gc-dr .dr-plays .pl-tag { font-family: var(--display); font-size: 10px; letter-spacing: .1em; padding: 1px 5px; border-radius: 4px; background: var(--raised); color: var(--ink-2); margin-right: 6px; vertical-align: middle; font-weight: 800; }
+  .gc-dr .dr-plays .pl-tag.big { background: var(--accent-soft); color: var(--accent); }
+  .gc-dr .dr-plays .pl-sc { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .gc-dr .dr-plays em { font-style: normal; font-family: var(--display); font-weight: 700; font-size: 13px; color: var(--muted); }
+  .gc-dr .dr-plays em.pos { color: var(--good); } .gc-dr .dr-plays em.neg { color: var(--live); }
+  /* probability panel: logo and number each side, a Win / Cover switch, a taller chart with quarter shading */
+  .gc-wp .mini { width: 26px; height: 26px; display: inline-grid; place-items: center; border-radius: 6px; font-size: 9px; }
+  .gc-wp i { font-size: 26px; }
+  .gc-wp small { font-family: var(--body); font-size: 11px; color: var(--muted); letter-spacing: 0; align-self: center; }
+  .gc-card h3 .seg { margin-left: auto; padding: 1px; }
+  .gc-card h3 .seg button { font-size: 10px; padding: 2px 8px; letter-spacing: .08em; }
+  .gc-card h3 .seg button:disabled { opacity: .4; cursor: default; }
+  .gc-card h3 .seg + small { margin-left: 8px; }
+  .gc-prob { position: relative; margin-top: 10px; }
+  .gc-prob svg { display: block; width: 100%; height: auto; }
+  .gc-prob .ax { position: absolute; left: 0; transform: translateY(-50%); width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 5px; font-size: 8px; overflow: hidden; }
+  .gc-prob .ax img { width: 100%; height: 100%; object-fit: contain; }
+  .gc-prob .ax.lgo { background: transparent !important; }
+  .gc-prob .tip { transform: translate(-50%, -125%); z-index: 3; }
+  .gc-prob .tip b { font-weight: 700; }
+  .gc-note.est { margin-top: 6px; }
+  /* big-play and final banners */
+  .toast.gcb { border-color: var(--tc, var(--accent)); box-shadow: 0 12px 40px rgba(0,0,0,.55), 0 0 30px color-mix(in srgb, var(--tc, var(--accent)) 40%, transparent); }
+  .toast.gcb .kicker { color: var(--tc, var(--accent)); }
+  .toast.gcb .pts { color: var(--ink); font-size: 24px; white-space: nowrap; }
+  .toast.gcb .what { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .toast.gcb.soft { border-color: var(--line-strong); box-shadow: 0 12px 40px rgba(0,0,0,.55); }
+  .toast.gcb.soft .kicker { color: var(--ink-2); }
+  /* the scoreboard on a phone scrolls instead of squeezing every game into one screen */
+  @media (max-width: 699px) {
+    body.v-scores { overflow: auto; padding-bottom: 70px; }
+    body.v-scores .wrap > * { min-width: 0; }
+    .board .bg { min-width: 0; overflow: hidden; }
+    .bg .foot { flex-wrap: wrap; row-gap: 4px; }
+    .bg .nm { font-size: 22px; }
+    body.lg-cfb .bg .nm { font-size: 17px; }
+    .bg .sc { min-width: 54px; }
+    .gc-dr .dr-head { grid-template-columns: 20px minmax(0, 1fr) auto 14px; }
+    .gc-dr .dr-side { display: none; }
+    .gc-dr .dr-plays { padding-left: 0; }
+    .gc-dr .dr-plays li { grid-template-columns: minmax(0, 1fr) auto; }
+    .gc-dr .dr-plays .pl-dd { grid-column: 1 / -1; flex-direction: row; gap: 8px; align-items: baseline; }
+    .gc-pin .side i { font-size: 26px; }
+    .gc-pin .side .mark { width: 26px; height: 26px; }
+    .gc-pin .mid .dd { display: none; }
+  }
 </style>
 </head>
 <body class="v-home">
@@ -1295,11 +1399,16 @@
   <!-- ================= GAME CENTER (v68: its own page, not a pop-up) ================= -->
   <main class="view gcv" id="view-game">
     <div class="sheet wide" id="gcSheet">
-      <div class="gc-bar">
-        <button class="btn back" id="gcBack" type="button">&#8249; Back</button>
-        <span class="gc-kick" id="gcKick">Game center</span>
-        <span class="gc-meta" id="gcMeta"></span>
-        <span class="sp"><button class="btn" id="gcFeature" type="button">Feature on Home</button></span>
+      <!-- v70: everything in here sticks to the top: other live scores, the back bar, and the pinned score with its drive bar -->
+      <div class="gc-sticky" id="gcSticky">
+        <div class="gc-strip" id="gcStrip" hidden aria-label="Other live games"></div>
+        <div class="gc-bar">
+          <button class="btn back" id="gcBack" type="button">&#8249; Back</button>
+          <span class="gc-kick" id="gcKick">Game center</span>
+          <span class="gc-meta" id="gcMeta"></span>
+          <span class="sp"><button class="btn" id="gcFeature" type="button">Feature on Home</button></span>
+        </div>
+        <div class="gc-pin" id="gcPin"></div>
       </div>
       <div id="gcBody"><div class="empty">Loading the game</div></div>
     </div>
@@ -1570,7 +1679,7 @@ async function loadScoreboard() {
   S.events = (d.events || []).map(normGame).sort((a,b) => a.date - b.date);
   S.prevState = S.prevState || {}; S.finishedAt = S.finishedAt || {}; S.finals = S.finals || [];
   for (const g of S.events) {
-    if (S.prevState[g.id] === "in" && g.state === "post") { S.finishedAt[g.id] = Date.now(); S.finals.push(g.id); }
+    if (S.prevState[g.id] === "in" && g.state === "post") { S.finishedAt[g.id] = Date.now(); S.finals.push(g.id); if (S.view === "scores") finalBanner(g); }   // v70: banner on the board too
     S.prevState[g.id] = g.state;
   }
   renderWeekBox();
@@ -2020,6 +2129,53 @@ function confetti(color) {
 }
 function gameForTeam(ab) { const e = toEspn(ab); return S.events.find(g => g.home === e || g.away === e); }
 
+/* ---- v70: banners. A game going final throws one on the scoreboard; big plays throw one on the game center page ---- */
+function banner(o) {   // { team, kicker, name, what, tag, td, soft }
+  const tc = chartColor(o.team), t = document.createElement("div"), name = o.name || dispName(o.team);
+  t.className = "toast gcb" + (o.td ? " big" : "") + (o.soft ? " soft" : ""); t.style.setProperty("--tc", tc);
+  t.innerHTML = `${mark(o.team, "abbr")}<div><div class="kicker">${esc(o.kicker)}</div><div class="name">${esc(name)}</div>${o.what ? `<div class="what">${esc(o.what)}</div>` : ""}</div>${o.tag ? `<span class="pts">${esc(o.tag)}</span>` : ""}`;
+  el("#toasts").prepend(t);
+  setTimeout(() => { t.classList.add("out"); setTimeout(() => t.remove(), 400); }, o.td ? 9000 : 6500);
+  if (o.td && !o.soft && o.team === CFG.fav && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti(tc);
+}
+function finalBanner(g) {
+  const aw = g.as > g.hs, hw = g.hs > g.as, w = hw ? g.home : g.away, l = hw ? g.away : g.home;
+  const soft = isFavLoss(g);
+  banner({ team: w, kicker: soft ? "That one's over" : (g.status || "Final"), name: aw || hw ? `${dispName(w)} ${hw ? g.hs : g.as}, ${dispName(l)} ${hw ? g.as : g.hs}` : `${dispName(g.away)} ${g.as}, ${dispName(g.home)} ${g.hs}`,
+    what: g.venue || "", tag: aw || hw ? "FINAL" : "TIE", td: !soft && w === CFG.fav, soft });
+}
+// what counts as a big play, and which team it belongs to
+function bigPlay(p, prev, d, g) {
+  const t = String(p.type?.text || ""), txt = String(p.text || "");
+  const off = d.team?.abbreviation || g.poss, def = off === g.home ? g.away : off === g.away ? g.home : null;
+  const yds = +p.statYardage || 0, score = `${g.away} ${p.awayScore ?? g.as} · ${g.home} ${p.homeScore ?? g.hs}`;
+  if (p.scoringPlay) {
+    if (/extra point|^pat\b/i.test(t) && !/two/i.test(t)) return null;
+    const ph = +(prev?.homeScore ?? 0), pa = +(prev?.awayScore ?? 0);
+    const team = (+p.homeScore || 0) > ph ? g.home : (+p.awayScore || 0) > pa ? g.away : off;
+    const td = /touchdown/i.test(t) || /touchdown/i.test(txt);
+    return { team, td, kicker: td ? "Touchdown!" : /field goal/i.test(t) ? "Field goal" : /safety/i.test(t) ? "Safety" : /two point|two-point/i.test(t) ? "Two-point conversion" : "Score", what: txt, tag: score };
+  }
+  if (def && /interception/i.test(t)) return { team: def, kicker: "Interception", what: txt, tag: "TAKEAWAY" };
+  if (def && /fumble recovery \(opponent\)|fumble return/i.test(t)) return { team: def, kicker: "Fumble", what: txt, tag: "TAKEAWAY" };
+  if (def && /field goal missed|blocked/i.test(t)) return { team: def, kicker: /blocked/i.test(t) ? "Blocked!" : "Missed field goal", what: txt, tag: "NO GOOD" };
+  if (off && p.start?.down === 4 && yds >= (+p.start.distance || 1) && !/punt|field goal|penalty|timeout/i.test(t)) return { team: off, kicker: "4th down conversion", what: txt, tag: `+${yds} yds` };
+  if (off && yds >= 25 && /rush|pass reception|reception/i.test(t)) return { team: off, kicker: "Big gain", what: txt, tag: `+${yds} yds` };
+  return null;
+}
+// called on every game center refresh: seed the play ids silently on the first load, then banner anything new and big.
+// the one exception he asked for: no banner for whoever is playing Texas Tech.
+function gcWatchPlays(sum, g) {
+  if (!g || !sum?.drives) return;
+  const all = []; for (const d of [...(sum.drives.previous || []), sum.drives.current].filter(Boolean)) for (const p of d.plays || []) all.push({ p, d });
+  if (!GC.seen || GC.seenId !== g.id) { GC.seen = new Set(all.map(x => String(x.p.id))); GC.seenId = g.id; return; }
+  const fresh = [];
+  all.forEach((x, i) => { const k = String(x.p.id ?? ""); if (!k || GC.seen.has(k)) return; GC.seen.add(k); fresh.push({ ...x, prev: all[i - 1]?.p }); });
+  if (!g.live || !fresh.length) return;
+  const noBanner = LG.key === "cfb" && (g.home === CFG.fav || g.away === CFG.fav) ? (g.home === CFG.fav ? g.away : g.home) : null;
+  for (const { p, prev, d } of fresh.slice(-3)) { const b = bigPlay(p, prev, d, g); if (b && b.team !== noBanner) banner(b); }
+}
+
 /* =====================================================================
    RENDER: home
    ===================================================================== */
@@ -2187,9 +2343,10 @@ function wpTrack(sum, g, wp, maxPts) {
   const keep = (_, i) => i % step === 0 || i === raw.length - 1;
   const series = raw.filter(keep);
   // where each play sits in game time, so the line only reaches the right edge when the game is actually over
-  const periodOf = {}, clockOf = {};
-  for (const d of [...(sum?.drives?.previous||[]), sum?.drives?.current].filter(Boolean)) for (const p of d.plays||[]) { periodOf[p.id] = p.period?.number; clockOf[p.id] = p.clock?.displayValue ?? p.clock?.value; }
+  const periodOf = {}, clockOf = {}, scoreOf = {};
+  for (const d of [...(sum?.drives?.previous||[]), sum?.drives?.current].filter(Boolean)) for (const p of d.plays||[]) { periodOf[p.id] = p.period?.number; clockOf[p.id] = p.clock?.displayValue ?? p.clock?.value; if (p.homeScore != null) scoreOf[p.id] = (+p.homeScore || 0) - (+p.awayScore || 0); }
   const kept = wp.filter(keep);
+  let mg = 0; const margin = kept.map(x => { if (scoreOf[x.playId] != null) mg = scoreOf[x.playId]; return mg; });   // v70: home margin at each point, for the cover chart and the tooltip
   const periods = kept.map(x => periodOf[x.playId] || 0);
   const maxP = Math.max(4, g.period || 0, ...periods);
   const secs = v => { if (v == null) return null; if (typeof v === "number") return v; const m = String(v).match(/^(\d+):(\d+)$/); return m ? +m[1]*60 + +m[2] : null; };
@@ -2203,7 +2360,7 @@ function wpTrack(sum, g, wp, maxPts) {
   for (let i = 0; i < fr.length; i++) if (fr[i] == null) { let a = i-1; while (a >= 0 && fr[a] == null) a--; let b = i+1; while (b < fr.length && fr[b] == null) b++; const av = a >= 0 ? fr[a] : 0, bv = b < fr.length ? fr[b] : (g.state === "post" ? 1 : (g.period ? (g.period - 1 + (1 - Math.min(1, (secs(g.clock) ?? 0)/(g.period > 4 ? 600 : 900))))/maxP : av)); fr[i] = av + (bv - av) * ((i - a) / (b - a)); }
   for (let i = 1; i < fr.length; i++) if (fr[i] < fr[i-1]) fr[i] = fr[i-1];
   if (g.state === "post") fr[fr.length-1] = 1;
-  return { series, fr, periods, maxP, step };
+  return { series, fr, periods, maxP, step, margin };
 }
 function renderWP(g) {
   const sum = S.summary, box = el("#wpChart");
@@ -2343,8 +2500,8 @@ function renderSlots() {
   const groups = new Map();
   if (byConf) { for (const [id, gs] of confSections(list)) groups.set(confName(id), gs); }
   else for (const g of list) { const k = slotOf(g); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(g); }
-  // conference blocks read in kickoff order, first game to last; the time windows keep ranked games on top
-  if (cfb) for (const gs of groups.values()) gs.sort(byConf ? (a, b) => (a.date - b.date) || (bestRank(a) - bestRank(b)) : (a, b) => (bestRank(a) - bestRank(b)) || (a.date - b.date));
+  // v70: every block reads in kickoff order, first game to last, rank only breaking ties (ranked-first made the times jump around)
+  if (cfb) for (const gs of groups.values()) gs.sort((a, b) => (a.date - b.date) || (bestRank(a) - bestRank(b)));
   el("#slots").innerHTML = [...groups].map(([name, gs]) => `
     <section class="slot">
       <div class="slot-head"><h2>${esc(name)}</h2><span class="sub">${byConf ? "" : fmtCT(gs[0].date,{weekday:"short",month:"short",day:"numeric"}) + " · "}${gs.length} game${gs.length>1?'s':''}</span></div>
@@ -2443,8 +2600,9 @@ function renderBoard() {
   const live = S.events.filter(g=>g.live).length, fin = S.events.filter(g=>g.state==="post").length;
   el("#boardSub").textContent = `${S.events.length} games · ${live} live · ${fin} final · ${S.events.length-live-fin} to come`;
   renderConfPicker();
-  const held = offWeek() ? [] : S.events.filter(g => g.live);   // v53: live games only; the Schedule tab has the rest
-  const liveGames = boardFilter(held).map(g => ({ g, w: importance(g) })).sort((a, b) => b.w.score - a.w.score || a.g.date - b.g.date);
+  // v53: live games only, the Schedule tab has the rest; v70: a game that just ended stays up two minutes with its Final before it clears
+  const held = offWeek() ? [] : S.events.filter(g => g.live || (g.state === "post" && S.finishedAt?.[g.id] && Date.now() - S.finishedAt[g.id] < 120000));
+  const liveGames = boardFilter(held).map(g => ({ g, w: g.live ? importance(g) : { score: 0, why: [] } })).sort((a, b) => (b.g.live - a.g.live) || b.w.score - a.w.score || a.g.date - b.g.date);
   const card = x => gameCard(x.g, true, { imp: x.w.score > 0, why: x.w.why });
   const next = S.events.find(g => g.state === "pre");
   const board = el("#board");
@@ -2461,6 +2619,7 @@ function renderBoard() {
     fitBoard();
   }
   el("#liveChip").style.display = live ? "" : "none"; el("#liveCount").textContent = live ? `${live} live` : "Live";
+  if (S.view === "game") { renderGCStrip(); if (GC.g) { const fresh = S.events.find(x => x.id === GC.g.id); if (fresh) GC.g = fresh; el("#gcPin").innerHTML = GC.g.state === "pre" ? "" : gcPinHTML(GC.g, GC.sum?.drives?.current); } }   // v70: the strip and the pinned score follow every board poll
 }
 
 // v53: why a live game matters. Only called for live games, so the treatment disappears at the final whistle.
@@ -2583,9 +2742,9 @@ function renderSchedule() {
   } else if (S.ssort === "conf") {
     html = confSections(list).map(([id, gs]) => sec(confName(id), cnt(gs.length), gs.slice().sort(byTime))).join("");
   } else if (S.ssort === "top25") {
-    const gs = list.filter(g => g.homeRank || g.awayRank).sort((a, b) => bestRank(a) - bestRank(b) || byTime(a, b));
+    const gs = list.filter(g => g.homeRank || g.awayRank).sort(byTime);   // v70: kickoff order, not best rank first
     shown = gs.length;
-    html = gs.length ? sec("Top 25", cnt(gs.length) + " · best rank first", gs) : `<div class="empty">No ranked teams play on this day</div>`;
+    html = gs.length ? sec("Top 25", cnt(gs.length) + " · kickoff order", gs) : `<div class="empty">No ranked teams play on this day</div>`;
   }
   box.innerHTML = html;
   el("#schSub").textContent = list.length ? `${dayName} · ${shown} game${shown === 1 ? "" : "s"} · ${live} live · ${fin} final` : "";
@@ -2677,7 +2836,8 @@ function renderFantasy() {
 
 function fitBoard() {
   const board = el("#board"), n = board.querySelectorAll(".bg").length;
-  if (!document.body.classList.contains("v-scores") || !n || S.grouped) { board.classList.remove("fill"); board.style.cssText = ""; return; }
+  // v70: on a phone the board scrolls with normal cards; squeezing every live game into one screen clipped the names and scores
+  if (!document.body.classList.contains("v-scores") || !n || S.grouped || window.innerWidth < 700) { board.classList.remove("fill"); board.style.cssText = ""; return; }
   const top = board.getBoundingClientRect().top + window.scrollY;
   const H = Math.max(240, window.innerHeight - top - 56 - 12), W = board.clientWidth;
   let best = { cols: 1, score: 0 };
@@ -2814,7 +2974,7 @@ function setLeague(k) {
    Opened from the Schedule tab; team names and logos open the team.
    ===================================================================== */
 const TID = {};   // abbr -> ESPN team id, learned from every feed
-const GC = { id: null, g: null, sum: null, timer: null, err: "" };
+const GC = { id: null, g: null, sum: null, timer: null, err: "", open: new Set(), curClosed: false, prob: store.get("cc-prob", "win"), seen: null, seenId: null, pts: null };   // v70: open drives, probability mode, seen play ids
 const TM = { ab: null, stand: {}, standT: {} };
 const numOf = v => { const m = String(v ?? "").match(/-?\d+(\.\d+)?/); return m ? +m[0] : 0; };
 function gameFromHeader(sum, id) {
@@ -2834,6 +2994,7 @@ async function showGame(id) {
   if (!id || GC.id === id) { if (id) renderGC(); return; }
   closeTeam();
   GC.id = id; GC.sum = null; GC.err = ""; GC.g = S.events.find(x => x.id === id) || null;
+  GC.open = new Set(); GC.curClosed = false; GC.seen = null;   // v70: fresh drive list and a silent first load for the banners
   window.scrollTo(0, 0);
   renderGC();
   if (GC.g && GC.g.state === "pre") loadTape(GC.g).then(() => { if (GC.id === id) renderGC(); });
@@ -2850,6 +3011,7 @@ async function refreshGC() {
     // the board game carries down and distance; the summary header is the fresher score between board polls
     GC.g = onBoard && hdr ? Object.assign(onBoard, { as: hdr.as ?? onBoard.as, hs: hdr.hs ?? onBoard.hs }) : (onBoard || hdr || GC.g);
     if (GC.g && sum.pickcenter?.length && (!GC.g.odds || GC.g.odds.oSp == null)) mergeLine(GC.g, bestPick(sum.pickcenter));
+    try { gcWatchPlays(sum, GC.g); } catch (e) { console.warn("big plays", e); }   // v70
   } catch (e) { if (GC.id === id) GC.err = e.message; console.warn("game center", e); }
   if (GC.id !== id) return;
   renderGC();
@@ -2858,33 +3020,91 @@ async function refreshGC() {
   else if (GC.g.state !== "post") GC.timer = setTimeout(refreshGC, GC.g.live ? CFG.pollLive : 60000);
 }
 function closeGame() { GC.id = null; clearTimeout(GC.timer); if (S.view === "game") location.hash = "#" + gcFrom(); }
-function gcSpark(wp, g, hc, ac, sum) {
-  if (!wp || wp.length < 2) return "";
-  const { series, fr, maxP } = wpTrack(sum, g, wp, 160);
-  const n = series.length, W = 640, H = 110, px = 6, py = 10, bot = 16;
-  const x = i => px + Math.min(1, Math.max(0, fr[i] ?? 0)) * (W - 2 * px), y = v => py + (100 - v) * (H - py - bot) / 100;
+/* ---- v70: the probability panel. Win probability comes straight from ESPN; cover probability is worked out from it,
+   the closing spread and the time left (ESPN does not publish one), and says so under the chart. ---- */
+const erf = x => { const s = x < 0 ? -1 : 1; x = Math.abs(x); const t = 1 / (1 + 0.3275911 * x); return s * (1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x)); };
+const Phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
+function PhiInv(p) {   // Acklam's rational approximation, plenty for a chart
+  p = Math.min(1 - 1e-9, Math.max(1e-9, p));
+  const a = [-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2, 1.383577518672690e2, -3.066479806614716e1, 2.506628277459239],
+        b = [-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2, 6.680131188771972e1, -1.328068155288572e1],
+        c = [-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783],
+        d = [7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996, 3.754408661907416];
+  const pl = 0.02425; let q, r;
+  if (p < pl) { q = Math.sqrt(-2 * Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+  if (p > 1 - pl) { q = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+  q = p - 0.5; r = q * q;
+  return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+// home cover chance per point: final margin ~ Normal(margin now + expected drift, sigma * sqrt(time left)); the drift is what the win probability implies
+function coverSeries(series, fr, margin, g, sp) {
+  const sig = LG.key === "cfb" ? 17 : 13.5;
+  const out = series.map((v, i) => {
+    const rem = Math.max(0.02, 1 - (fr[i] ?? 0)), s = sig * Math.sqrt(rem), m = margin[i] || 0;
+    const z = PhiInv(Math.min(0.995, Math.max(0.005, v / 100)));
+    const drift = Math.max(-10 * rem, Math.min(10 * rem, z * s - m));
+    return Phi((m + drift + sp) / s) * 100;
+  });
+  if (g.state === "post" && g.hs != null && g.as != null) { const fm = g.hs - g.as + sp; out[out.length - 1] = fm > 0 ? 100 : fm < 0 ? 0 : 50; }
+  return out;
+}
+const spreadText = g => { const sp = g.odds?.spread; if (sp == null) return ""; if (g.odds.details && /[A-Z]/.test(g.odds.details)) return g.odds.details; return sp < 0 ? `${g.home} ${sp}` : sp > 0 ? `${g.away} -${sp}` : "PK"; };
+function gcProb(wpl, g, hc, ac, sum) {
+  if (!wpl || wpl.length < 2) return "";
+  const tr = wpTrack(sum, g, wpl, 160), win = tr.series, fr = tr.fr, maxP = tr.maxP;
+  const sp = g.odds && g.odds.spread != null ? +g.odds.spread : null;   // home spread, negative when the home side is favoured
+  const cover = sp == null ? null : coverSeries(win, fr, tr.margin, g, sp);
+  const mode = GC.prob === "cover" && cover ? "cover" : "win";
+  const series = mode === "cover" ? cover : win;
+  const n = series.length, W = 600, H = 240, px = 30, pr = 8, py = 12, bot = 30, strip = 6;
+  const plotW = W - px - pr, plotB = H - bot;
+  const x = i => px + Math.min(1, Math.max(0, fr[i] ?? 0)) * plotW, y = v => py + (100 - v) * (plotB - py) / 100;
   const mid = y(50), cfb = LG.key === "cfb";
-  const gl = cfb ? "#2d2429" : "#26303f", gl2 = cfb ? "#453338" : "#3c4a5e", gt = cfb ? "#8b7f84" : "#7f8ba0", gbg = cfb ? "#1a161b" : "#1b2431";
+  const gl = cfb ? "#2d2429" : "#26303f", gl2 = cfb ? "#4a383e" : "#3c4a5e", gt = cfb ? "#8b7f84" : "#7f8ba0", gbg = cfb ? "#1a161b" : "#1b2431";
   const path = "M" + series.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" L");
   const area = path + ` L${x(n - 1).toFixed(1)},${mid.toFixed(1)} L${x(0).toFixed(1)},${mid.toFixed(1)} Z`;
   let q = "";
-  for (let i = 1; i <= maxP; i++) { const qx = px + ((i - 1) / maxP) * (W - 2 * px); if (i > 1) q += `<line x1="${qx.toFixed(1)}" x2="${qx.toFixed(1)}" y1="${py}" y2="${H - bot}" stroke="${gl}"/>`; q += `<text x="${(qx + 4).toFixed(1)}" y="${H - 4}" font-size="9" fill="${gt}">${ordinal(i)}</text>`; }
-  const grid = [25, 75].map(v => `<line x1="${px}" x2="${W - px}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="${gl}" stroke-dasharray="3 4"/>`).join("");
+  for (let i = 1; i <= maxP; i++) { const qx = px + ((i - 1) / maxP) * plotW; if (i > 1) q += `<line x1="${qx.toFixed(1)}" x2="${qx.toFixed(1)}" y1="${py}" y2="${plotB}" stroke="${gl}"/>`; q += `<text x="${(qx + 4).toFixed(1)}" y="${H - 5}" font-size="10" fill="${gt}">${ordinal(i)}</text>`; }
+  const grid = [25, 75].map(v => `<line x1="${px}" x2="${W - pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="${gl}" stroke-dasharray="3 4"/>`).join("")
+    + `<text x="${px - 4}" y="${(mid + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="${gt}">50</text>`;   // the logos mark the 100% ends
+  // momentum strip under the plot: who was on top at each point, stronger colour the further from even
+  let heat = "";
+  for (let i = 0; i < n - 1; i++) { const v = series[i], w = Math.max(0.6, x(i + 1) - x(i)); heat += `<rect x="${x(i).toFixed(1)}" y="${plotB + 3}" width="${w.toFixed(1)}" height="${strip}" fill="${v >= 50 ? hc : ac}" fill-opacity="${(Math.min(1, Math.abs(v - 50) / 35) * 0.9 + 0.08).toFixed(2)}"/>`; }
   const last = series[n - 1], lc = last >= 50 ? hc : ac;
-  return `<svg class="gc-spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="Win probability through the game">
+  GC.pts = { W, H, xs: series.map((_, i) => x(i)), ys: series.map(v => y(v)), win, cover, periods: tr.periods, margin: tr.margin, step: tr.step, mode };
+  const ax = (ab, top) => { const l = logoOf(ab); return `<span class="ax ${l ? "lgo" : ""}" style="top:${(top / H * 100).toFixed(1)}%;background:${T(ab)[2]}">${l ? `<img src="${esc(l)}" alt="${esc(ab)}" onerror="this.remove()">` : esc(ab)}</span>`; };
+  return `<div class="gc-prob">${ax(g.home, y(100))}${ax(g.away, y(0))}
+    <svg class="gc-spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="${mode === "cover" ? "Cover" : "Win"} probability through the game">
     <defs>
       <clipPath id="gcT"><rect x="0" y="0" width="${W}" height="${mid.toFixed(1)}"/></clipPath>
       <clipPath id="gcB"><rect x="0" y="${mid.toFixed(1)}" width="${W}" height="${(H - mid).toFixed(1)}"/></clipPath>
-      <linearGradient id="gcFH" gradientUnits="userSpaceOnUse" x1="0" y1="${py}" x2="0" y2="${mid.toFixed(1)}"><stop offset="0" stop-color="${hc}" stop-opacity=".36"/><stop offset="1" stop-color="${hc}" stop-opacity=".05"/></linearGradient>
-      <linearGradient id="gcFA" gradientUnits="userSpaceOnUse" x1="0" y1="${mid.toFixed(1)}" x2="0" y2="${H - bot}"><stop offset="0" stop-color="${ac}" stop-opacity=".05"/><stop offset="1" stop-color="${ac}" stop-opacity=".36"/></linearGradient>
+      <linearGradient id="gcFH" gradientUnits="userSpaceOnUse" x1="0" y1="${py}" x2="0" y2="${mid.toFixed(1)}"><stop offset="0" stop-color="${hc}" stop-opacity=".62"/><stop offset="1" stop-color="${hc}" stop-opacity=".08"/></linearGradient>
+      <linearGradient id="gcFA" gradientUnits="userSpaceOnUse" x1="0" y1="${mid.toFixed(1)}" x2="0" y2="${plotB}"><stop offset="0" stop-color="${ac}" stop-opacity=".08"/><stop offset="1" stop-color="${ac}" stop-opacity=".62"/></linearGradient>
     </defs>
+    <rect x="${px}" y="${py}" width="${plotW}" height="${plotB - py}" fill="${gbg}" fill-opacity=".35"/>
     ${grid}${q}
     <path d="${area}" fill="url(#gcFH)" clip-path="url(#gcT)"/><path d="${area}" fill="url(#gcFA)" clip-path="url(#gcB)"/>
-    <line x1="${px}" x2="${W - px}" y1="${mid.toFixed(1)}" y2="${mid.toFixed(1)}" stroke="${gl2}"/>
-    <text x="${W - px}" y="${(mid - 5).toFixed(1)}" text-anchor="end" font-size="9" fill="${gt}" letter-spacing="1">EVEN</text>
-    <path d="${path}" fill="none" stroke="${hc}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#gcT)"/>
-    <path d="${path}" fill="none" stroke="${ac}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#gcB)"/>
-    <circle cx="${x(n - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="4" fill="${lc}" stroke="${gbg}" stroke-width="2"/></svg>`;
+    <line x1="${px}" x2="${W - pr}" y1="${mid.toFixed(1)}" y2="${mid.toFixed(1)}" stroke="${gl2}"/>
+    <text x="${W - pr}" y="${(mid - 5).toFixed(1)}" text-anchor="end" font-size="9" fill="${gt}" letter-spacing="1">EVEN</text>
+    <path d="${path}" fill="none" stroke="${hc}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#gcT)"/>
+    <path d="${path}" fill="none" stroke="${ac}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#gcB)"/>
+    ${heat}
+    <circle cx="${x(n - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="4.5" fill="${lc}" stroke="${gbg}" stroke-width="2"/>
+    <line id="gcPX" x1="0" x2="0" y1="${py}" y2="${plotB}" stroke="#b7c0ce" style="display:none"/><circle id="gcPDot" r="4" fill="#eef2f7" style="display:none"/>
+    <rect id="gcPHit" x="0" y="0" width="${W}" height="${H}" fill="transparent"/></svg><div class="tip" id="gcPTip"></div></div>`;
+}
+function gcProbBind(g, hc, ac) {
+  const svg = el("#gcBody .gc-prob svg"), hit = el("#gcPHit"), tip = el("#gcPTip"), xl = el("#gcPX"), dot = el("#gcPDot"), P = GC.pts;
+  if (!svg || !hit || !P) return;
+  hit.onmousemove = e => {
+    const r = svg.getBoundingClientRect(), rx = (e.clientX - r.left) / r.width * P.W; let i = 0, best = Infinity;
+    P.xs.forEach((xv, k) => { const dd = Math.abs(xv - rx); if (dd < best) { best = dd; i = k; } });
+    xl.setAttribute("x1", P.xs[i]); xl.setAttribute("x2", P.xs[i]); xl.style.display = ""; dot.setAttribute("cx", P.xs[i]); dot.setAttribute("cy", P.ys[i]); dot.style.display = "";
+    tip.style.display = "block"; tip.style.left = (P.xs[i] / P.W * r.width) + "px"; tip.style.top = (P.ys[i] / P.H * r.height) + "px";
+    const s = P.mode === "cover" ? P.cover : P.win, m = P.margin[i] || 0;
+    tip.innerHTML = `<b style="color:${hc}">${esc(g.home)} ${Math.round(s[i])}%</b> · <b style="color:${ac}">${esc(g.away)} ${Math.round(100 - s[i])}%</b>${P.periods[i] ? " · " + ordinal(P.periods[i]) : ""} · ${m ? `${esc(m > 0 ? g.home : g.away)} by ${Math.abs(m)}` : "tied"}`;
+  };
+  hit.onmouseleave = () => { xl.style.display = "none"; dot.style.display = "none"; tip.style.display = "none"; };
 }
 function fieldSpot(txt, g) {   // "DET 40" -> yards from the away team's own goal line
   const m = String(txt || "").match(/\b([A-Z]{2,4})\s+(\d+)/);
@@ -2893,6 +3113,23 @@ function fieldSpot(txt, g) {   // "DET 40" -> yards from the away team's own goa
   if (m[1] === g.away) return n;
   if (m[1] === g.home) return 100 - n;
   return null;
+}
+// v70: the ball, the drive start and the first-down spot in one place, for the field graphic and the thin drive bar
+function driveGeom(g, cur) {
+  const poss = cur?.team?.abbreviation || g.poss;
+  if (!poss || (poss !== g.away && poss !== g.home)) return null;
+  const dir = poss === g.away ? 1 : -1;   // the away team drives left to right
+  const un = yl => yl == null ? null : (dir === 1 ? yl : 100 - yl), cl = v => Math.max(0, Math.min(100, v));
+  let ball = fieldSpot(g.spot, g);
+  if (ball == null) ball = un(cur?.end?.yardLine ?? cur?.start?.yardLine);
+  if (ball == null) return null;
+  let start = fieldSpot(cur?.start?.text, g);
+  if (start == null) start = un(cur?.start?.yardLine);
+  if (start == null) start = ball;
+  ball = cl(ball); start = cl(start);
+  const goal = /goal/i.test(g.dd || ""), dm = String(g.dd || "").match(/&\s*(\d+)/);
+  const gain = !goal && dm ? cl(ball + dir * +dm[1]) : null;
+  return { poss, dir, ball, start, gain };
 }
 function gcSit(g, hp) {
   const poss = g.poss;
@@ -2905,23 +3142,12 @@ function gcSit(g, hp) {
   return bits.length ? `<div class="gc-sit">${bits.join("")}</div>` : "";
 }
 function gcField(g, cur) {
-  const poss = cur?.team?.abbreviation || g.poss;
-  if (!poss || (poss !== g.away && poss !== g.home)) return "";
-  const dir = poss === g.away ? 1 : -1;   // the away team drives left to right
-  const un = yl => yl == null ? null : (dir === 1 ? yl : 100 - yl);
-  let ball = fieldSpot(g.spot, g);
-  if (ball == null) ball = un(cur?.end?.yardLine ?? cur?.start?.yardLine);
-  if (ball == null) return "";
-  let start = fieldSpot(cur?.start?.text, g);
-  if (start == null) start = un(cur?.start?.yardLine);
-  if (start == null) start = ball;
-  ball = Math.max(0, Math.min(100, ball)); start = Math.max(0, Math.min(100, start));
-  const goal = /goal/i.test(g.dd || ""), dm = String(g.dd || "").match(/&\s*(\d+)/);
-  const gain = !goal && dm ? Math.max(0, Math.min(100, ball + dir * +dm[1])) : null;
+  const d = driveGeom(g, cur); if (!d) return "";
+  const { poss, dir, ball, start, gain } = d;
   const W = 680, H = 104, EZ = 44, top = 8, bot = H - 20, F = W - 2 * EZ;
   const X = v => EZ + (v / 100) * F;
   const pc = chartColor(poss), cfb = LG.key === "cfb";
-  const line = cfb ? "#3a2f34" : "#2c3647", gt = cfb ? "#8b7f84" : "#7f8ba0";
+  const gt = cfb ? "#8b7f84" : "#7f8ba0";
   let grid = "";
   for (let v = 0; v < 100; v += 10) if ((v / 10) % 2) grid += `<rect x="${X(v).toFixed(1)}" y="${top}" width="${(F * 0.1).toFixed(1)}" height="${bot - top}" fill="#ffffff" fill-opacity=".028"/>`;
   for (let v = 5; v < 100; v += 5) grid += `<line x1="${X(v).toFixed(1)}" x2="${X(v).toFixed(1)}" y1="${top}" y2="${bot}" stroke="rgba(255,255,255,${v % 10 ? ".06" : ".13"})"/>`;
@@ -2945,12 +3171,97 @@ function gcField(g, cur) {
     ${prog}${ez(g.away, true)}${ez(g.home, false)}${stick}${marker}
     <text x="${X(50).toFixed(1)}" y="${H - 3}" text-anchor="middle" font-size="9" fill="${gt}">${esc(dispName(poss))} driving ${dir === 1 ? "&#8594;" : "&#8592;"}</text></svg>`;
 }
+// v70: the thin drive bar under the pinned score, ESPN style: endzones, the drive so far, the first-down stick and the ball
+function gcDriveBar(g, cur) {
+  const d = driveGeom(g, cur);
+  const W = 1000, H = 10, EZ = 30, F = W - 2 * EZ, X = v => EZ + v / 100 * F;
+  let inner = "";
+  for (let v = 10; v < 100; v += 10) inner += `<line x1="${X(v)}" x2="${X(v)}" y1="0" y2="${H}" stroke="rgba(255,255,255,${v === 50 ? ".3" : ".12"})"/>`;
+  if (d) {
+    const pc = chartColor(d.poss);
+    inner += `<rect x="${Math.min(X(d.start), X(d.ball)).toFixed(1)}" y="0" width="${Math.abs(X(d.ball) - X(d.start)).toFixed(1)}" height="${H}" fill="${pc}" fill-opacity=".6"/>`;
+    if (d.gain != null) inner += `<rect x="${(X(d.gain) - 1.5).toFixed(1)}" y="0" width="3" height="${H}" fill="var(--warn)"/>`;
+    inner += `<rect x="${(X(d.ball) - 2).toFixed(1)}" y="0" width="4" height="${H}" fill="#fff"/>`;
+  }
+  return `<svg class="gc-dbar" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="0" width="${W}" height="${H}" fill="var(--raised)"/><rect x="0" y="0" width="${EZ}" height="${H}" fill="${lift(T(g.away)[2] || "#334")}"/><rect x="${W - EZ}" y="0" width="${EZ}" height="${H}" fill="${lift(T(g.home)[2] || "#334")}"/>${inner}</svg>`;
+}
+// v70: the score pinned to the top once the big header scrolls away, with the drive bar under it
+function gcPinHTML(g, cur) {
+  const pre = g.state === "pre", fin = g.state === "post", live = g.live;
+  const aWin = fin && g.as > g.hs, hWin = fin && g.hs > g.as;
+  const side = (ab, s, dim, cls) => `<span class="side ${cls} ${dim ? "dim" : ""}">${mark(ab)}<b>${esc(ab)}${live && g.poss === ab ? '<i class="poss" title="possession"></i>' : ""}</b><i>${pre ? "" : s}</i></span>`;
+  const st = live
+    ? `<span class="q live">${g.status === "Halftime" ? "Halftime" : `${ordinal(g.period)} · ${esc(g.clock)}`}</span><span class="dd">${g.dd ? esc(g.dd) + (g.spot ? " at " + esc(g.spot) : "") : ""}</span>`
+    : fin ? `<span class="q">${esc(g.status)}</span>` : `<span class="q">${esc(fmtCT(g.date, { weekday: "short", hour: "numeric", minute: "2-digit" }))}</span>`;
+  return `${side(g.away, g.as, hWin, "away")}<span class="mid">${st}</span>${side(g.home, g.hs, aWin, "home")}${live ? gcDriveBar(g, cur) : ""}`;
+}
+function gcPinCheck() {
+  const st = el("#gcSticky"); if (!st) return;
+  if (S.view !== "game" || !el("#gcPin").innerHTML) { st.classList.remove("pinned"); return; }
+  const t = el("#gcBody .gc-top"), bar = st.querySelector(".gc-bar");
+  st.classList.toggle("pinned", !!t && t.getBoundingClientRect().bottom < (bar ? bar.getBoundingClientRect().bottom : 60));
+}
+window.addEventListener("scroll", gcPinCheck, { passive: true });
+// v70: the strip of other live games across the top of the page; tapping one opens that game
+function renderGCStrip() {
+  const box = el("#gcStrip"); if (!box) return;
+  const list = S.events.filter(g => g.live && g.id !== GC.id).map(g => ({ g, w: importance(g) })).sort((a, b) => b.w.score - a.w.score || a.g.date - b.g.date).map(x => x.g);
+  const html = list.map(g => {
+    const stt = g.status === "Halftime" ? "Half" : `${ordinal(g.period)} ${g.clock || ""}`.trim();
+    const tm = (ab, s) => `<span class="tm ${s > (ab === g.home ? g.as : g.hs) ? "lead" : ""}">${mark(ab, "mini")}${esc(ab)}${g.poss === ab ? '<i class="poss"></i>' : ""}<b>${s}</b></span>`;
+    return `<button type="button" data-id="${esc(g.id)}" class="${g.home === CFG.fav || g.away === CFG.fav ? "fav" : ""}" title="Open ${esc(dispName(g.away))} at ${esc(dispName(g.home))}">${tm(g.away, g.as)}<span class="st">${esc(stt)}${g.rz ? '<em class="rz">RZ</em>' : ""}</span>${tm(g.home, g.hs)}</button>`;
+  }).join("");
+  if (box.dataset.k !== html) { const sl = box.scrollLeft; box.innerHTML = html; box.dataset.k = html; box.scrollLeft = sl; }
+  box.hidden = !html;
+}
+// v70: drive list, newest on top; each drive opens into its plays with down and distance, yards and the clock
+function playTag(p) {
+  const t = String(p.type?.text || "");
+  if (/touchdown/i.test(t) || (p.scoringPlay && /touchdown/i.test(p.text || ""))) return "TD";
+  if (/field goal good/i.test(t)) return "FG"; if (/field goal missed/i.test(t)) return "NO GOOD"; if (/blocked/i.test(t)) return "BLOCKED";
+  if (/interception/i.test(t)) return "INT"; if (/fumble recovery \(opponent\)|fumble return/i.test(t)) return "FUM"; if (/fumble/i.test(t)) return "FUMBLE";
+  if (/safety/i.test(t)) return "SAF"; if (/two point|two-point/i.test(t)) return "2PT"; if (/sack/i.test(t)) return "SACK"; if (/penalty/i.test(t)) return "PEN";
+  if (/punt/i.test(t)) return "PUNT"; if (/kickoff/i.test(t)) return "KO"; if (/timeout/i.test(t)) return "TO"; if (/extra point/i.test(t)) return "XP"; return "";
+}
+function playRow(p, g, hl) {
+  const tag = playTag(p), big = /^(TD|FG|INT|FUM|SAF|2PT|NO GOOD|BLOCKED)$/.test(tag);
+  const dd = p.start?.downDistanceText || [p.start?.shortDownDistanceText, p.start?.possessionText ? "at " + p.start.possessionText : ""].filter(Boolean).join(" ");
+  const y = p.statYardage == null ? null : +p.statYardage;
+  const showY = y != null && dd && !/^(KO|PUNT|TO|PEN|XP)$/.test(tag) && !/end (of )?(period|quarter|half|game)/i.test(p.type?.text || "");
+  const clk = `${ordinal(p.period?.number)} ${p.clock?.displayValue || ""}`.trim();
+  const sc = p.scoringPlay ? `<span class="pl-sc">${esc(g.away)} ${p.awayScore ?? ""} · ${esc(g.home)} ${p.homeScore ?? ""}</span>` : "";
+  return `<li class="${hl ? "hl" : ""} ${big ? "big" : ""}"><span class="pl-dd">${esc(dd)}<small>${esc(clk)}</small></span><span class="pl-tx">${tag ? `<b class="pl-tag ${big ? "big" : ""}">${tag}</b> ` : ""}${esc(p.text || "")}${sc}</span>${showY ? `<em class="${y > 0 ? "pos" : y < 0 ? "neg" : ""}">${y > 0 ? "+" : ""}${y}</em>` : "<em></em>"}</li>`;
+}
+function driveRow(d, key, isCur, g) {
+  const ab = d.team?.abbreviation || "", plays = d.plays || [], lastP = plays[plays.length - 1];
+  const res = d.displayResult || d.shortDisplayResult || d.result || (isCur ? "In progress" : "Drive");
+  const isScore = !!d.isScore || /touchdown|field goal good|^td$|^fg$/i.test(res);
+  const to = /interception|fumble|downs|turnover|missed|blocked/i.test(res);
+  const n = d.offensivePlays ?? plays.length, yds = d.yards ?? 0, te = d.timeElapsed?.displayValue || "";
+  const desc = d.description || `${n} play${n === 1 ? "" : "s"}, ${yds} yard${yds === 1 ? "" : "s"}${te ? ", " + te : ""}`;
+  const when = d.start?.period?.number ? `${ordinal(d.start.period.number)} ${d.start.clock?.displayValue || ""}`.trim() : "";
+  const from = d.start?.text || "", end = d.end?.text || "";
+  const sc = lastP && lastP.awayScore != null ? `${lastP.awayScore}-${lastP.homeScore}` : "";
+  const open = isCur ? !GC.curClosed : GC.open.has(key);
+  return `<li class="gc-dr ${open ? "open" : ""} ${isCur ? "cur" : ""} ${isScore ? "score" : ""} ${to ? "to" : ""}" data-drive="${esc(key)}">
+    <button type="button" class="dr-head" aria-expanded="${open}">${mark(ab, "mini")}<span class="dr-main"><b>${esc(isCur && !/progress/i.test(res) ? res + " · live" : res)}</b><span>${esc(desc)}${from ? " · from " + esc(from) : ""}</span></span><span class="dr-side"><span>${esc(when)}</span>${end && !isCur ? `<span>to ${esc(end)}</span>` : ""}</span><span class="dr-sc">${esc(sc)}</span><span class="dr-caret"></span></button>
+    <ul class="dr-plays">${plays.slice().reverse().map((p, i) => playRow(p, g, isCur && i === 0)).join("") || `<li class="empty">Drive starting</li>`}</ul></li>`;
+}
+function gcDrives(sum, g, live) {
+  let prev = sum?.drives?.previous || []; const cur = live ? sum?.drives?.current : null;
+  if (cur && prev.length && prev[prev.length - 1].id != null && prev[prev.length - 1].id === cur.id) prev = prev.slice(0, -1);   // ESPN sometimes lists the live drive in both
+  if (!prev.length && !cur) return "";
+  const rows = [];
+  if (cur) rows.push(driveRow(cur, "cur", true, g));
+  prev.slice().reverse().forEach((d, i) => rows.push(driveRow(d, String(d.id ?? "d" + (prev.length - 1 - i)), false, g)));
+  return `<ul class="gc-drives">${rows.join("")}</ul>`;
+}
 const GCBACK = { home: "Home", scores: "Scoreboard", schedule: "Schedule", season: "Season", fantasy: "Fantasy" };
 function renderGC() {
   const g = GC.g, sum = GC.sum, box = el("#gcBody");
   el("#gcBack").innerHTML = "&#8249; Back to " + esc(GCBACK[gcFrom()] || "Home");
   el("#gcFeature").hidden = !(g && S.events.some(x => x.id === g.id));
-  if (!g) { el("#gcKick").textContent = "Game center"; el("#gcMeta").textContent = ""; box.innerHTML = `<div class="empty">${GC.err ? "Couldn't load this game. Trying again shortly" : "Loading the game"}</div>`; return; }
+  if (!g) { el("#gcKick").textContent = "Game center"; el("#gcMeta").textContent = ""; el("#gcPin").innerHTML = ""; renderGCStrip(); gcPinCheck(); box.innerHTML = `<div class="empty">${GC.err ? "Couldn't load this game. Trying again shortly" : "Loading the game"}</div>`; return; }
   const pre = g.state === "pre", fin = g.state === "post", live = g.live;
   const kick = el("#gcKick"); kick.textContent = live ? "Game center" : fin ? "Game breakdown" : "Preview"; kick.classList.toggle("live", live);
   el("#gcMeta").textContent = [fmtCT(g.date, { weekday: "short", month: "short", day: "numeric", ...(pre ? { hour: "numeric", minute: "2-digit" } : {}) }) + (pre ? " CT" : ""), g.venue, g.net].filter(Boolean).join(" · ");
@@ -2978,19 +3289,27 @@ function renderGC() {
   const wpl = sum?.winprobability;
   let hp = wpl?.length ? wpl[wpl.length - 1].homeWinPercentage * 100 : null;
   if (hp == null && sum?.predictor) { const p = sum.predictor; const h = numOf(p.homeTeam?.gameProjection), a = numOf(p.awayTeam?.gameProjection); if (h || a) { hp = h / ((h + a) || 100) * 100; wpNote = "matchup predictor"; } }
+  // v70: logo and number on each side, a Win / Cover switch, the chart with quarter shading; a pregame keeps the predictor bar
+  let probCard = "", probTitle = pre ? "Win chances" : "Win probability";
   if (hp != null && !(fin && !wpl?.length)) {
-    const ap = 100 - hp;
-    wp = `<div class="gc-wp"><span style="color:${ac}"><b>${esc(g.away)}</b><i>${Math.round(ap)}%</i></span><span style="color:${hc}"><i>${Math.round(hp)}%</i><b>${esc(g.home)}</b></span></div><div class="gc-wpbar"><i style="width:${ap}%;background:${ac}"></i><i style="width:${hp}%;background:${hc}"></i></div>${gcSpark(wpl, g, hc, ac, sum)}`;
+    const chart = gcProb(wpl, g, hc, ac, sum);
+    const mode = chart && GC.pts ? GC.pts.mode : "win";
+    const hv = mode === "cover" ? GC.pts.cover[GC.pts.cover.length - 1] : hp, av = 100 - hv;
+    const spT = spreadText(g);
+    const head = `<div class="gc-wp"><span style="color:${ac}">${mark(g.away, "mini")}<b>${esc(g.away)}</b><i>${Math.round(av)}%</i></span>${mode === "cover" ? `<small>to cover · ${esc(spT)}</small>` : ""}<span style="color:${hc}"><i>${Math.round(hv)}%</i><b>${esc(g.home)}</b>${mark(g.home, "mini")}</span></div>`;
+    const bar = `<div class="gc-wpbar"><i style="width:${av}%;background:${ac}"></i><i style="width:${hv}%;background:${hc}"></i></div>`;
+    const seg = chart ? `<span class="seg" id="gcProbSeg"><button type="button" data-prob="win" class="${mode === "win" ? "on" : ""}">Win</button><button type="button" data-prob="cover" class="${mode === "cover" ? "on" : ""}" ${GC.pts?.cover ? "" : 'disabled title="No line for this game"'}>Cover</button></span>` : "";
     if (!wpNote) wpNote = fin ? "how it swung" : "live";
+    if (mode === "cover") probTitle = "Cover probability";
+    wp = head + bar + chart + (mode === "cover" ? `<p class="gc-note est">Worked out from the win probability, the closing line (${esc(spT)}) and the time left. ESPN does not publish one.</p>` : "");
+    probCard = `<section class="gc-card"><h3>${probTitle}${seg}<small>${wpNote}</small></h3>${wp}</section>`;
   }
-  // current drive
+  // current drive, then every drive newest first (v70)
   let drive = "";
   const cur = sum?.drives?.current;
-  if (live && cur) {
-    const plays = (cur.plays || []).slice(-6).reverse();
-    drive = `${gcField(g, cur)}${gcSit(g, hp)}<ul class="gc-plays">${plays.map((p, i) => `<li class="${i === 0 ? "hl" : ""}"><span>${esc(p.start?.shortDownDistanceText || p.start?.downDistanceText || ordinal(p.period?.number) + " " + (p.clock?.displayValue || ""))}</span><span>${esc(p.text)}</span></li>`).join("") || `<li><span></span><span>Drive starting</span></li>`}</ul>
-      <p class="gc-note">${esc(dispName(cur.team?.abbreviation || g.poss || ""))} · ${cur.offensivePlays ?? (cur.plays || []).length} plays, ${cur.yards ?? 0} yds${cur.timeElapsed?.displayValue ? " · " + esc(cur.timeElapsed.displayValue) : ""}</p>`;
-  } else if (live && (g.lastPlay || g.spot)) drive = `${gcField(g, null)}${gcSit(g, hp)}<ul class="gc-plays">${g.lastPlay ? `<li class="hl"><span>Last play</span><span>${esc(g.lastPlay)}</span></li>` : ""}</ul>`;
+  if (live && cur) drive = `${gcField(g, cur)}${gcSit(g, hp)}${gcDrives(sum, g, true)}`;
+  else if (live && (g.lastPlay || g.spot)) drive = `${gcField(g, null)}${gcSit(g, hp)}${g.lastPlay ? `<ul class="gc-plays"><li class="hl"><span>Last play</span><span>${esc(g.lastPlay)}</span></li></ul>` : ""}${gcDrives(sum, g, true)}`;
+  const drivesFin = fin ? gcDrives(sum, g, false) : "";
   // team stats
   let ts = "";
   const bt = sum?.boxscore?.teams;
@@ -3033,23 +3352,27 @@ function renderGC() {
     if (b) l5 = `<div class="gc-lead">${b}</div>`;
   }
   el("#gcSheet").classList.toggle("pv", pre);
-  if (pre) { box.innerHTML = top + previewHTML(g, sum) + `<p class="gc-note">Tap a team for its schedule, standings and stats. Refreshes every minute until kickoff.</p>`; return; }
+  renderGCStrip();   // v70: other live scores across the top
+  el("#gcPin").innerHTML = pre ? "" : gcPinHTML(g, cur);
+  if (pre) { box.innerHTML = top + previewHTML(g, sum) + `<p class="gc-note">Tap a team for its schedule, standings and stats. Refreshes every minute until kickoff.</p>`; gcPinCheck(); return; }
   const lines = g.odds ? `<div class="gc-card"><h3>Lines${fin ? "<small>how they landed</small>" : ""}</h3>${linesHTML(g, false)}</div>` : "";
   const left = [
     live ? card("On the field", drive) : "",
     card("Line score", ls),
     card("Scoring", sp, fin ? "every score" : ""),
+    fin ? card("Drives", drivesFin, "newest first, tap one for its plays") : "",
     fin || live ? card("Box score", boxS, "top three each") : "",
     pre ? card("Last five", l5) : "",
   ].join("");
   const right = [
-    card(pre ? "Win chances" : "Win probability", wp, wpNote),
+    probCard,
     card("Team stats", ts),
     card(pre ? "Season leaders" : "Leaders", lead),
     lines,
   ].join("");
   box.innerHTML = top + `<div class="gc-grid"><div class="gc-col">${left || `<div class="empty">${sum ? "Nothing to show yet" : "Loading the details"}</div>`}</div><div class="gc-col">${right}</div></div>`
     + `<p class="gc-note">Tap a team for its schedule, standings and stats.${live ? " Updates every few seconds." : ""}</p>`;
+  gcProbBind(g, hc, ac); gcPinCheck();
 }
 
 function previewHTML(g, sum) {   // v62
@@ -3296,6 +3619,10 @@ document.addEventListener("click", e => {
   const sortb = e.target.closest("#sortSeg button"); if (sortb) { S.ssort = sortb.dataset.sort; store.set("cc-sort-" + LG.key, S.ssort); return renderSchedule(); }
   // v57: team names and logos open the team; a schedule card opens its game center / breakdown / preview
   if (e.target.closest("#gcBack")) return closeGame();
+  // v70: the live strip, the drive list and the Win / Cover switch on the game page
+  const sb = e.target.closest("#gcStrip button[data-id]"); if (sb) return openGame(sb.dataset.id);
+  const dh = e.target.closest(".gc-dr > .dr-head"); if (dh) { const li = dh.parentElement, k = li.dataset.drive, on = li.classList.toggle("open"); dh.setAttribute("aria-expanded", on); if (li.classList.contains("cur")) GC.curClosed = !on; else on ? GC.open.add(k) : GC.open.delete(k); return; }
+  const pb = e.target.closest("#gcProbSeg button[data-prob]"); if (pb) { if (pb.disabled) return; GC.prob = pb.dataset.prob; store.set("cc-prob", GC.prob); return renderGC(); }
   if (e.target.closest("#tmClose") || e.target === el("#tmodal")) return closeTeam();
   if (e.target.closest("#gcFeature")) { const id = GC.id; GC.id = null; clearTimeout(GC.timer); location.hash = "#home"; return pickGame(id); }
   const tBtn = e.target.closest(".gc-team[data-team], .tm-st tr[data-team], #standings tr[data-team]"); if (tBtn) return openTeam(tBtn.dataset.team);
