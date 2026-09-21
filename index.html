@@ -1185,6 +1185,47 @@
     #snPmod .pmx { width: 100%; justify-content: flex-end; }
   }
 
+
+  /* ---------- v74: the player game log, a chart with a stat picker plus compact rows ---------- */
+  #snPmod .pbars { position: relative; height: 92px; }
+  #snPmod .pbars i.l { opacity: .6; }
+  #snPmod .pbars s { position: absolute; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,.35); text-decoration: none; pointer-events: none; z-index: 1; }
+  #snPmod .pbars s em { position: absolute; right: 0; top: -13px; font-style: normal; font-size: 9.5px; color: var(--muted); background: var(--raised); padding: 0 3px; }
+  #snPmod .tseg.pst { margin-left: auto; flex-wrap: wrap; }
+  #snPmod .tseg.pst button { padding: 3px 8px; }
+  #snPmod .pgl-top { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; font-size: 11px; color: var(--muted); }
+  #snPmod .pgl-top .tseg { margin-left: auto; }
+  #snPmod .pgl { display: grid; gap: 2px; font-variant-numeric: tabular-nums; font-size: 12.5px; }
+  #snPmod .pgl-h, #snPmod .pgl-r { display: grid; grid-template-columns: var(--cols); align-items: center; gap: 4px 6px; padding: 5px 6px; border-radius: 8px; }
+  #snPmod .pgl-h { font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding-bottom: 2px; border-bottom: 1px solid var(--line); border-radius: 0; }
+  #snPmod .pgl-h span, #snPmod .pgl-r span { text-align: right; min-width: 0; }
+  #snPmod .pgl-h span:first-child, #snPmod .pgl-h .sh, #snPmod .pgl-r .gm, #snPmod .pgl-r .sh { text-align: left; }
+  #snPmod .pgl-r { cursor: pointer; background: rgba(255,255,255,.02); }
+  #snPmod .pgl-r:hover { background: rgba(255,255,255,.06); }
+  #snPmod .pgl-r.avg { cursor: default; background: rgba(91,156,255,.10); box-shadow: inset 3px 0 0 var(--accent); }
+  body.lg-cfb #snPmod .pgl-r.avg { background: rgba(232,35,42,.10); }
+  #snPmod .pgl-r .gm { display: flex; flex-direction: column; min-width: 0; }
+  #snPmod .pgl-r .gm b { font-weight: 600; display: flex; align-items: center; gap: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #snPmod .pgl-r .gm b em { font-style: normal; color: var(--muted); font-size: 10.5px; }
+  #snPmod .pgl-r .gm b img { width: 17px; height: 17px; object-fit: contain; flex: none; }
+  #snPmod .pgl-r .gm b .snab { width: 18px; height: 18px; }
+  #snPmod .pgl-r .gm small { font-size: 10.5px; color: var(--muted); }
+  #snPmod .pgl-r .gm small.W { color: var(--good); } #snPmod .pgl-r .gm small.L { color: var(--live); }
+  #snPmod .pgl-r .pts { font-family: var(--display); font-size: 19px; font-weight: 700; color: var(--ink); }
+  #snPmod .pgl-r.hot .pts { color: var(--accent); }
+  #snPmod .pgl-r .sh { font-size: 11px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #snPmod .pgl-r .sh i { font-style: normal; color: var(--muted); font-size: 9.5px; margin-right: 3px; }
+  #snPmod .pgl-r .sh u { display: inline-block; width: 9px; text-decoration: none; }
+  #snPmod .pgl-r > span > i { font-style: normal; color: var(--muted); font-size: 9.5px; margin-right: 3px; }
+  #snPmod .pgl-r > span:not(.sh) > i { display: none; }
+  @media (max-width: 640px) {
+    #snPmod .pgl-h { display: none; }
+    #snPmod .pgl-r { grid-template-columns: none !important; display: flex; flex-wrap: wrap; gap: 3px 14px; align-items: baseline; }
+    #snPmod .pgl-r .gm { flex: 1 1 100%; }
+    #snPmod .pgl-r span { text-align: left; }
+    #snPmod .pgl-r > span:not(.sh) > i { display: inline; }
+    #snPmod .pgl-r .sh { flex: 1 1 100%; white-space: normal; }
+  }
   /* ---------- v70: game center, the trip list ---------- */
   /* the sticky block: other live scores, the back bar, then the pinned score once the big header scrolls away */
   #view-game .gc-bar { position: static; padding: 6px 0 10px; margin-bottom: 0; border-bottom: 0; }
@@ -3715,7 +3756,7 @@ const SNS = p => `https://site.web.api.espn.com/apis/site/v2/sports/${LG.path}/$
 const SNHS = id => `https://a.espncdn.com/i/headshots/${LG.key === "cfb" ? "nfl" : "nfl"}/players/full/${id}.png`;
 const SN = { sea:"cur", sch:{}, stand:{}, byt:{}, roster:{}, lead:{}, leadCat:"pyds", rtab:"passing",
   rsort:{}, lgv:{sort:"pct",dir:-1,f:"div"}, split:null, on:null, onKey:"", logAll:false, busy:{}, chart:null, autoRouted:false };
-const SP = { id:null, pid:null, mode:"l10", gl:{}, nm:{}, bio:{}, ov:{}, fx:{}, fxv:"pts" };   // v71: bio, season splits and fantasy per player
+const SP = { id:null, pid:null, mode:"l10", stat:null, gl:{}, nm:{}, bio:{}, ov:{}, fx:{}, fxv:"pts" };   // v71: bio, season splits and fantasy per player
 
 const snEl = id => document.getElementById(id);
 const snY = () => (SN.sea === "prev" ? snSeason() - 1 : snSeason());
@@ -4305,7 +4346,7 @@ function snLog() {
    league's scoring, projections for the rest of the season, and who owns him in the Trend League. Every card has Search X. */
 function snOpenPlayer(id, pid) {
   if (!id) return;
-  SP.id = String(id); SP.mode = "l10"; SP.fxv = "pts";
+  SP.id = String(id); SP.mode = "l10"; SP.stat = null; SP.fxv = "pts";
   SP.pid = pid || slByEspn(SP.id) || (LG.fantasy ? slByName(SP.nm[SP.id]) : null);
   if (SP.pid) { const p = S.sleeper.players?.[SP.pid]; if (p && !p[3]) { p[3] = SP.id; if (S.sleeper.byEspn) S.sleeper.byEspn[SP.id] = SP.pid; } }
   snEl("snPmod").hidden = false; snEl("snPmod").querySelector(".sheet").scrollTop = 0;
@@ -4459,6 +4500,78 @@ function snFantasy(pid, name) {
   }
   return head(tiles + bars + brk, `${fx.y} season · ${sl.me?.name ? esc(sl.me.name) : "your team"}`);
 }
+/* ---------- v74: the player game log reads as a chart plus compact, position-aware rows ---------- */
+const snGlNum = v => { const n = parseFloat(String(v ?? "").replace(/[^0-9.\-]/g, "")); return isNaN(n) ? 0 : n; };
+const snGlFmt = v => Number.isInteger(v) ? String(v) : (+v).toFixed(1);
+const snGlPair = v => /^\s*[\d.]+\s*[\/-]\s*[\d.]+\s*$/.test(String(v ?? ""));
+// column average; a combined cell like 22/31 averages each side
+function snGlAvg(vals) {
+  const v = vals.filter(x => x != null && x !== "" && x !== "--" && x !== "-");
+  if (!v.length) return "–";
+  if (snGlPair(v[0])) {
+    const sep = String(v[0]).indexOf("/") >= 0 ? "/" : "-";
+    const parts = v.map(x => String(x).split(sep).map(y => parseFloat(y) || 0));
+    return [0, 1].map(i => (parts.reduce((a, p) => a + (p[i] || 0), 0) / parts.length).toFixed(1)).join(sep);
+  }
+  return (v.reduce((a, x) => a + snGlNum(x), 0) / v.length).toFixed(1);
+}
+const SN_GLPROF = {
+  pass: { on:"passingYards", head:"passingYards", hot:300,
+    cols:["completions/passingAttempts","passingTouchdowns","interceptions","yardsPerPassAttempt","QBRating"],
+    chart:["passingYards","passingTouchdowns","QBRating","adjQBR","completionPct","rushingYards","interceptions"],
+    more:["sacks-sackYardsLost","rushingYards","rushingTouchdowns","longPassing","fumblesLost"] },
+  rush: { on:"rushingYards", head:"rushingYards", hot:100,
+    cols:["rushingAttempts","yardsPerRushAttempt","rushingTouchdowns","longRushing","receptions"],
+    chart:["rushingYards","rushingAttempts","rushingTouchdowns","receivingYards","receptions","yardsPerRushAttempt"],
+    more:["receivingYards","receivingTouchdowns","longReception","fumblesLost"] },
+  rec: { on:"receivingYards", head:"receivingYards", hot:100,
+    cols:["receptions","receivingTargets","yardsPerReception","receivingTouchdowns","longReception"],
+    chart:["receivingYards","receptions","receivingTargets","receivingTouchdowns","yardsPerReception","rushingYards"],
+    more:["rushingYards","rushingTouchdowns","fumblesLost"] },
+  def: { on:"totalTackles", head:"totalTackles", hot:10,
+    cols:["soloTackles","sacks","tacklesForLoss","passesDefended","interceptions"],
+    chart:["totalTackles","soloTackles","sacks","tacklesForLoss","passesDefended","interceptions"],
+    more:["QBHits","fumblesForced","fumblesRecovered","interceptionYards"] },
+  kick: { on:"totalKickingPoints", head:"totalKickingPoints", hot:12,
+    cols:["fieldGoalsMade/fieldGoalAttempts","fieldGoalPct","longFieldGoalMade","extraPointsMade/extraPointAttempts"],
+    chart:["totalKickingPoints","fieldGoalsMade","fieldGoalPct","longFieldGoalMade"],
+    more:["extraPointsMade/extraPointAttempts","fieldGoalPct"] },
+  punt: { on:"punts", head:"punts", hot:99,
+    cols:["puntYards","grossAvgPuntYards","puntsInside20","touchbacks","longPunt"],
+    chart:["punts","grossAvgPuntYards","puntYards","puntsInside20"],
+    more:["longPunt","touchbacks"] },
+};
+const SN_GLPOS = { QB:"pass", RB:"rush", HB:"rush", FB:"rush", WR:"rec", TE:"rec", K:"kick", PK:"kick", P:"punt" };
+const SN_GLDEF = /^(LB|OLB|ILB|MLB|DE|DT|NT|EDGE|CB|S|SS|FS|DB|SAF|LS)$/i;
+// pick a headline stat, five columns, a "more" line and the chart's stat picker for this player
+function snGlPlan(g, pos) {
+  const names = g.names || [], labels = g.labels || [], used = new Set();
+  const has = n => names.includes(n);
+  const lab = n => labels[names.indexOf(n)] || n;
+  // two categories can ship the same label (a quarterback's passing and rushing YDS), so qualify the second one
+  const seen = new Set();
+  const qual = n => /^passing/.test(n) ? "PASS " : /^rushing/.test(n) ? "RUSH " : /^receiv|^recept/.test(n) ? "REC " : /^punt/.test(n) ? "PUNT " : /^fieldGoal|^extraPoint/.test(n) ? "K " : "";
+  const dedupe = c => { if (!c) return c; let l = c[1]; if (seen.has(l)) l = qual(c[0]) + l; seen.add(l); return [c[0], l]; };
+  const take = n => { if (!has(n) || used.has(n)) return null; used.add(n); return dedupe([n, lab(n)]); };
+  const P0 = String(pos || "").toUpperCase();
+  let key = SN_GLPOS[P0] || (SN_GLDEF.test(P0) ? "def" : "");
+  if (!key || !has(SN_GLPROF[key].on)) key = ["pass","rush","rec","def","kick","punt"].find(k => has(SN_GLPROF[k].on)) || "";
+  const P = SN_GLPROF[key];
+  const head = (P && take(P.head)) || (names.length ? take(names[0]) : ["", ""]);
+  const cols = (P ? P.cols : []).map(take).filter(Boolean).slice(0, 5);
+  for (const n of names) { if (cols.length >= 5) break; const c = take(n); if (c) cols.push(c); }
+  const more = (P ? P.more : []).map(take).filter(Boolean).slice(0, 3);
+  for (const n of names) { if (more.length >= 3) break; const c = take(n); if (c) more.push(c); }
+  const combo = n => { const r = g.rows.find(x => x.st[n] != null && x.st[n] !== ""); return r ? snGlPair(r.st[n]) : false; };
+  const chart = [];
+  const cseen = new Set();
+  const add = c => { if (!c || !c[0] || combo(c[0]) || chart.some(x => x[0] === c[0])) return;
+    let l = c[1]; if (cseen.has(l)) l = qual(c[0]) + l; cseen.add(l); chart.push([c[0], l]); };
+  (P ? P.chart : []).forEach(n => { if (has(n)) add([n, lab(n)]); });
+  [head, ...cols].forEach(add);
+  if (!chart.length) chart.push(head);
+  return { head, cols, more, chart: chart.slice(0, 6), hot: P ? P.hot : Infinity };
+}
 function snPlRender() {
   const id = SP.id; if (!id) return;
   let g = SP.gl[`${id}|${snY()}|${LG.key}`];
@@ -4490,19 +4603,33 @@ function snPlRender() {
   if (!g) h += `<div class="tmc"><h3>Game log</h3><div class="empty">Loading the game log</div></div>`;
   else if (!g.rows.length) h += `<div class="tmc"><h3>Game log</h3><div class="empty">No regular-season games logged yet.</div></div>`;
   else {
-    const pick = ["receivingYards","rushingYards","passingYards","totalTackles","fieldGoalsMade"].find(n => g.names.includes(n)) || g.names[0];
-    const num = v => { const n = parseFloat(String(v ?? "").replace(/[^0-9.\-]/g, "")); return isNaN(n) ? 0 : n; };
-    const mx = Math.max(1, ...g.rows.map(r => num(r.st[pick])));
-    const bars = `<div class="pbars">${g.rows.map(r => { const v = num(r.st[pick]);
-      return `<i data-gid="${r.id}" class="${v ? "on" : "zero"}" style="height:${v / mx * 100}%" title="${esc(`${r.at} ${r.opp}: ${v} ${pick}`)}"></i>`; }).join("")}</div>
-      <div class="pbk"><span>Week ${g.rows[0].wk || 1}</span><span>${esc(g.labels[g.names.indexOf(pick)] || pick)} per game, tap a bar</span><span>Week ${g.rows[g.rows.length - 1].wk || g.rows.length}</span></div>`;
-    const idx = g.names.map((n, i) => i).slice(0, 12);
+    // v74: a chart with a stat picker and compact rows, not a twelve-column dump that ran off the card
+    const plan = snGlPlan(g, pos);
+    const sk = plan.chart.some(c => c[0] === SP.stat) ? SP.stat : plan.chart[0][0];
+    const slab = (plan.chart.find(c => c[0] === sk) || plan.chart[0])[1];
+    const vals = g.rows.map(r => snGlNum(r.st[sk]));
+    const mx = Math.max(1, ...vals), avg = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
+    const seg1 = `<span class="tseg pst">${plan.chart.map(c => `<button data-plst="${esc(c[0])}" class="${c[0] === sk ? "on" : ""}">${esc(c[1])}</button>`).join("")}</span>`;
+    const bars = `<div class="pbars"><s style="bottom:${(avg / mx * 100).toFixed(1)}%"><em>avg ${snGlFmt(+avg.toFixed(1))}</em></s>${g.rows.map((r, i) => {
+      const v = vals[i];
+      return `<i data-gid="${r.id}" class="${v ? "on" : "zero"}${r.res === "L" ? " l" : ""}" style="height:${(v / mx * 100).toFixed(1)}%" title="${esc(`Wk ${r.wk || i + 1} ${r.at} ${r.opp}: ${snGlFmt(v)} ${slab}${r.res ? ` (${r.res} ${r.score})` : ""}`)}"></i>`; }).join("")}</div>
+      <div class="pbk"><span>Wk ${g.rows[0].wk || 1}</span><span>${esc(slab)} per game, tap a bar · high ${snGlFmt(mx)}</span><span>Wk ${g.rows[g.rows.length - 1].wk || g.rows.length}</span></div>`;
     const list = SP.mode === "l10" ? g.rows.slice(-10).reverse() : g.rows.slice().reverse();
-    const seg = `<span class="tseg"><button data-plm="l10" class="${SP.mode === "l10" ? "on" : ""}">Last 10</button><button data-plm="all" class="${SP.mode === "all" ? "on" : ""}">All ${g.rows.length}</button></span>`;
-    h += `<div class="tmc"><h3>Game log ${g.y}${seg}</h3>${bars}
-      <div class="scroll" style="margin-top:8px"><table class="rs"><tr><th>Wk</th><th style="text-align:left">Opp</th><th>Result</th>${idx.map(i => `<th style="cursor:default">${esc(g.labels[i] || g.names[i])}</th>`).join("")}</tr>
-      ${list.map(r => `<tr data-gid="${r.id}"><td>${r.wk || ""}</td><td style="text-align:left"><div class="pl lgo"><i style="width:14px">${esc(r.at)}</i>${r.opp ? snImg(r.opp) : ""}<b>${esc(r.opp)}</b></div></td>
-        <td class="${r.res === "W" ? "W" : r.res === "L" ? "L" : ""}">${esc(`${r.res} ${r.score}`)}</td>${idx.map(i => `<td>${esc(r.st[g.names[i]] ?? "")}</td>`).join("")}</tr>`).join("")}</table></div></div>`;
+    const seg2 = `<span class="tseg"><button data-plm="l10" class="${SP.mode === "l10" ? "on" : ""}">Last 10</button><button data-plm="all" class="${SP.mode === "all" ? "on" : ""}">All ${g.rows.length}</button></span>`;
+    const cols = `minmax(126px,1.5fr) 58px ${plan.cols.map(() => "46px").join(" ")}${plan.more.length ? " minmax(96px,1fr)" : ""}`;
+    const val = (r, n) => { const v = r.st[n]; return v == null || v === "" ? "–" : v; };
+    const mean = n => snGlAvg(list.map(r => r.st[n]));
+    const detail = r => plan.more.map(c => { const v = r.st[c[0]]; return v == null || v === "" || v === "0" || v === "--" || v === "0-0" ? "" : `<i>${esc(c[1])}</i>${esc(v)}`; }).filter(Boolean).join("<u></u>");
+    const headRow = `<div class="pgl-h"><span>Game</span><span>${esc(plan.head[1])}</span>${plan.cols.map(c => `<span>${esc(c[1])}</span>`).join("")}${plan.more.length ? `<span class="sh">More</span>` : ""}</div>`;
+    const avgRow = `<div class="pgl-r avg"><span class="gm"><b>Average</b><small>these ${list.length}</small></span><span class="pts">${esc(mean(plan.head[0]))}</span>${plan.cols.map(c => `<span><i>${esc(c[1])}</i>${esc(mean(c[0]))}</span>`).join("")}${plan.more.length ? `<span class="sh"></span>` : ""}</div>`;
+    const rows = list.map(r => `<div class="pgl-r${snGlNum(r.st[plan.head[0]]) >= plan.hot ? " hot" : ""}" data-gid="${r.id}" title="Open the game">`
+      + `<span class="gm"><b>Wk ${r.wk || ""} <em>${esc(r.at)}</em>${r.opp ? snImg(r.opp) : ""}${esc(r.opp)}</b><small class="${r.res === "W" ? "W" : r.res === "L" ? "L" : ""}">${esc(`${r.res || ""} ${r.score || ""}`.trim())}</small></span>`
+      + `<span class="pts"><i>${esc(plan.head[1])}</i>${esc(val(r, plan.head[0]))}</span>`
+      + plan.cols.map(c => `<span><i>${esc(c[1])}</i>${esc(val(r, c[0]))}</span>`).join("")
+      + (plan.more.length ? `<span class="sh">${detail(r)}</span>` : "") + `</div>`).join("");
+    h += `<div class="tmc"><h3>Game log ${g.y}${seg1}</h3>${bars}
+      <div class="pgl-top"><small>${SP.mode === "l10" ? "newest first, last 10" : "newest first, every game"} · tap a game to open it</small>${seg2}</div>
+      <div class="pgl" style="--cols:${cols}">${headRow}${avgRow}${rows}</div></div>`;
   }
   snEl("snPmBody").innerHTML = h;
 }
@@ -4543,6 +4670,7 @@ function snClick(e) {
   const t = e.target; let b;
   if (t.closest("[data-plclose]") || t === snEl("snPmod")) { snClosePlayer(); return true; }
   if ((b = t.closest("[data-plm]"))) { SP.mode = b.dataset.plm; snPlRender(); return true; }
+  if ((b = t.closest("[data-plst]"))) { SP.stat = b.dataset.plst; snPlRender(); return true; }
   if ((b = t.closest("#snPmod [data-team]"))) { const ab = b.dataset.team; snClosePlayer(); openTeam(ab); return true; }
   if ((b = t.closest("#snPmod [data-gid]"))) { const id = b.dataset.gid; snClosePlayer(); openGame(id); return true; }
   if ((b = t.closest("[data-plid]"))) { const nm = b.dataset.pname || b.querySelector("b")?.textContent; if (nm) SP.nm[b.dataset.plid] = nm; snOpenPlayer(b.dataset.plid); return true; }
