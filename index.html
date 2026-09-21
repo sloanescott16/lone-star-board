@@ -1983,6 +1983,7 @@ function breakdownFrom(pid, st) {
 async function openPlayer(pid) {
   const sl = S.sleeper, p = sl.players?.[pid] || [pid, "", ""], g = gameForTeam(p[2]);
   if (p[3]) { SP.nm[p[3]] = p[0]; return snOpenPlayer(p[3], pid); }   // v71: one pop-up for everyone; DEF units keep the old one
+  if (p[1] !== "DEF" && p[2]) { const eid = await espnIdFor(pid); if (eid) { SP.nm[eid] = p[0]; return snOpenPlayer(eid, pid); } }   // Sleeper only carries espn_id for older players; look the rest up on the team roster
   const pts = +((sl.mine?.players_points?.[pid] ?? sl.oppM?.players_points?.[pid]) || 0);
   const m = el("#pmodal"); m.hidden = false;
   setMark(el("#pmMark"), p[2] || "FA");
@@ -4216,21 +4217,47 @@ function snLog() {
 function snOpenPlayer(id, pid) {
   if (!id) return;
   SP.id = String(id); SP.mode = "l10"; SP.fxv = "pts";
-  SP.pid = pid || slByEspn(SP.id);
+  SP.pid = pid || slByEspn(SP.id) || (LG.fantasy ? slByName(SP.nm[SP.id]) : null);
+  if (SP.pid) { const p = S.sleeper.players?.[SP.pid]; if (p && !p[3]) { p[3] = SP.id; if (S.sleeper.byEspn) S.sleeper.byEspn[SP.id] = SP.pid; } }
   snEl("snPmod").hidden = false; snEl("snPmod").querySelector(".sheet").scrollTop = 0;
   snPlRender();
   const me = SP.id, again = () => { if (SP.id === me) snPlRender(); };
-  snLoadBio(me).then(again);
+  snLoadBio(me).then(bio => {
+    // the bio settles the name and team, which is enough to find him on Sleeper when the id did not
+    if (SP.id === me && !SP.pid && LG.fantasy && bio) { const pid2 = slByName(bio.displayName || bio.fullName, bio.team?.abbreviation); if (pid2) { SP.pid = pid2; const p = S.sleeper.players[pid2]; if (p && !p[3]) { p[3] = me; if (S.sleeper.byEspn) S.sleeper.byEspn[me] = pid2; } snLoadFx(pid2).then(again); } }
+    again();
+  });
   snLoadOv(me).then(again);
   snLoadGL(me, snY()).then(g => { if (g && !g.rows.length && snY() === snSeason()) return snLoadGL(me, snSeason() - 1); }).then(again);
   if (SP.pid && LG.fantasy) snLoadFx(SP.pid).then(again);
 }
 function snClosePlayer() { SP.id = null; SP.pid = null; snEl("snPmod").hidden = true; }
-// Sleeper id for an ESPN athlete, off the trimmed players cache
+// Sleeper id for an ESPN athlete, off the trimmed players cache; Sleeper only carries espn_id for about half the league, so names back it up
 function slByEspn(eid) {
   const ps = S.sleeper.players; if (!ps || !eid) return null;
   if (!S.sleeper.byEspn) { S.sleeper.byEspn = {}; for (const [pid, p] of Object.entries(ps)) if (p[3]) S.sleeper.byEspn[p[3]] = pid; }
   return S.sleeper.byEspn[String(eid)] || null;
+}
+const normN = s => String(s || "").toLowerCase().replace(/\b(jr|sr|ii|iii|iv|v)\b\.?/g, "").replace(/[^a-z]/g, "");
+function slByName(name, team) {
+  const ps = S.sleeper.players; if (!ps || !name) return null;
+  const n = normN(name); if (!n) return null;
+  const hits = Object.entries(ps).filter(([, p]) => p[1] !== "DEF" && normN(p[0]) === n && (!team || !p[2] || toEspn(p[2]) === toEspn(team)));
+  return hits.length === 1 ? hits[0][0] : null;
+}
+// ESPN athlete id for a Sleeper player with no espn_id: match him by name on his team's ESPN roster, then remember it in the cache
+async function espnIdFor(pid) {
+  const p = S.sleeper.players?.[pid]; if (!p || p[1] === "DEF" || !p[2]) return null;
+  const ab = toEspn(p[2]); SP.rost = SP.rost || {};
+  if (!SP.rost[ab]) {
+    try { const d = await getJSON(api(`teams/${(TID[ab] || ab).toString().toLowerCase()}/roster`)); const list = [];
+      for (const grp of d.athletes || []) for (const a of grp.items || grp.athletes || []) if (a?.id) list.push({ id: String(a.id), n: normN(a.displayName || a.fullName), last: normN((a.lastName || (a.displayName || "").split(" ").slice(-1)[0])), pos: a.position?.abbreviation || "" });
+      SP.rost[ab] = list; } catch (e) { SP.rost[ab] = []; }
+  }
+  const n = normN(p[0]), last = normN(p[0].split(" ").slice(-1)[0]);
+  const hit = SP.rost[ab].find(a => a.n === n) || (() => { const c = SP.rost[ab].filter(a => a.last === last && a.pos === p[1]); return c.length === 1 ? c[0] : null; })();
+  if (hit) { p[3] = hit.id; if (S.sleeper.byEspn) S.sleeper.byEspn[hit.id] = pid; const c = store.get("lsb-players2", null); if (c) store.set("lsb-players2", { t: c.t, p: S.sleeper.players }); }
+  return hit ? hit.id : null;
 }
 function snLoadBio(id) {
   const k = `${id}|${LG.key}`;
