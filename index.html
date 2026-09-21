@@ -1139,6 +1139,14 @@
 
   /* ---------- v71: one player card for everyone, with fantasy on the NFL side ---------- */
   :is(#view-season,#snPmod) .pbars i.on{background:var(--blue)} :is(#view-season,#snPmod) .pbars i.zero{height:3px!important; background:#2a3140}
+  :is(#view-season,#snPmod) .pbars{gap:1px; overflow:hidden; min-width:0}
+  :is(#view-season,#snPmod) .pbars i{flex:1 1 0; min-width:0}
+  /* v73: playoff odds cells */
+  :is(#view-season,#tmodal) td.od{font-family:var(--display); font-size:15px; font-weight:700; min-width:52px; text-align:right}
+  :is(#view-season,#tmodal) table td.od.hi{color:#37c07d} :is(#view-season,#tmodal) table td.od.mid{color:#e8a33d} :is(#view-season,#tmodal) table td.od.lo{color:var(--muted)} :is(#view-season,#tmodal) table td.od.out{color:#e0475b} :is(#view-season,#tmodal) table td.od.in{color:#6ee0a8}
+  :is(#view-season,#tmodal) td.od .ob{display:block; height:3px; border-radius:2px; background:rgba(255,255,255,.08); margin-top:3px; overflow:hidden}
+  :is(#view-season,#tmodal) td.od .ob i{display:block; height:100%; border-radius:2px; background:currentColor}
+  #snLeague .sn-note.po{margin-top:6px}
   #snPmod .pmh { flex-wrap: wrap; }
   #snPmod .pmh .sub .bio { display: block; width: 100%; color: var(--muted); font-size: 12px; }
   #snPmod .pmh .sub .inj { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--warn); border: 1px solid rgba(242,184,75,.5); border-radius: 999px; padding: 1px 8px; }
@@ -3553,6 +3561,7 @@ async function openTeam(ab) {
   try {
     const gid = LG.key === "cfb" ? (tm.groups?.id || tm.groups?.parent?.id || "") : "nfl";
     if (gid) {
+      if (LG.key === "nfl") { try { await Promise.all([snLoadStand(snSeason()), snLoadStand(snSeason() - 1), poLoad()]); } catch (e) {} }   /* v73: odds column */
       const d = await standingsFor(gid);
       let entries = [];
       if (LG.key === "cfb") { entries = d.standings?.entries || []; standTitle = d.name || confName(gid); }
@@ -3562,7 +3571,7 @@ async function openTeam(ab) {
         const v = (e, t) => stOf(e, t)?.displayValue ?? "–";
         stand = LG.key === "cfb"
           ? `<table class="tm-st"><thead><tr><th>Team</th><th>Conf</th><th>Overall</th><th class="hm">PF</th><th class="hm">PA</th><th>Strk</th></tr></thead><tbody>${entries.map(e => { const a = e.team.abbreviation; return `<tr data-team="${esc(a)}" class="${a === ab ? "me" : ""}"><td>${mark(a, "mini")}${esc(e.team.shortDisplayName || e.team.location || a)}</td><td>${esc(v(e, "vsconf"))}</td><td>${esc(v(e, "total"))}</td><td class="hm">${esc(v(e, "pointsfor"))}</td><td class="hm">${esc(v(e, "pointsagainst"))}</td><td>${esc(v(e, "streak"))}</td></tr>`; }).join("")}</tbody></table>`
-          : `<table class="tm-st"><thead><tr><th>Team</th><th>W-L-T</th><th>Pct</th><th>Div</th><th class="hm">PF</th><th class="hm">PA</th><th class="hm">Diff</th><th>Strk</th></tr></thead><tbody>${entries.map(e => { const a = e.team.abbreviation; return `<tr data-team="${esc(a)}" class="${a === toEspn(ab) ? "me" : ""}"><td>${mark(a, "mini")}${esc(TEAMS[a] ? TEAMS[a][1] : e.team.shortDisplayName || a)}</td><td>${v(e, "wins")}-${v(e, "losses")}-${v(e, "ties")}</td><td>${esc(v(e, "winpercent"))}</td><td>${esc(v(e, "vsdiv"))}</td><td class="hm">${esc(v(e, "pointsfor"))}</td><td class="hm">${esc(v(e, "pointsagainst"))}</td><td class="hm">${esc(v(e, "differential"))}</td><td>${esc(v(e, "streak"))}</td></tr>`; }).join("")}</tbody></table>`;
+          : `<table class="tm-st"><thead><tr><th>Team</th><th>W-L-T</th><th>Pct</th><th>Playoff</th><th>Div</th><th class="hm">PF</th><th class="hm">PA</th><th class="hm">Diff</th><th>Strk</th></tr></thead><tbody>${entries.map(e => { const a = e.team.abbreviation; return `<tr data-team="${esc(a)}" class="${a === toEspn(ab) ? "me" : ""}"><td>${mark(a, "mini")}${esc(TEAMS[a] ? TEAMS[a][1] : e.team.shortDisplayName || a)}</td><td>${v(e, "wins")}-${v(e, "losses")}-${v(e, "ties")}</td><td>${esc(v(e, "winpercent"))}</td>${poCell(a, stOf(e, "clincher")?.displayValue)}<td>${esc(v(e, "vsdiv"))}</td><td class="hm">${esc(v(e, "pointsfor"))}</td><td class="hm">${esc(v(e, "pointsagainst"))}</td><td class="hm">${esc(v(e, "differential"))}</td><td>${esc(v(e, "streak"))}</td></tr>`; }).join("")}</tbody></table>`;
       }
     }
   } catch (e) { console.warn("team standings", e); }
@@ -3755,6 +3764,82 @@ function snRecOf(list) {
   return { w, l, t, gp: w + l + t, txt: t ? `${w}-${l}-${t}` : `${w}-${l}`, pf, pa };
 }
 
+/* ---------- v73: NFL playoff odds, a Monte Carlo over the remaining schedule ----------
+   Every unplayed game from the current week to week 18 comes off the week scoreboards (one call per week, cached 30 min).
+   Team strength is point differential per game, pulled toward last season's record early in the year; a game is a
+   coin weighted by the strength gap plus two points of home field. Each conference takes its four division winners
+   and three wild cards, ties broken at random. Nothing here is the official tiebreak procedure. */
+const PO = { games:null, at:0, busy:null, odds:null, key:"" };
+function poLoad() {
+  if (LG.key !== "nfl") return Promise.resolve(null);
+  if (PO.games && Date.now() - PO.at < 30 * 60e3) return Promise.resolve(PO.games);
+  if (PO.busy) return PO.busy;
+  const y = snSeason(), wk0 = Math.max(1, Math.min(18, S.curWeek || S.week || 1)), wks = [];
+  for (let w = wk0; w <= 18; w++) wks.push(w);
+  PO.busy = Promise.all(wks.map(w => getJSON(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${w}&dates=${y}`)
+    .then(d => (d.events || []).map(ev => { const c = ev.competitions?.[0]; if (!c) return null;
+      const h = c.competitors.find(x => x.homeAway === "home"), a = c.competitors.find(x => x.homeAway === "away"); if (!h || !a) return null;
+      return { id:String(ev.id), wk:w, h:h.team?.abbreviation, a:a.team?.abbreviation, done:(ev.status?.type?.state || c.status?.type?.state) === "post", hs:+h.score || 0, as:+a.score || 0 }; }).filter(Boolean))
+    .catch(() => [])))
+    .then(arrs => { PO.games = [].concat(...arrs); PO.at = Date.now(); PO.busy = null; PO.key = ""; return PO.games; });
+  return PO.busy;
+}
+function poStrength(ab, st, prev) {
+  const r = st[ab] || { w:0, l:0, t:0, pf:0, pa:0 }, gp = r.w + r.l + r.t;
+  const p = prev && prev[ab], pp = p && (p.w + p.l + p.t) ? (p.w + p.t / 2) / (p.w + p.l + p.t) : 0.5;
+  const prior = (pp - 0.5) * 24;                        // last season's record as points per game, regressed by the blend below
+  return (r.pf - r.pa + 6 * prior * 0.6) / (gp + 6);    // six games of prior weight
+}
+function poSim() {
+  const y = snSeason(), st = SN.stand[y], prev = SN.stand[y - 1], G = PO.games;
+  if (!st || !Object.keys(st).length || !G) return null;
+  const ids = snAllTeams(), ix = {}; ids.forEach((ab, i) => ix[ab] = i);
+  const n = ids.length, s = new Float64Array(n), w0 = new Float64Array(n), conf = ids.map(ab => snConfOf(ab)), div = ids.map(ab => snDivOf(ab));
+  ids.forEach((ab, i) => { const r = st[ab] || { w:0, t:0 }; s[i] = poStrength(ab, st, prev); w0[i] = r.w + (r.t || 0) / 2; });
+  // games still to play: everything not final, minus any the standings already count (a game finished after the boards were fetched still shows in the standings)
+  const games = []; const cnt = new Float64Array(n);
+  G.forEach(g => { if (g.done || ix[g.h] == null || ix[g.a] == null) return; games.push([ix[g.h], ix[g.a], 1 / (1 + Math.exp(-((s[ix[g.h]] - s[ix[g.a]] + 2) / 8)))]); cnt[ix[g.h]]++; cnt[ix[g.a]]++; });
+  ids.forEach((ab, i) => { const r = st[ab] || { w:0, l:0, t:0 }; const gp = r.w + r.l + r.t; const extra = Math.max(0, 17 - gp - cnt[i]); for (let e = 0; e < extra; e++) games.push([i, -1, 1 / (1 + Math.exp(-(s[i] / 8)))]); });
+  const N = 10000; let seed = games.length * 7919; ids.forEach((ab, i) => { seed = (seed * 31 + w0[i] * 2 + i) | 0; });
+  const rnd = (() => { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; })();
+  const made = new Float64Array(n), divW = new Float64Array(n), one = new Float64Array(n), exp = new Float64Array(n), w = new Float64Array(n), key = new Float64Array(n);
+  const confs = ["NFC", "AFC"].map(c => ids.map((ab, i) => conf[i] === c ? i : -1).filter(i => i >= 0));
+  const bykey = (x, z) => key[z] - key[x];
+  for (let it = 0; it < N; it++) {
+    w.set(w0);
+    for (let g = 0; g < games.length; g++) { const G2 = games[g]; if (rnd() < G2[2]) w[G2[0]]++; else if (G2[1] >= 0) w[G2[1]]++; }
+    for (let i = 0; i < n; i++) { exp[i] += w[i]; key[i] = w[i] + rnd() * 0.9; }
+    for (let c = 0; c < 2; c++) {
+      const teams = confs[c], byDiv = {}, rest = [];
+      for (const i of teams) (byDiv[div[i]] || (byDiv[div[i]] = [])).push(i);
+      const winners = [];
+      for (const d in byDiv) { const arr = byDiv[d].sort(bykey); winners.push(arr[0]); for (let k = 1; k < arr.length; k++) rest.push(arr[k]); }
+      winners.sort(bykey); rest.sort(bykey);
+      one[winners[0]]++;
+      for (const i of winners) { made[i]++; divW[i]++; }
+      for (let k = 0; k < 3 && k < rest.length; k++) made[rest[k]]++;
+    }
+  }
+  const out = {}; ids.forEach((ab, i) => out[ab] = { po: made[i] / N, div: divW[i] / N, one: one[i] / N, exp: exp[i] / N });
+  return out;
+}
+function poOdds() {
+  if (LG.key !== "nfl") return null;
+  const y = snSeason(), st = SN.stand[y]; if (!st || !PO.games) return PO.odds;
+  const key = Object.keys(st).map(k => st[k].w + "-" + st[k].l + "-" + st[k].t).join() + "|" + PO.games.filter(g => !g.done).length + "|" + PO.at;
+  if (key !== PO.key) { PO.odds = poSim(); PO.key = key; }
+  return PO.odds;
+}
+function poTxt(p) { if (p == null) return "--"; if (p <= 0) return "0%"; if (p >= 1) return "100%"; if (p < 0.01) return "<1%"; if (p > 0.99) return ">99%"; return Math.round(p * 100) + "%"; }
+function poCell(ab, cl) {
+  const o = (poOdds() || {})[ab], c = String(cl || "").toLowerCase().replace(/[^a-z]/g, "");
+  if (c === "e") return `<td class="od out">out</td>`;
+  if (c && "xyz*".includes(c[0])) return `<td class="od in" title="Clinched">100%</td>`;
+  if (!o) return `<td class="od lo">--</td>`;
+  const v = o.po, k = v >= 0.995 ? "in" : v >= 0.75 ? "hi" : v >= 0.25 ? "mid" : v <= 0 ? "out" : "lo";
+  return `<td class="od ${k}" title="Playoffs ${poTxt(v)} · division ${poTxt(o.div)} · 1 seed ${poTxt(o.one)} · projected ${Math.round(o.exp)}-${17 - Math.round(o.exp)}">${poTxt(v)}<span class="ob"><i style="width:${Math.round(v * 100)}%"></i></span></td>`;
+}
+
 /* ---------- standings ---------- */
 function snLoadStand(y) {
   if (SN.stand[y]) return Promise.resolve(SN.stand[y]);
@@ -3767,7 +3852,7 @@ function snLoadStand(y) {
       const g = nm => { const s = (e.stats || []).find(x => x.name === nm); return s ? (+s.value || 0) : 0; };
       const d2 = nm => { const s = (e.stats || []).find(x => x.name === nm); return s ? (s.displayValue || "") : ""; };
       out[ab] = { ab, w:g("wins"), l:g("losses"), t:g("ties"), pf:g("pointsFor"), pa:g("pointsAgainst"),
-        pct:g("winPercent"), seed:g("playoffSeed"), streak:d2("streak"), home:d2("Home"), road:d2("Road"), div:d2("vs. Div.") };
+        pct:g("winPercent"), seed:g("playoffSeed"), streak:d2("streak"), home:d2("Home"), road:d2("Road"), div:d2("vs. Div."), clinch:d2("clincher") };   /* v73: clinch letter for the odds column */
     }); (n.children || []).forEach(walk); };
     walk(d);
     SN.stand[y] = out; delete SN.busy[k]; return out;
@@ -3879,6 +3964,7 @@ function renderSeason() {
   if (!snGames(ab, y)) need.push(snLoadSched(ab, y));
   if (!SN.stand[y]) need.push(snLoadStand(y));
   if (!SN.stand[snSeason() - 1]) need.push(snLoadStand(snSeason() - 1));
+  if (LG.key === "nfl" && !snPrev() && !PO.games && !PO.busy) need.push(poLoad());   /* v73 */
   if (!SN.byt[y]) need.push(snLoadByt(y));
   if (!SN.roster["r" + y + LG.key]) need.push(snLoadRoster(y));
   if (!SN.lead[`${SN.leadCat}|${y}|${LG.key}`]) need.push(snLoadLead(SN.leadCat, y));
@@ -3901,6 +3987,8 @@ function snPulse() {
     cells.push([ordinalN(dv.indexOf(ab) + 1), snDivOf(ab), dv[0] === ab ? "leading" : `behind ${snName(dv[0])}`, "", "", "lg:pct"]);
     if (seed) cells.push([ordinalN(seed), `${snConfOf(ab)} seed`, seed <= 7 ? "in the field" : "outside", "", seed <= 7 ? "up" : "", "#home"]);
     else if (conf.length) cells.push([ordinalN(conf.indexOf(ab) + 1), `In the ${snConfOf(ab)}`, "by record", "", "", "lg:pct"]);
+    const po = !snPrev() && (poOdds() || {})[ab];   /* v73 */
+    if (po) cells.push([poTxt(po.po), "Playoff odds", `division ${poTxt(po.div)} · proj. ${Math.round(po.exp)}-${17 - Math.round(po.exp)}`, "", po.po >= 0.75 ? "up" : po.po < 0.25 ? "dn" : "gr", "lg:po"]);
   }
   const gp = done.length || 1;
   if (r.pf) cells.push([snFix(r.pf / gp), "Points / game", LG.key === "nfl" ? ordinalN(snRankOf("pf")) + " in the league" : "", "", "", "lg:pf"]);
@@ -4163,14 +4251,14 @@ function snLeaders() {
         <span></span><em>${esc(p.v == null ? "-" : Math.round(p.v))}</em></li>`).join("")}</ol>`;
   snEl("snLeaders").innerHTML = snCard(`${LG.label} leaders`, chips + body, "", L ? `${L.y}${L.y < snSeason() && !snPrev() ? " (last season)" : ""}` : "");
 }
-const SN_LG = [["pct","PCT"],["w","W"],["l","L",1],["pf","PF"],["pa","PA",1],["diff","DIFF"],["ppg","PF/G"],["papg","PA/G",1],["ypg","YDS/G"],["oypg","OPP YDS",1],["to","TO"],["streak","STRK"]];
+const SN_LG = [["pct","PCT"],["w","W"],["l","L",1],["po","PLAYOFF"],["pf","PF"],["pa","PA",1],["diff","DIFF"],["ppg","PF/G"],["papg","PA/G",1],["ypg","YDS/G"],["oypg","OPP YDS",1],["to","TO"],["streak","STRK"]];
 function snLgRow(ab, y) {
-  const r = snRec(ab), byt = SN.byt[y]?.[ab] || { own:{}, opp:{} };
+  const r = snRec(ab), byt = SN.byt[y]?.[ab] || { own:{}, opp:{} }, po = (!snPrev() && (poOdds() || {})[ab]) || null;
   const gp = (r.w + r.l + r.t) || 1;
   const sk = String(r.streak || ""), sn = (parseInt(sk.replace(/\D/g, "")) || 0) * (/W/i.test(sk) ? 1 : -1);
   return { ab, r, pct: r.pct || (r.w + r.t/2) / gp, w:r.w, l:r.l, pf:r.pf, pa:r.pa, diff:r.pf - r.pa, ppg:r.pf / gp, papg:r.pa / gp,
     ypg: byt.own.netYardsPerGame ?? null, oypg: byt.opp?.netYardsPerGame ?? null, to: byt.own.turnOverDifferential ?? null,
-    streak: sn, streakt: sk || "-" };
+    po: po ? po.po : null, streak: sn, streakt: sk || "-" };
 }
 function snLeague() {
   if (LG.key !== "nfl") { snEl("snLeague").innerHTML = ""; return; }
@@ -4186,8 +4274,9 @@ function snLeague() {
   const head = `<tr><th>#</th><th style="text-align:left">Team</th>${SN_LG.map(c => `<th data-lg="${c[0]}" class="${c[0] === so ? "on" + (dir === 1 ? " asc" : "") : ""}">${c[1]}</th>`).join("")}</tr>`;
   const body = rows.map((x, i) => `<tr data-team="${x.ab}" class="${x.ab === ab ? "fav" : ""}"><td style="color:var(--dim)">${i + 1}</td>
     <td style="text-align:left"><div class="pl lgo">${snImg(x.ab)}<b>${esc(snName(x.ab))}</b></div></td>
-    ${SN_LG.map(c => { const v = x[c[0]]; return `<td class="${c[0] === so ? "srt" : ""}">${esc(fmt[c[0]] ? fmt[c[0]](v, x) : (v == null ? "-" : v))}</td>`; }).join("")}</tr>`).join("");
-  snEl("snLeague").innerHTML = snCard("League at a glance", `<div class="scroll"><table class="rs"><thead>${head}</thead><tbody>${body}</tbody></table></div>`, tabs,
+    ${SN_LG.map(c => { const v = x[c[0]]; if (c[0] === "po") return poCell(x.ab, x.r.clinch).replace('class="od', 'class="od' + (c[0] === so ? " srt" : "")); return `<td class="${c[0] === so ? "srt" : ""}">${esc(fmt[c[0]] ? fmt[c[0]](v, x) : (v == null ? "-" : v))}</td>`; }).join("")}</tr>`).join("");
+  const poNote = snPrev() ? "" : `<div class="sn-note po">Playoff: every remaining game played out 10,000 times, strength from point differential pulled toward last season early on, four division winners and three wild cards per conference, ties broken at random. Hover a number for the division, 1-seed and projected-record split.</div>`;
+  snEl("snLeague").innerHTML = snCard("League at a glance", `<div class="scroll"><table class="rs"><thead>${head}</thead><tbody>${body}</tbody></table></div>${poNote}`, tabs,
     `${y}${y < snSeason() && !snPrev() ? " (last season)" : ""}`);
 }
 function snLog() {
@@ -4446,7 +4535,7 @@ function snGo(to) {
   if (to[0] === "#") { location.hash = to; return; }
   const [a, b] = to.split(":");
   if (a === "log") { SN.split = b === "all" ? null : b; renderSeason(); snScroll("snLog"); return; }
-  if (a === "lg") { const m = { pct:"pct", diff:"diff", pf:"ppg", pa:"papg", ypg:"ypg", oypg:"oypg", to:"to", third:"ypg" };
+  if (a === "lg") { const m = { pct:"pct", diff:"diff", pf:"ppg", pa:"papg", ypg:"ypg", oypg:"oypg", to:"to", third:"ypg", po:"po" };
     SN.lgv.sort = m[b] || "pct"; SN.lgv.dir = (SN_LG.find(c => c[0] === SN.lgv.sort) || [])[2] ? 1 : -1; SN.lgv.f = "all"; renderSeason(); snScroll("snLeague"); return; }
   snScroll({ rib:"snRib", chart:"snChart", cal:"snWeeks" }[a] || "snPulse");
 }
