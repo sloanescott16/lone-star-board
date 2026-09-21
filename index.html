@@ -608,6 +608,9 @@
   .seg.lg { margin-left: 0; }
   .seg.lg button { font-size: 13px; padding: 4px 14px; }
   body.lg-cfb .nav a[data-v="fantasy"] { display: none; }
+  /* v75: the Rankings page is Saturday only */
+  .nav a[data-v="ranks"] { display: none; }
+  body.lg-cfb .nav a[data-v="ranks"] { display: block; }
   body.lg-cfb .ticker { display: none !important; }
   body.lg-cfb.v-scores { padding-bottom: 0; }
   body.lg-cfb .settings .fx { display: none; }
@@ -913,219 +916,248 @@
     .tm-sch td { padding: 6px 4px; }
     .gc-sp li { grid-template-columns: 20px 46px 1fr auto; }
   }
+
+  /* ================= v75: RANKINGS (Saturday) ================= */
+  #view-ranks .rk-wrap { display: grid; gap: 18px; align-items: start; grid-template-columns: minmax(0, 430px) minmax(0, 1fr); }
+  #view-ranks .rk-wrap.ap, #view-ranks .rk-wrap.conf { grid-template-columns: 1fr; }
+  #view-ranks .rk-wrap.ap #rkConf, #view-ranks .rk-wrap.conf #rkPoll { display: none; }
+  #view-ranks .rk-wrap.ap #rkPoll { max-width: 860px; }
+  #view-ranks .rk-confs { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(305px, 1fr)); }
+  #view-ranks .rkn { display: inline-grid; place-items: center; min-width: 22px; height: 18px; padding: 0 5px; margin-right: 7px;
+    border-radius: 5px; background: var(--raised); font-family: var(--display); font-weight: 800; font-size: 11px; color: var(--ink-2); }
+  #view-ranks tr.fav .rkn { background: var(--accent); color: #0c1119; }
+  #view-ranks .apr { font-family: var(--display); font-weight: 800; font-size: 10.5px; color: var(--accent); margin-left: 6px; }
+  #view-ranks .mv { font-style: normal; font-size: 10.5px; font-weight: 700; }
+  #view-ranks .mv.up { color: var(--good); } #view-ranks .mv.dn { color: var(--live); }
+  #view-ranks .mv.same, #view-ranks .mv.nr { color: var(--muted); }
+  #view-ranks .rk-when { color: var(--muted); font-size: 11px; }
+  #view-ranks .rk-when.live { color: var(--live); font-weight: 700; }
+  #view-ranks .rk-others { margin-top: 8px; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+  #view-ranks table.rs td:first-child { padding-right: 10px; }
+  #view-ranks .rk-wrap table.rs .pl img { width: 22px; height: 22px; border-radius: 0; background: none; object-fit: contain; filter: drop-shadow(0 0 2px rgba(255,255,255,.35)); }
+  #view-ranks .rk-wrap table.rs .pl b { max-width: 112px; }
+  #view-ranks .rk-wrap table.rs .pl { gap: 5px; }
+  #view-ranks #rkConf table.rs th, #view-ranks #rkConf table.rs td { padding: 6px 4px; }
+  #view-ranks #rkPoll .rk-wrap, #view-ranks #rkPoll table.rs .pl b { max-width: 150px; }
+  #view-ranks table.rs td.up { color: var(--good); } #view-ranks table.rs td.dn { color: var(--live); }
+  @media (max-width: 1100px) { #view-ranks .rk-wrap { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) {
+    #view-ranks .rk-confs { grid-template-columns: 1fr; }
+    #view-ranks .rk-when, #view-ranks #rkPoll table.rs th:nth-child(6) { display: none; }
+  }
   /* ================= SEASON ================= */
-  #view-season, #snPmod {
+  #view-season, #snPmod, #view-ranks {
     --card: var(--surface); --card2: var(--raised); --mute: var(--ink-2); --dim: var(--muted);
     --bad: var(--live); --blue: var(--accent);
   }
-  #view-season { align-content: start; }
+  #view-season, #view-ranks { align-content: start; }
   .sn-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .sn-head h2 { margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
   .sn-head .sub { color: var(--muted); font-size: 13px; }
   .sn-head .seg { margin-left: auto; }
-  :is(#view-season, #snPmod) .gcard { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; min-width: 0; }
-  :is(#view-season, #snPmod) .gcard > .gh { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--raised); }
-  :is(#view-season, #snPmod) .gcard > .gh h3 { margin: 0; font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
-  :is(#view-season, #snPmod) .gcard > .gh .gn { margin-left: auto; font-size: 11px; color: var(--muted); text-align: right; }
-  :is(#view-season, #snPmod) .gcard .gb { padding: 12px 14px; }
-  :is(#view-season, #snPmod) .gcard .empty { padding: 6px 0; }
-  :is(#view-season, #snPmod) .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  :is(#view-season, #snPmod) .lnk { font: inherit; font-size: 11px; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
-  :is(#view-season, #snPmod) .lnk:hover { text-decoration: underline; }
-  :is(#view-season, #snPmod) .gtab { display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; }
-  :is(#view-season, #snPmod) .gtab button { font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); background: transparent; border: 1px solid transparent; border-radius: 5px; padding: 3px 8px; cursor: pointer; }
-  :is(#view-season, #snPmod) .gtab button.on { border-color: var(--line-strong); background: var(--surface); color: var(--ink); }
-  :is(#view-season, #snPmod) .tmc { background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; margin-bottom: 12px; }
-  :is(#view-season, #snPmod) .tmc h3 { margin: 0 0 8px; font-family: var(--display); font-size: 15px; letter-spacing: .1em; text-transform: uppercase; display: flex; align-items: baseline; gap: 8px; color: var(--ink-2); }
-  :is(#view-season, #snPmod) .tseg { display: inline-flex; gap: 2px; border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px; margin-left: auto; }
-  :is(#view-season, #snPmod) .tseg button { font: inherit; font-size: 11px; font-weight: 600; color: var(--ink-2); background: transparent; border: 0; border-radius: 999px; padding: 3px 10px; cursor: pointer; }
-  :is(#view-season, #snPmod) .tseg button.on { background: var(--accent); color: #0c1119; }
+  :is(#view-season, #snPmod, #view-ranks) .gcard { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; min-width: 0; }
+  :is(#view-season, #snPmod, #view-ranks) .gcard > .gh { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--raised); }
+  :is(#view-season, #snPmod, #view-ranks) .gcard > .gh h3 { margin: 0; font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  :is(#view-season, #snPmod, #view-ranks) .gcard > .gh .gn { margin-left: auto; font-size: 11px; color: var(--muted); text-align: right; }
+  :is(#view-season, #snPmod, #view-ranks) .gcard .gb { padding: 12px 14px; }
+  :is(#view-season, #snPmod, #view-ranks) .gcard .empty { padding: 6px 0; }
+  :is(#view-season, #snPmod, #view-ranks) .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  :is(#view-season, #snPmod, #view-ranks) .lnk { font: inherit; font-size: 11px; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
+  :is(#view-season, #snPmod, #view-ranks) .lnk:hover { text-decoration: underline; }
+  :is(#view-season, #snPmod, #view-ranks) .gtab { display: flex; gap: 2px; margin-left: auto; flex-wrap: wrap; }
+  :is(#view-season, #snPmod, #view-ranks) .gtab button { font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); background: transparent; border: 1px solid transparent; border-radius: 5px; padding: 3px 8px; cursor: pointer; }
+  :is(#view-season, #snPmod, #view-ranks) .gtab button.on { border-color: var(--line-strong); background: var(--surface); color: var(--ink); }
+  :is(#view-season, #snPmod, #view-ranks) .tmc { background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; margin-bottom: 12px; }
+  :is(#view-season, #snPmod, #view-ranks) .tmc h3 { margin: 0 0 8px; font-family: var(--display); font-size: 15px; letter-spacing: .1em; text-transform: uppercase; display: flex; align-items: baseline; gap: 8px; color: var(--ink-2); }
+  :is(#view-season, #snPmod, #view-ranks) .tseg { display: inline-flex; gap: 2px; border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px; margin-left: auto; }
+  :is(#view-season, #snPmod, #view-ranks) .tseg button { font: inherit; font-size: 11px; font-weight: 600; color: var(--ink-2); background: transparent; border: 0; border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+  :is(#view-season, #snPmod, #view-ranks) .tseg button.on { background: var(--accent); color: #0c1119; }
   /* the season grid: one tile per week */
-  :is(#view-season) .wkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 5px; }
-  :is(#view-season) .wkc { border: 1px solid #1a1f29; border-radius: 8px; padding: 5px 7px; background: #0e1116; min-width: 0; }
-  :is(#view-season) .wkc.gm { cursor: pointer; background: var(--raised); }
-  :is(#view-season) .wkc.gm:hover { border-color: var(--line-strong); }
-  :is(#view-season) .wkc.hm { background: linear-gradient(180deg, var(--accent-soft), var(--raised) 70%); }
-  :is(#view-season) .wkc .n { display: block; font-size: 9.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-  :is(#view-season) .wkc .op { display: flex; align-items: center; gap: 4px; margin-top: 2px; min-width: 0; }
-  :is(#view-season) .wkc .op img { width: 22px; height: 22px; object-fit: contain; flex: none; }
-  :is(#view-season) .wkc .op i { font-style: normal; color: var(--muted); font-size: 10px; }
-  :is(#view-season) .wkc .op span { font-family: var(--display); font-size: 15px; font-weight: 700; white-space: nowrap; }
-  :is(#view-season) .wkc .rs { font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-  :is(#view-season) .wkc .rs b { font-weight: 800; }
-  :is(#view-season) .wkc.W .rs b { color: var(--good); } :is(#view-season) .wkc.L .rs b { color: var(--live); } :is(#view-season) .wkc.T .rs b { color: var(--warn); }
-  :is(#view-season) .wkc.W { box-shadow: inset 0 -3px 0 var(--good); } :is(#view-season) .wkc.L { box-shadow: inset 0 -3px 0 var(--live); } :is(#view-season) .wkc.T { box-shadow: inset 0 -3px 0 var(--warn); }
-  :is(#view-season) .wkc.lv { border-color: var(--live); }
-  :is(#view-season) .wkc.bye { border-style: dashed; opacity: .6; }
-  :is(#view-season) .wkc.bye .op { color: var(--muted); font-size: 12px; }
+  :is(#view-season,#view-ranks) .wkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 5px; }
+  :is(#view-season,#view-ranks) .wkc { border: 1px solid #1a1f29; border-radius: 8px; padding: 5px 7px; background: #0e1116; min-width: 0; }
+  :is(#view-season,#view-ranks) .wkc.gm { cursor: pointer; background: var(--raised); }
+  :is(#view-season,#view-ranks) .wkc.gm:hover { border-color: var(--line-strong); }
+  :is(#view-season,#view-ranks) .wkc.hm { background: linear-gradient(180deg, var(--accent-soft), var(--raised) 70%); }
+  :is(#view-season,#view-ranks) .wkc .n { display: block; font-size: 9.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  :is(#view-season,#view-ranks) .wkc .op { display: flex; align-items: center; gap: 4px; margin-top: 2px; min-width: 0; }
+  :is(#view-season,#view-ranks) .wkc .op img { width: 22px; height: 22px; object-fit: contain; flex: none; }
+  :is(#view-season,#view-ranks) .wkc .op i { font-style: normal; color: var(--muted); font-size: 10px; }
+  :is(#view-season,#view-ranks) .wkc .op span { font-family: var(--display); font-size: 15px; font-weight: 700; white-space: nowrap; }
+  :is(#view-season,#view-ranks) .wkc .rs { font-size: 11px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  :is(#view-season,#view-ranks) .wkc .rs b { font-weight: 800; }
+  :is(#view-season,#view-ranks) .wkc.W .rs b { color: var(--good); } :is(#view-season,#view-ranks) .wkc.L .rs b { color: var(--live); } :is(#view-season,#view-ranks) .wkc.T .rs b { color: var(--warn); }
+  :is(#view-season,#view-ranks) .wkc.W { box-shadow: inset 0 -3px 0 var(--good); } :is(#view-season,#view-ranks) .wkc.L { box-shadow: inset 0 -3px 0 var(--live); } :is(#view-season,#view-ranks) .wkc.T { box-shadow: inset 0 -3px 0 var(--warn); }
+  :is(#view-season,#view-ranks) .wkc.lv { border-color: var(--live); }
+  :is(#view-season,#view-ranks) .wkc.bye { border-style: dashed; opacity: .6; }
+  :is(#view-season,#view-ranks) .wkc.bye .op { color: var(--muted); font-size: 12px; }
   #snPmod .sheet { max-width: 900px; }
-  :is(#view-season, #snPmod) .snab { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; font: 700 10px var(--display); letter-spacing: .04em; color: #fff; flex: none; }
-  :is(#view-season,#snPmod) .sn-grid{display:grid; gap:12px; align-items:start; margin-top:12px}
-  :is(#view-season,#snPmod) .sn-g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr)}
-  :is(#view-season,#snPmod) .sn-g2{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
-  :is(#view-season,#snPmod) .sn-col{display:flex; flex-direction:column; gap:12px; min-width:0}
-  :is(#view-season,#snPmod) .sn-note{font-size:11.5px; color:var(--dim)}
-  :is(#view-season,#snPmod) .sn-tag{display:inline-block; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:1px 6px; border-radius:3px; background:#1d222c; color:var(--mute); vertical-align:2px; margin-left:6px}
-  :is(#view-season,#snPmod) .pulse{display:grid; grid-template-columns:repeat(auto-fill,minmax(118px,1fr)); gap:8px}
-  :is(#view-season,#snPmod) .pulse button{font:inherit; text-align:left; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 11px; cursor:pointer; min-width:0; transition:border-color .12s, transform .12s}
-  :is(#view-season,#snPmod) .pulse button:hover{border-color:#4a5569; transform:translateY(-1px)}
-  :is(#view-season,#snPmod) .pulse button.hero{border-color:rgba(31,168,96,.55); background:linear-gradient(160deg,rgba(31,168,96,.16),var(--card) 70%)}
-  :is(#view-season,#snPmod) .pulse b{display:block; font-family:var(--display); font-size:25px; line-height:1.05; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  :is(#view-season,#snPmod) .pulse span{display:block; font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  :is(#view-season,#snPmod) .pulse em{display:block; font-style:normal; font-size:10.5px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  :is(#view-season,#snPmod) .pulse b.up{color:var(--good)} :is(#view-season,#snPmod) .pulse b.dn{color:var(--bad)} :is(#view-season,#snPmod) .pulse b.gr{color:var(--blue)}
-  :is(#view-season,#snPmod) .nx{display:flex; align-items:center; gap:14px; cursor:pointer; padding:4px 0 10px}
-  :is(#view-season,#snPmod) .nx img{width:60px; height:60px; object-fit:contain; flex:none; filter:drop-shadow(0 0 3px rgba(255,255,255,.22))}
-  :is(#view-season,#snPmod) .nx .t{font-family:var(--display); font-size:26px; line-height:1}
-  :is(#view-season,#snPmod) .nx .t small{font-size:15px; color:var(--mute); margin-right:6px}
-  :is(#view-season,#snPmod) .nx .s{font-size:12px; color:var(--mute); margin-top:3px}
-  :is(#view-season,#snPmod) .nx .w{margin-left:auto; text-align:right; flex:none}
-  :is(#view-season,#snPmod) .nx .w b{display:block; font-family:var(--display); font-size:34px; line-height:1; color:var(--blue)}
-  :is(#view-season,#snPmod) .nx .w span{font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim)}
-  :is(#view-season,#snPmod) .nx:hover .t{text-decoration:underline; text-underline-offset:4px}
-  :is(#view-season,#snPmod) .flag{display:inline-block; font-size:9.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:1px 5px; border-radius:3px; margin-left:5px; background:rgba(232,163,61,.17); color:#f0bd73; vertical-align:1px; white-space:nowrap}
-  :is(#view-season,#snPmod) .flag.rt{background:rgba(155,123,255,.16); color:#c4b2ff}
-  :is(#view-season,#snPmod) .flag.hm{background:rgba(31,168,96,.2); color:#7ee2a8}
-  :is(#view-season,#snPmod) .flag.pre{background:#1d222c; color:var(--dim)}
-  :is(#view-season,#snPmod) .snwk{list-style:none; margin:0; padding:0}
-  :is(#view-season,#snPmod) .snwk li{display:grid; grid-template-columns:62px 18px 22px minmax(0,1fr) auto; gap:7px; align-items:center; padding:6px 0; border-top:1px solid #1a1f29; font-size:12.5px; cursor:pointer}
-  :is(#view-season,#snPmod) .snwk li:hover{background:rgba(255,255,255,.035)}
-  :is(#view-season,#snPmod) .snwk li .d{color:var(--mute); font-size:11.5px; font-weight:600}
-  :is(#view-season,#snPmod) .snwk li .va{color:var(--dim); font-size:11px; text-align:center}
-  :is(#view-season,#snPmod) .snwk li img{width:20px; height:20px; object-fit:contain}
-  :is(#view-season,#snPmod) .snwk li .o{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600}
-  :is(#view-season,#snPmod) .snwk li .o i{font-style:normal; font-weight:400; color:var(--dim); font-size:11px; margin-left:5px}
-  :is(#view-season,#snPmod) .snwk li .r{text-align:right; font-variant-numeric:tabular-nums; color:var(--mute); white-space:nowrap}
-  :is(#view-season,#snPmod) .snwk li .r b.W{color:var(--good)} :is(#view-season,#snPmod) .snwk li .r b.L, :is(#view-season,#snPmod) .snwk li .r b.OTL{color:var(--bad)} :is(#view-season,#snPmod) .snwk li .r b.OTL{color:var(--warn)}
-  :is(#view-season,#snPmod) .lr{display:flex; align-items:center; gap:10px; cursor:pointer}
-  :is(#view-season,#snPmod) .lr .sc{font-family:var(--display); font-size:34px; line-height:1}
-  :is(#view-season,#snPmod) .lr .sc.W{color:var(--good)} :is(#view-season,#snPmod) .lr .sc.L{color:var(--bad)} :is(#view-season,#snPmod) .lr .sc.OTL{color:var(--warn)}
-  :is(#view-season,#snPmod) .lr img{width:30px; height:30px; object-fit:contain}
-  :is(#view-season,#snPmod) .lr .m{font-size:12px; color:var(--mute)}
-  :is(#view-season,#snPmod) .lr .m b{color:var(--ink)}
-  :is(#view-season,#snPmod) .lr:hover .m b{text-decoration:underline}
-  :is(#view-season,#snPmod) .rib{display:flex; flex-wrap:wrap; gap:3px; margin:4px 0 2px}
-  :is(#view-season,#snPmod) .rib i{display:block; width:13px; height:19px; border-radius:3px; background:#1d222c; cursor:pointer; position:relative}
-  :is(#view-season,#snPmod) .rib i.W{background:var(--good)} :is(#view-season,#snPmod) .rib i.L{background:var(--bad)} :is(#view-season,#snPmod) .rib i.OTL{background:var(--warn)}
-  :is(#view-season,#snPmod) .rib i.nx{box-shadow:0 0 0 2px var(--blue)} :is(#view-season,#snPmod) .rib i.h::after{content:''; position:absolute; left:4px; right:4px; bottom:3px; height:2px; border-radius:1px; background:rgba(0,0,0,.45)}
-  :is(#view-season,#snPmod) .rib i:hover{transform:scale(1.25); z-index:2}
-  :is(#view-season,#snPmod) .rib i.sep{width:1px; background:transparent; margin:0 3px; cursor:default; border-left:1px dashed #3a4353}
-  :is(#view-season,#snPmod) .rib i.sep:hover{transform:none}
-  :is(#view-season,#snPmod) .ribk{display:flex; gap:12px; flex-wrap:wrap; font-size:10.5px; color:var(--dim); margin-top:6px}
-  :is(#view-season,#snPmod) .ribk span{display:inline-flex; align-items:center; gap:4px}
-  :is(#view-season,#snPmod) .ribk span i{width:9px; height:9px; border-radius:2px; display:inline-block}
-  :is(#view-season,#snPmod) table.spl{width:100%; border-collapse:collapse; font-size:12.5px; font-variant-numeric:tabular-nums}
-  :is(#view-season,#snPmod) table.spl th{font-size:9.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--dim); font-weight:700; text-align:right; padding:4px 5px; border-bottom:1px solid var(--line)}
-  :is(#view-season,#snPmod) table.spl td{text-align:right; padding:6px 5px; border-bottom:1px solid #1a1f29}
-  :is(#view-season,#snPmod) table.spl th:first-child, :is(#view-season,#snPmod) table.spl td:first-child{text-align:left; padding-left:0}
-  :is(#view-season,#snPmod) table.spl tr[data-split]{cursor:pointer}
-  :is(#view-season,#snPmod) table.spl tr[data-split]:hover td{background:rgba(255,255,255,.035)}
-  :is(#view-season,#snPmod) table.spl tr.on td{background:rgba(31,168,96,.14)}
-  :is(#view-season,#snPmod) table.spl td b{font-family:var(--display); font-size:15px; font-weight:600}
-  :is(#view-season,#snPmod) table.spl tr.grp td{color:var(--dim); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; padding-top:10px; border-bottom:0}
-  :is(#view-season,#snPmod) .chips{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px}
-  :is(#view-season,#snPmod) .chips button{font:inherit; font-size:11px; font-weight:600; color:var(--mute); background:transparent; border:1px solid var(--line); border-radius:999px; padding:3px 9px 3px 5px; cursor:pointer; display:inline-flex; align-items:center; gap:5px}
-  :is(#view-season,#snPmod) .chips button img{width:15px; height:15px; object-fit:contain}
-  :is(#view-season,#snPmod) .chips button i{width:9px; height:9px; border-radius:50%; display:inline-block}
-  :is(#view-season,#snPmod) .chips button.on{color:var(--ink); border-color:#4a5569; background:var(--card2)}
-  :is(#view-season,#snPmod) .chips button:not(.on) img, :is(#view-season,#snPmod) .chips button:not(.on) i{opacity:.35}
-  :is(#view-season,#snPmod) .chips select{font:inherit; font-size:11px; color:var(--mute); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:3px 8px}
-  :is(#view-season,#snPmod) .chw{position:relative}
-  :is(#view-season,#snPmod) .chw svg{width:100%; height:auto; display:block}
-  :is(#view-season,#snPmod) .chw .ax{fill:var(--dim); font:600 9px var(--body)}
-  :is(#view-season,#snPmod) .chw .gl{stroke:#232936; stroke-width:1}
-  :is(#view-season,#snPmod) .chw .pl{stroke:#9aa3b2; stroke-dasharray:4 4; stroke-width:1.2; fill:none}
-  :is(#view-season,#snPmod) .chw .cur{stroke:#4a5569; stroke-width:1}
-  :is(#view-season,#snPmod) .chtip{position:absolute; pointer-events:none; background:#0b0e14; border:1px solid var(--line); border-radius:6px; padding:6px 9px; font-size:11px; color:var(--mute); display:none; z-index:5; min-width:130px}
-  :is(#view-season,#snPmod) .chtip b{display:block; color:var(--ink); font-family:var(--display); font-size:14px; margin-bottom:2px}
-  :is(#view-season,#snPmod) .chtip div{display:flex; gap:8px; justify-content:space-between}
-  :is(#view-season,#snPmod) .chtip div span:last-child{color:var(--ink); font-variant-numeric:tabular-nums}
-  :is(#view-season,#snPmod) .h2h{display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px}
-  :is(#view-season,#snPmod) .h2h div{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:6px 7px; cursor:pointer; display:flex; align-items:center; gap:6px; min-width:0}
-  :is(#view-season,#snPmod) .h2h div:hover{border-color:#4a5569}
-  :is(#view-season,#snPmod) .h2h img{width:24px; height:24px; object-fit:contain; flex:none}
-  :is(#view-season,#snPmod) .h2h b{display:block; font-family:var(--display); font-size:14px; line-height:1}
-  :is(#view-season,#snPmod) .h2h span{display:block; font-size:10.5px; color:var(--mute); white-space:nowrap}
-  :is(#view-season,#snPmod) .h2h div.up{box-shadow:inset 3px 0 0 var(--good)} :is(#view-season,#snPmod) .h2h div.dn{box-shadow:inset 3px 0 0 var(--bad)} :is(#view-season,#snPmod) .h2h div.dv{border-color:rgba(31,168,96,.4)}
-  :is(#view-season,#snPmod) table.rs{width:100%; border-collapse:collapse; font-size:12.5px; font-variant-numeric:tabular-nums}
-  :is(#view-season,#snPmod) table.rs th{font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); font-weight:700; text-align:right; padding:6px 5px; border-bottom:1px solid var(--line); cursor:pointer; white-space:nowrap; user-select:none}
-  :is(#view-season,#snPmod) table.rs th:hover{color:var(--ink)}
-  :is(#view-season,#snPmod) table.rs th.on{color:#7ee2a8}
-  :is(#view-season,#snPmod) table.rs th.on::after{content:' \25BE'}
-  :is(#view-season,#snPmod) table.rs th.on.asc::after{content:' \25B4'}
-  :is(#view-season,#snPmod) table.rs td{text-align:right; padding:6px 5px; border-bottom:1px solid #1a1f29; white-space:nowrap}
-  :is(#view-season,#snPmod) table.rs th:first-child, :is(#view-season,#snPmod) table.rs td:first-child{text-align:left; padding-left:0; cursor:default}
-  :is(#view-season,#snPmod) table.rs td.srt{color:var(--ink); font-weight:700; background:rgba(255,255,255,.025)}
-  :is(#view-season,#snPmod) table.rs tr[data-plid], :is(#view-season,#snPmod) table.rs tr[data-tid], :is(#view-season,#snPmod) table.rs tr[data-gid]{cursor:pointer}
-  :is(#view-season,#snPmod) table.rs tr[data-plid]:hover td, :is(#view-season,#snPmod) table.rs tr[data-tid]:hover td, :is(#view-season,#snPmod) table.rs tr[data-gid]:hover td{background:rgba(255,255,255,.04)}
-  :is(#view-season,#snPmod) table.rs .pl{display:flex; align-items:center; gap:7px; min-width:0}
-  :is(#view-season,#snPmod) table.rs .pl img{width:26px; height:26px; border-radius:50%; object-fit:cover; background:#1d222c; flex:none}
-  :is(#view-season,#snPmod) table.rs .pl img.lg{border-radius:0; background:none; object-fit:contain; width:20px; height:20px}
-  :is(#view-season,#snPmod) table.rs .pl b{font-weight:600; max-width:150px; overflow:hidden; text-overflow:ellipsis}
-  :is(#view-season,#snPmod) table.rs .pl i{font-style:normal; color:var(--dim); font-size:10.5px}
-  :is(#view-season,#snPmod) table.rs tr.fav td{background:rgba(31,168,96,.10)}
-  :is(#view-season,#snPmod) table.rs tr.fav td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
-  :is(#view-season,#snPmod) table.rs td.W{color:var(--good); font-weight:700} :is(#view-season,#snPmod) table.rs td.L{color:var(--bad); font-weight:700} :is(#view-season,#snPmod) table.rs td.OTL{color:var(--warn); font-weight:700}
-  :is(#view-season,#snPmod) .ldr{list-style:none; margin:0; padding:0}
-  :is(#view-season,#snPmod) .ldr li{display:grid; grid-template-columns:18px 34px minmax(0,1fr) 20px auto; gap:8px; align-items:center; padding:5px 0; border-top:1px solid #1a1f29; cursor:pointer; font-size:12.5px}
-  :is(#view-season,#snPmod) .ldr li:hover{background:rgba(255,255,255,.035)}
-  :is(#view-season,#snPmod) .ldr li .k{color:var(--dim); font-size:11px; font-weight:700; text-align:right}
-  :is(#view-season,#snPmod) .ldr li img.h{width:34px; height:34px; border-radius:50%; object-fit:cover; background:#1d222c}
-  :is(#view-season,#snPmod) .ldr li img.l{width:20px; height:20px; object-fit:contain}
-  :is(#view-season,#snPmod) .ldr li b{display:block; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  :is(#view-season,#snPmod) .ldr li span{display:block; color:var(--dim); font-size:10.5px}
-  :is(#view-season,#snPmod) .ldr li em{font-style:normal; font-family:var(--display); font-size:22px; color:var(--ink); min-width:48px; text-align:right}
-  :is(#view-season,#snPmod) .ldr li.fav{background:rgba(31,168,96,.12)}
-  :is(#view-season,#snPmod) .ldr li:first-child em{color:var(--blue)}
-  :is(#view-season,#snPmod) .tni{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px}
-  :is(#view-season,#snPmod) .tni div{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:5px 8px; cursor:pointer; font-size:12px}
-  :is(#view-season,#snPmod) .tni div:hover{border-color:#4a5569}
-  :is(#view-season,#snPmod) .tni div.fav{border-color:rgba(31,168,96,.55)}
-  :is(#view-season,#snPmod) .tni div.lv{border-color:rgba(255,59,78,.45)}
-  :is(#view-season,#snPmod) .tni p{margin:0; display:flex; align-items:center; gap:6px; padding:1px 0}
-  :is(#view-season,#snPmod) .tni p img{width:17px; height:17px; object-fit:contain}
-  :is(#view-season,#snPmod) .tni p b{font-family:var(--display); font-size:15px; font-weight:600}
-  :is(#view-season,#snPmod) .tni p span{margin-left:auto; font-family:var(--display); font-size:15px}
-  :is(#view-season,#snPmod) .tni em{display:block; font-style:normal; font-size:10px; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; margin-bottom:1px}
-  :is(#view-season,#snPmod) .tni div.lv em{color:var(--live)}
-  :is(#view-season,#snPmod) /* player pop-up */
+  :is(#view-season, #snPmod, #view-ranks) .snab { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; font: 700 10px var(--display); letter-spacing: .04em; color: #fff; flex: none; }
+  :is(#view-season,#snPmod,#view-ranks) .sn-grid{display:grid; gap:12px; align-items:start; margin-top:12px}
+  :is(#view-season,#snPmod,#view-ranks) .sn-g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr)}
+  :is(#view-season,#snPmod,#view-ranks) .sn-g2{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
+  :is(#view-season,#snPmod,#view-ranks) .sn-col{display:flex; flex-direction:column; gap:12px; min-width:0}
+  :is(#view-season,#snPmod,#view-ranks) .sn-note{font-size:11.5px; color:var(--dim)}
+  :is(#view-season,#snPmod,#view-ranks) .sn-tag{display:inline-block; font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; padding:1px 6px; border-radius:3px; background:#1d222c; color:var(--mute); vertical-align:2px; margin-left:6px}
+  :is(#view-season,#snPmod,#view-ranks) .pulse{display:grid; grid-template-columns:repeat(auto-fill,minmax(118px,1fr)); gap:8px}
+  :is(#view-season,#snPmod,#view-ranks) .pulse button{font:inherit; text-align:left; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:10px; padding:8px 11px; cursor:pointer; min-width:0; transition:border-color .12s, transform .12s}
+  :is(#view-season,#snPmod,#view-ranks) .pulse button:hover{border-color:#4a5569; transform:translateY(-1px)}
+  :is(#view-season,#snPmod,#view-ranks) .pulse button.hero{border-color:rgba(31,168,96,.55); background:linear-gradient(160deg,rgba(31,168,96,.16),var(--card) 70%)}
+  :is(#view-season,#snPmod,#view-ranks) .pulse b{display:block; font-family:var(--display); font-size:25px; line-height:1.05; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  :is(#view-season,#snPmod,#view-ranks) .pulse span{display:block; font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  :is(#view-season,#snPmod,#view-ranks) .pulse em{display:block; font-style:normal; font-size:10.5px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  :is(#view-season,#snPmod,#view-ranks) .pulse b.up{color:var(--good)} :is(#view-season,#snPmod,#view-ranks) .pulse b.dn{color:var(--bad)} :is(#view-season,#snPmod,#view-ranks) .pulse b.gr{color:var(--blue)}
+  :is(#view-season,#snPmod,#view-ranks) .nx{display:flex; align-items:center; gap:14px; cursor:pointer; padding:4px 0 10px}
+  :is(#view-season,#snPmod,#view-ranks) .nx img{width:60px; height:60px; object-fit:contain; flex:none; filter:drop-shadow(0 0 3px rgba(255,255,255,.22))}
+  :is(#view-season,#snPmod,#view-ranks) .nx .t{font-family:var(--display); font-size:26px; line-height:1}
+  :is(#view-season,#snPmod,#view-ranks) .nx .t small{font-size:15px; color:var(--mute); margin-right:6px}
+  :is(#view-season,#snPmod,#view-ranks) .nx .s{font-size:12px; color:var(--mute); margin-top:3px}
+  :is(#view-season,#snPmod,#view-ranks) .nx .w{margin-left:auto; text-align:right; flex:none}
+  :is(#view-season,#snPmod,#view-ranks) .nx .w b{display:block; font-family:var(--display); font-size:34px; line-height:1; color:var(--blue)}
+  :is(#view-season,#snPmod,#view-ranks) .nx .w span{font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim)}
+  :is(#view-season,#snPmod,#view-ranks) .nx:hover .t{text-decoration:underline; text-underline-offset:4px}
+  :is(#view-season,#snPmod,#view-ranks) .flag{display:inline-block; font-size:9.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:1px 5px; border-radius:3px; margin-left:5px; background:rgba(232,163,61,.17); color:#f0bd73; vertical-align:1px; white-space:nowrap}
+  :is(#view-season,#snPmod,#view-ranks) .flag.rt{background:rgba(155,123,255,.16); color:#c4b2ff}
+  :is(#view-season,#snPmod,#view-ranks) .flag.hm{background:rgba(31,168,96,.2); color:#7ee2a8}
+  :is(#view-season,#snPmod,#view-ranks) .flag.pre{background:#1d222c; color:var(--dim)}
+  :is(#view-season,#snPmod,#view-ranks) .snwk{list-style:none; margin:0; padding:0}
+  :is(#view-season,#snPmod,#view-ranks) .snwk li{display:grid; grid-template-columns:62px 18px 22px minmax(0,1fr) auto; gap:7px; align-items:center; padding:6px 0; border-top:1px solid #1a1f29; font-size:12.5px; cursor:pointer}
+  :is(#view-season,#snPmod,#view-ranks) .snwk li:hover{background:rgba(255,255,255,.035)}
+  :is(#view-season,#snPmod,#view-ranks) .snwk li .d{color:var(--mute); font-size:11.5px; font-weight:600}
+  :is(#view-season,#snPmod,#view-ranks) .snwk li .va{color:var(--dim); font-size:11px; text-align:center}
+  :is(#view-season,#snPmod,#view-ranks) .snwk li img{width:20px; height:20px; object-fit:contain}
+  :is(#view-season,#snPmod,#view-ranks) .snwk li .o{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:600}
+  :is(#view-season,#snPmod,#view-ranks) .snwk li .o i{font-style:normal; font-weight:400; color:var(--dim); font-size:11px; margin-left:5px}
+  :is(#view-season,#snPmod,#view-ranks) .snwk li .r{text-align:right; font-variant-numeric:tabular-nums; color:var(--mute); white-space:nowrap}
+  :is(#view-season,#snPmod,#view-ranks) .snwk li .r b.W{color:var(--good)} :is(#view-season,#snPmod,#view-ranks) .snwk li .r b.L, :is(#view-season,#snPmod,#view-ranks) .snwk li .r b.OTL{color:var(--bad)} :is(#view-season,#snPmod,#view-ranks) .snwk li .r b.OTL{color:var(--warn)}
+  :is(#view-season,#snPmod,#view-ranks) .lr{display:flex; align-items:center; gap:10px; cursor:pointer}
+  :is(#view-season,#snPmod,#view-ranks) .lr .sc{font-family:var(--display); font-size:34px; line-height:1}
+  :is(#view-season,#snPmod,#view-ranks) .lr .sc.W{color:var(--good)} :is(#view-season,#snPmod,#view-ranks) .lr .sc.L{color:var(--bad)} :is(#view-season,#snPmod,#view-ranks) .lr .sc.OTL{color:var(--warn)}
+  :is(#view-season,#snPmod,#view-ranks) .lr img{width:30px; height:30px; object-fit:contain}
+  :is(#view-season,#snPmod,#view-ranks) .lr .m{font-size:12px; color:var(--mute)}
+  :is(#view-season,#snPmod,#view-ranks) .lr .m b{color:var(--ink)}
+  :is(#view-season,#snPmod,#view-ranks) .lr:hover .m b{text-decoration:underline}
+  :is(#view-season,#snPmod,#view-ranks) .rib{display:flex; flex-wrap:wrap; gap:3px; margin:4px 0 2px}
+  :is(#view-season,#snPmod,#view-ranks) .rib i{display:block; width:13px; height:19px; border-radius:3px; background:#1d222c; cursor:pointer; position:relative}
+  :is(#view-season,#snPmod,#view-ranks) .rib i.W{background:var(--good)} :is(#view-season,#snPmod,#view-ranks) .rib i.L{background:var(--bad)} :is(#view-season,#snPmod,#view-ranks) .rib i.OTL{background:var(--warn)}
+  :is(#view-season,#snPmod,#view-ranks) .rib i.nx{box-shadow:0 0 0 2px var(--blue)} :is(#view-season,#snPmod,#view-ranks) .rib i.h::after{content:''; position:absolute; left:4px; right:4px; bottom:3px; height:2px; border-radius:1px; background:rgba(0,0,0,.45)}
+  :is(#view-season,#snPmod,#view-ranks) .rib i:hover{transform:scale(1.25); z-index:2}
+  :is(#view-season,#snPmod,#view-ranks) .rib i.sep{width:1px; background:transparent; margin:0 3px; cursor:default; border-left:1px dashed #3a4353}
+  :is(#view-season,#snPmod,#view-ranks) .rib i.sep:hover{transform:none}
+  :is(#view-season,#snPmod,#view-ranks) .ribk{display:flex; gap:12px; flex-wrap:wrap; font-size:10.5px; color:var(--dim); margin-top:6px}
+  :is(#view-season,#snPmod,#view-ranks) .ribk span{display:inline-flex; align-items:center; gap:4px}
+  :is(#view-season,#snPmod,#view-ranks) .ribk span i{width:9px; height:9px; border-radius:2px; display:inline-block}
+  :is(#view-season,#snPmod,#view-ranks) table.spl{width:100%; border-collapse:collapse; font-size:12.5px; font-variant-numeric:tabular-nums}
+  :is(#view-season,#snPmod,#view-ranks) table.spl th{font-size:9.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--dim); font-weight:700; text-align:right; padding:4px 5px; border-bottom:1px solid var(--line)}
+  :is(#view-season,#snPmod,#view-ranks) table.spl td{text-align:right; padding:6px 5px; border-bottom:1px solid #1a1f29}
+  :is(#view-season,#snPmod,#view-ranks) table.spl th:first-child, :is(#view-season,#snPmod,#view-ranks) table.spl td:first-child{text-align:left; padding-left:0}
+  :is(#view-season,#snPmod,#view-ranks) table.spl tr[data-split]{cursor:pointer}
+  :is(#view-season,#snPmod,#view-ranks) table.spl tr[data-split]:hover td{background:rgba(255,255,255,.035)}
+  :is(#view-season,#snPmod,#view-ranks) table.spl tr.on td{background:rgba(31,168,96,.14)}
+  :is(#view-season,#snPmod,#view-ranks) table.spl td b{font-family:var(--display); font-size:15px; font-weight:600}
+  :is(#view-season,#snPmod,#view-ranks) table.spl tr.grp td{color:var(--dim); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; padding-top:10px; border-bottom:0}
+  :is(#view-season,#snPmod,#view-ranks) .chips{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px}
+  :is(#view-season,#snPmod,#view-ranks) .chips button{font:inherit; font-size:11px; font-weight:600; color:var(--mute); background:transparent; border:1px solid var(--line); border-radius:999px; padding:3px 9px 3px 5px; cursor:pointer; display:inline-flex; align-items:center; gap:5px}
+  :is(#view-season,#snPmod,#view-ranks) .chips button img{width:15px; height:15px; object-fit:contain}
+  :is(#view-season,#snPmod,#view-ranks) .chips button i{width:9px; height:9px; border-radius:50%; display:inline-block}
+  :is(#view-season,#snPmod,#view-ranks) .chips button.on{color:var(--ink); border-color:#4a5569; background:var(--card2)}
+  :is(#view-season,#snPmod,#view-ranks) .chips button:not(.on) img, :is(#view-season,#snPmod,#view-ranks) .chips button:not(.on) i{opacity:.35}
+  :is(#view-season,#snPmod,#view-ranks) .chips select{font:inherit; font-size:11px; color:var(--mute); background:var(--card); border:1px solid var(--line); border-radius:999px; padding:3px 8px}
+  :is(#view-season,#snPmod,#view-ranks) .chw{position:relative}
+  :is(#view-season,#snPmod,#view-ranks) .chw svg{width:100%; height:auto; display:block}
+  :is(#view-season,#snPmod,#view-ranks) .chw .ax{fill:var(--dim); font:600 9px var(--body)}
+  :is(#view-season,#snPmod,#view-ranks) .chw .gl{stroke:#232936; stroke-width:1}
+  :is(#view-season,#snPmod,#view-ranks) .chw .pl{stroke:#9aa3b2; stroke-dasharray:4 4; stroke-width:1.2; fill:none}
+  :is(#view-season,#snPmod,#view-ranks) .chw .cur{stroke:#4a5569; stroke-width:1}
+  :is(#view-season,#snPmod,#view-ranks) .chtip{position:absolute; pointer-events:none; background:#0b0e14; border:1px solid var(--line); border-radius:6px; padding:6px 9px; font-size:11px; color:var(--mute); display:none; z-index:5; min-width:130px}
+  :is(#view-season,#snPmod,#view-ranks) .chtip b{display:block; color:var(--ink); font-family:var(--display); font-size:14px; margin-bottom:2px}
+  :is(#view-season,#snPmod,#view-ranks) .chtip div{display:flex; gap:8px; justify-content:space-between}
+  :is(#view-season,#snPmod,#view-ranks) .chtip div span:last-child{color:var(--ink); font-variant-numeric:tabular-nums}
+  :is(#view-season,#snPmod,#view-ranks) .h2h{display:grid; grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); gap:6px}
+  :is(#view-season,#snPmod,#view-ranks) .h2h div{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:6px 7px; cursor:pointer; display:flex; align-items:center; gap:6px; min-width:0}
+  :is(#view-season,#snPmod,#view-ranks) .h2h div:hover{border-color:#4a5569}
+  :is(#view-season,#snPmod,#view-ranks) .h2h img{width:24px; height:24px; object-fit:contain; flex:none}
+  :is(#view-season,#snPmod,#view-ranks) .h2h b{display:block; font-family:var(--display); font-size:14px; line-height:1}
+  :is(#view-season,#snPmod,#view-ranks) .h2h span{display:block; font-size:10.5px; color:var(--mute); white-space:nowrap}
+  :is(#view-season,#snPmod,#view-ranks) .h2h div.up{box-shadow:inset 3px 0 0 var(--good)} :is(#view-season,#snPmod,#view-ranks) .h2h div.dn{box-shadow:inset 3px 0 0 var(--bad)} :is(#view-season,#snPmod,#view-ranks) .h2h div.dv{border-color:rgba(31,168,96,.4)}
+  :is(#view-season,#snPmod,#view-ranks) table.rs{width:100%; border-collapse:collapse; font-size:12.5px; font-variant-numeric:tabular-nums}
+  :is(#view-season,#snPmod,#view-ranks) table.rs th{font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); font-weight:700; text-align:right; padding:6px 5px; border-bottom:1px solid var(--line); cursor:pointer; white-space:nowrap; user-select:none}
+  :is(#view-season,#snPmod,#view-ranks) table.rs th:hover{color:var(--ink)}
+  :is(#view-season,#snPmod,#view-ranks) table.rs th.on{color:#7ee2a8}
+  :is(#view-season,#snPmod,#view-ranks) table.rs th.on::after{content:' \25BE'}
+  :is(#view-season,#snPmod,#view-ranks) table.rs th.on.asc::after{content:' \25B4'}
+  :is(#view-season,#snPmod,#view-ranks) table.rs td{text-align:right; padding:6px 5px; border-bottom:1px solid #1a1f29; white-space:nowrap}
+  :is(#view-season,#snPmod,#view-ranks) table.rs th:first-child, :is(#view-season,#snPmod,#view-ranks) table.rs td:first-child{text-align:left; padding-left:0; cursor:default}
+  :is(#view-season,#snPmod,#view-ranks) table.rs td.srt{color:var(--ink); font-weight:700; background:rgba(255,255,255,.025)}
+  :is(#view-season,#snPmod,#view-ranks) table.rs tr[data-plid], :is(#view-season,#snPmod,#view-ranks) table.rs tr[data-tid], :is(#view-season,#snPmod,#view-ranks) table.rs tr[data-gid]{cursor:pointer}
+  :is(#view-season,#snPmod,#view-ranks) table.rs tr[data-plid]:hover td, :is(#view-season,#snPmod,#view-ranks) table.rs tr[data-tid]:hover td, :is(#view-season,#snPmod,#view-ranks) table.rs tr[data-gid]:hover td{background:rgba(255,255,255,.04)}
+  :is(#view-season,#snPmod,#view-ranks) table.rs .pl{display:flex; align-items:center; gap:7px; min-width:0}
+  :is(#view-season,#snPmod,#view-ranks) table.rs .pl img{width:26px; height:26px; border-radius:50%; object-fit:cover; background:#1d222c; flex:none}
+  :is(#view-season,#snPmod,#view-ranks) table.rs .pl img.lg{border-radius:0; background:none; object-fit:contain; width:20px; height:20px}
+  :is(#view-season,#snPmod,#view-ranks) table.rs .pl b{font-weight:600; max-width:150px; overflow:hidden; text-overflow:ellipsis}
+  :is(#view-season,#snPmod,#view-ranks) table.rs .pl i{font-style:normal; color:var(--dim); font-size:10.5px}
+  :is(#view-season,#snPmod,#view-ranks) table.rs tr.fav td{background:rgba(31,168,96,.10)}
+  :is(#view-season,#snPmod,#view-ranks) table.rs tr.fav td:first-child{box-shadow:inset 3px 0 0 var(--blue)}
+  :is(#view-season,#snPmod,#view-ranks) table.rs td.W{color:var(--good); font-weight:700} :is(#view-season,#snPmod,#view-ranks) table.rs td.L{color:var(--bad); font-weight:700} :is(#view-season,#snPmod,#view-ranks) table.rs td.OTL{color:var(--warn); font-weight:700}
+  :is(#view-season,#snPmod,#view-ranks) .ldr{list-style:none; margin:0; padding:0}
+  :is(#view-season,#snPmod,#view-ranks) .ldr li{display:grid; grid-template-columns:18px 34px minmax(0,1fr) 20px auto; gap:8px; align-items:center; padding:5px 0; border-top:1px solid #1a1f29; cursor:pointer; font-size:12.5px}
+  :is(#view-season,#snPmod,#view-ranks) .ldr li:hover{background:rgba(255,255,255,.035)}
+  :is(#view-season,#snPmod,#view-ranks) .ldr li .k{color:var(--dim); font-size:11px; font-weight:700; text-align:right}
+  :is(#view-season,#snPmod,#view-ranks) .ldr li img.h{width:34px; height:34px; border-radius:50%; object-fit:cover; background:#1d222c}
+  :is(#view-season,#snPmod,#view-ranks) .ldr li img.l{width:20px; height:20px; object-fit:contain}
+  :is(#view-season,#snPmod,#view-ranks) .ldr li b{display:block; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  :is(#view-season,#snPmod,#view-ranks) .ldr li span{display:block; color:var(--dim); font-size:10.5px}
+  :is(#view-season,#snPmod,#view-ranks) .ldr li em{font-style:normal; font-family:var(--display); font-size:22px; color:var(--ink); min-width:48px; text-align:right}
+  :is(#view-season,#snPmod,#view-ranks) .ldr li.fav{background:rgba(31,168,96,.12)}
+  :is(#view-season,#snPmod,#view-ranks) .ldr li:first-child em{color:var(--blue)}
+  :is(#view-season,#snPmod,#view-ranks) .tni{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:6px}
+  :is(#view-season,#snPmod,#view-ranks) .tni div{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:5px 8px; cursor:pointer; font-size:12px}
+  :is(#view-season,#snPmod,#view-ranks) .tni div:hover{border-color:#4a5569}
+  :is(#view-season,#snPmod,#view-ranks) .tni div.fav{border-color:rgba(31,168,96,.55)}
+  :is(#view-season,#snPmod,#view-ranks) .tni div.lv{border-color:rgba(255,59,78,.45)}
+  :is(#view-season,#snPmod,#view-ranks) .tni p{margin:0; display:flex; align-items:center; gap:6px; padding:1px 0}
+  :is(#view-season,#snPmod,#view-ranks) .tni p img{width:17px; height:17px; object-fit:contain}
+  :is(#view-season,#snPmod,#view-ranks) .tni p b{font-family:var(--display); font-size:15px; font-weight:600}
+  :is(#view-season,#snPmod,#view-ranks) .tni p span{margin-left:auto; font-family:var(--display); font-size:15px}
+  :is(#view-season,#snPmod,#view-ranks) .tni em{display:block; font-style:normal; font-size:10px; color:var(--dim); text-transform:uppercase; letter-spacing:.05em; margin-bottom:1px}
+  :is(#view-season,#snPmod,#view-ranks) .tni div.lv em{color:var(--live)}
+  :is(#view-season,#snPmod,#view-ranks) /* player pop-up */
   .pmh{display:flex; align-items:center; gap:14px; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:12px}
-  :is(#view-season,#snPmod) .pmh .hs{width:76px; height:76px; border-radius:50%; object-fit:cover; background:#1d222c; border:1px solid var(--line); flex:none}
-  :is(#view-season,#snPmod) .pmh h2{font-size:30px; line-height:1}
-  :is(#view-season,#snPmod) .pmh .sub{color:var(--mute); font-size:13px; margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap}
-  :is(#view-season,#snPmod) .pmh .sub img{width:18px; height:18px; object-fit:contain}
-  :is(#view-season,#snPmod) .pmh .sub a{cursor:pointer; text-decoration:underline; text-underline-offset:3px}
-  :is(#view-season,#snPmod) .pbars{display:flex; align-items:flex-end; gap:2px; height:70px; margin:6px 0 2px; border-bottom:1px solid var(--line)}
-  :is(#view-season,#snPmod) .pbars i{flex:1; min-width:3px; background:#2a3140; border-radius:2px 2px 0 0; cursor:pointer; position:relative}
-  :is(#view-season,#snPmod) .pbars i.p{background:var(--blue)} :is(#view-season,#snPmod) .pbars i.z{height:3px!important; background:#2a3140}
-  :is(#view-season,#snPmod) .pbars i:hover{outline:1px solid #fff}
-  :is(#view-season,#snPmod) .pbk{font-size:10.5px; color:var(--dim); display:flex; justify-content:space-between}
-  :is(#view-season,#snPmod) .sn-more{font:inherit; font-size:11px; font-weight:600; color:#7ee2a8; background:none; border:0; padding:6px 0 0; cursor:pointer}
-  :is(#view-season,#snPmod) .sn-more:hover{text-decoration:underline}
-  :is(#view-season,#snPmod) .pulse button, :is(#view-season,#snPmod) .nx, :is(#view-season,#snPmod) .lr{-webkit-tap-highlight-color:transparent}
-  @media (max-width:1180px){ :is(#view-season,#snPmod) .sn-g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} :is(#view-season,#snPmod) .sn-g3>.sn-col:last-child{grid-column:1/-1} }
+  :is(#view-season,#snPmod,#view-ranks) .pmh .hs{width:76px; height:76px; border-radius:50%; object-fit:cover; background:#1d222c; border:1px solid var(--line); flex:none}
+  :is(#view-season,#snPmod,#view-ranks) .pmh h2{font-size:30px; line-height:1}
+  :is(#view-season,#snPmod,#view-ranks) .pmh .sub{color:var(--mute); font-size:13px; margin-top:4px; display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+  :is(#view-season,#snPmod,#view-ranks) .pmh .sub img{width:18px; height:18px; object-fit:contain}
+  :is(#view-season,#snPmod,#view-ranks) .pmh .sub a{cursor:pointer; text-decoration:underline; text-underline-offset:3px}
+  :is(#view-season,#snPmod,#view-ranks) .pbars{display:flex; align-items:flex-end; gap:2px; height:70px; margin:6px 0 2px; border-bottom:1px solid var(--line)}
+  :is(#view-season,#snPmod,#view-ranks) .pbars i{flex:1; min-width:3px; background:#2a3140; border-radius:2px 2px 0 0; cursor:pointer; position:relative}
+  :is(#view-season,#snPmod,#view-ranks) .pbars i.p{background:var(--blue)} :is(#view-season,#snPmod,#view-ranks) .pbars i.z{height:3px!important; background:#2a3140}
+  :is(#view-season,#snPmod,#view-ranks) .pbars i:hover{outline:1px solid #fff}
+  :is(#view-season,#snPmod,#view-ranks) .pbk{font-size:10.5px; color:var(--dim); display:flex; justify-content:space-between}
+  :is(#view-season,#snPmod,#view-ranks) .sn-more{font:inherit; font-size:11px; font-weight:600; color:#7ee2a8; background:none; border:0; padding:6px 0 0; cursor:pointer}
+  :is(#view-season,#snPmod,#view-ranks) .sn-more:hover{text-decoration:underline}
+  :is(#view-season,#snPmod,#view-ranks) .pulse button, :is(#view-season,#snPmod,#view-ranks) .nx, :is(#view-season,#snPmod,#view-ranks) .lr{-webkit-tap-highlight-color:transparent}
+  @media (max-width:1180px){ :is(#view-season,#snPmod,#view-ranks) .sn-g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} :is(#view-season,#snPmod,#view-ranks) .sn-g3>.sn-col:last-child{grid-column:1/-1} }
   @media (max-width:760px){
-    :is(#view-season,#snPmod) .sn-g3, :is(#view-season,#snPmod) .sn-g2{grid-template-columns:minmax(0,1fr)}
-    :is(#view-season,#snPmod) .pulse{grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px}
-    :is(#view-season,#snPmod) .pulse button{padding:6px 8px} :is(#view-season,#snPmod) .pulse b{font-size:20px}
-    :is(#view-season,#snPmod) .nx img{width:44px;height:44px} :is(#view-season,#snPmod) .nx .t{font-size:21px} :is(#view-season,#snPmod) .nx .w b{font-size:26px}
-    :is(#view-season,#snPmod) .pmh h2{font-size:23px} :is(#view-season,#snPmod) .pmh .hs{width:56px;height:56px}
-    :is(#view-season,#snPmod) table.rs .pl b{max-width:110px}
-    :is(#view-season,#snPmod) .snwk li{grid-template-columns:54px 14px 20px minmax(0,1fr) auto}
+    :is(#view-season,#snPmod,#view-ranks) .sn-g3, :is(#view-season,#snPmod,#view-ranks) .sn-g2{grid-template-columns:minmax(0,1fr)}
+    :is(#view-season,#snPmod,#view-ranks) .pulse{grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px}
+    :is(#view-season,#snPmod,#view-ranks) .pulse button{padding:6px 8px} :is(#view-season,#snPmod,#view-ranks) .pulse b{font-size:20px}
+    :is(#view-season,#snPmod,#view-ranks) .nx img{width:44px;height:44px} :is(#view-season,#snPmod,#view-ranks) .nx .t{font-size:21px} :is(#view-season,#snPmod,#view-ranks) .nx .w b{font-size:26px}
+    :is(#view-season,#snPmod,#view-ranks) .pmh h2{font-size:23px} :is(#view-season,#snPmod,#view-ranks) .pmh .hs{width:56px;height:56px}
+    :is(#view-season,#snPmod,#view-ranks) table.rs .pl b{max-width:110px}
+    :is(#view-season,#snPmod,#view-ranks) .snwk li{grid-template-columns:54px 14px 20px minmax(0,1fr) auto}
   }
   @media (max-width: 640px) {
-    :is(#view-season) .wkgrid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
-    :is(#view-season) .sn-head .seg { margin-left: 0; }
-    :is(#view-season, #snPmod) .gcard .gb { padding: 10px; }
+    :is(#view-season,#view-ranks) .wkgrid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+    :is(#view-season,#view-ranks) .sn-head .seg { margin-left: 0; }
+    :is(#view-season, #snPmod, #view-ranks) .gcard .gb { padding: 10px; }
   }
   /* the Season tab makes five links; keep the bar inside a phone */
   @media (max-width: 560px) {
     .topbar .nav { flex-wrap: wrap; justify-content: center; border-radius: 14px; }
     .topbar .nav a { padding: 5px 7px; font-size: 11.5px; letter-spacing: .04em; }
   }
-  :is(#view-season) .h2h { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
-  :is(#view-season) .h2h span { font-size: 10px; overflow: hidden; text-overflow: ellipsis; }
-  :is(#view-season) .h2h div { padding: 6px 8px; }
+  :is(#view-season,#view-ranks) .h2h { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
+  :is(#view-season,#view-ranks) .h2h span { font-size: 10px; overflow: hidden; text-overflow: ellipsis; }
+  :is(#view-season,#view-ranks) .h2h div { padding: 6px 8px; }
 
   /* ---------- v68: the game center is a page, so its sheet loses the dialog chrome ---------- */
   #view-game.on { display: block; }
@@ -1138,14 +1170,14 @@
   #board .bg .mp[data-pid] { cursor: pointer; }
 
   /* ---------- v71: one player card for everyone, with fantasy on the NFL side ---------- */
-  :is(#view-season,#snPmod) .pbars i.on{background:var(--blue)} :is(#view-season,#snPmod) .pbars i.zero{height:3px!important; background:#2a3140}
-  :is(#view-season,#snPmod) .pbars{gap:1px; overflow:hidden; min-width:0}
-  :is(#view-season,#snPmod) .pbars i{flex:1 1 0; min-width:0}
+  :is(#view-season,#snPmod,#view-ranks) .pbars i.on{background:var(--blue)} :is(#view-season,#snPmod,#view-ranks) .pbars i.zero{height:3px!important; background:#2a3140}
+  :is(#view-season,#snPmod,#view-ranks) .pbars{gap:1px; overflow:hidden; min-width:0}
+  :is(#view-season,#snPmod,#view-ranks) .pbars i{flex:1 1 0; min-width:0}
   /* v73: playoff odds cells */
-  :is(#view-season,#tmodal) td.od{font-family:var(--display); font-size:15px; font-weight:700; min-width:52px; text-align:right}
-  :is(#view-season,#tmodal) table td.od.hi{color:#37c07d} :is(#view-season,#tmodal) table td.od.mid{color:#e8a33d} :is(#view-season,#tmodal) table td.od.lo{color:var(--muted)} :is(#view-season,#tmodal) table td.od.out{color:#e0475b} :is(#view-season,#tmodal) table td.od.in{color:#6ee0a8}
-  :is(#view-season,#tmodal) td.od .ob{display:block; height:3px; border-radius:2px; background:rgba(255,255,255,.08); margin-top:3px; overflow:hidden}
-  :is(#view-season,#tmodal) td.od .ob i{display:block; height:100%; border-radius:2px; background:currentColor}
+  :is(#view-season,#tmodal,#view-ranks) td.od{font-family:var(--display); font-size:15px; font-weight:700; min-width:52px; text-align:right}
+  :is(#view-season,#tmodal,#view-ranks) table td.od.hi{color:#37c07d} :is(#view-season,#tmodal,#view-ranks) table td.od.mid{color:#e8a33d} :is(#view-season,#tmodal,#view-ranks) table td.od.lo{color:var(--muted)} :is(#view-season,#tmodal,#view-ranks) table td.od.out{color:#e0475b} :is(#view-season,#tmodal,#view-ranks) table td.od.in{color:#6ee0a8}
+  :is(#view-season,#tmodal,#view-ranks) td.od .ob{display:block; height:3px; border-radius:2px; background:rgba(255,255,255,.08); margin-top:3px; overflow:hidden}
+  :is(#view-season,#tmodal,#view-ranks) td.od .ob i{display:block; height:100%; border-radius:2px; background:currentColor}
   #snLeague .sn-note.po{margin-top:6px}
   #snPmod .pmh { flex-wrap: wrap; }
   #snPmod .pmh .sub .bio { display: block; width: 100%; color: var(--muted); font-size: 12px; }
@@ -1350,6 +1382,7 @@
       <a href="#home" data-v="home">Home</a>
       <a href="#schedule" data-v="schedule">Schedule</a>
       <a href="#scores" data-v="scores">Scoreboard</a>
+      <a href="#ranks" data-v="ranks">Rankings</a>
       <a href="#fantasy" data-v="fantasy">Fantasy</a>
     </nav>
     <a class="chip live go" id="liveChip" href="#scores" title="Open the full scoreboard" style="display:none"><span class="dot"></span> <span id="liveCount">Live</span></a>
@@ -1429,6 +1462,23 @@
     <div class="sn-grid sn-g2">
       <div class="sn-col"><div id="snLeague"></div></div>
       <div class="sn-col"><div id="snLog"></div></div>
+    </div>
+  </main>
+
+  <!-- ================= RANKINGS (Saturday) ================= -->
+  <main class="view" id="view-ranks">
+    <div class="sn-head">
+      <h2>Rankings</h2>
+      <span class="sub" id="rkSub"></span>
+      <span class="seg" id="rkSeg" role="group" aria-label="Rankings view">
+        <button type="button" data-rkv="both">Both</button>
+        <button type="button" data-rkv="ap">Poll</button>
+        <button type="button" data-rkv="conf">Conferences</button>
+      </span>
+    </div>
+    <div class="rk-wrap" id="rkWrap">
+      <div id="rkPoll"></div>
+      <div id="rkConf"></div>
     </div>
   </main>
 
@@ -1653,6 +1703,7 @@ const S = {
   scoreFeed: [], lastScores: {},           // derived scoring events across all games
   sleeper: { league:null, me:null, opp:null, players:null, proj:null, positions:[], week:null, lastPts:{}, events:[] },
   lastOk: 0, err: false, viewWeek: null, curWeek: null, cf: "all", conf: "all", hcf: "all", hconf: "all", view: "home", grouped: false,
+  cstand: null, cstandT: 0, rkv: "both", poll: null,   // v75: the Saturday Rankings page
 };
 const WKMAX = () => LG.weeks;
 // v47: fantasy follows the week on screen: a jumped-to week, else the NFL board's current week, else Sleeper's (which rolls forward early in the week)
@@ -2608,8 +2659,126 @@ async function loadRanks() {
   S.ranks = (poll?.ranks || []).map(r => {
     const t = r.team || {};
     if (t.abbreviation && !CT[t.abbreviation]) learnTeam({ abbreviation: t.abbreviation, shortDisplayName: t.shortDisplayName || t.location || t.name, name: t.nickname || t.name, color: t.color, alternateColor: t.alternateColor, logo: t.logo, logos: t.logos });
-    return { rank: r.current, ab: t.abbreviation || "", name: t.shortDisplayName || t.location || t.name || "", rec: r.recordSummary || "" };
+    return { rank: r.current, ab: t.abbreviation || "", name: t.shortDisplayName || t.location || t.name || "", rec: r.recordSummary || "",
+      prev: r.previous ?? null, pts: r.points ?? null, fpv: r.firstPlaceVotes ?? null, trend: r.trend || "" };   // v75
   }).filter(r => r.rank && r.rank <= 25);
+  // v75: the poll's own name, week and the also-rans, for the Rankings page
+  S.poll = poll ? { name: poll.name || poll.shortName || "AP Top 25",
+    week: poll.occurrence?.displayValue || d.latestWeek?.displayValue || (S.week ? "Week " + S.week : ""),
+    others: (poll.others || []).map(o => ({ name: o.team?.shortDisplayName || o.team?.location || o.team?.name || "", pts: o.points ?? null })).filter(o => o.name),
+    dropped: (poll.droppedOut || []).map(o => o.team?.shortDisplayName || o.team?.location || o.team?.name || "").filter(Boolean) } : null;
+}
+/* ===================================================================
+   v75: the Saturday Rankings page. ESPN's v2 standings tree for college
+   nests conferences (and sometimes their divisions) under children, so
+   the walk below collects every node that actually carries entries and
+   files it under the conference id CONF already knows.
+   =================================================================== */
+const RK_ORDER = ["4"].concat(CONF_ORDER.filter(c => c !== "4"));   // Big 12 first, his league
+function stdStat(e, names) {
+  for (const n of names) { const x = (e.stats || []).find(y => y.name === n || y.abbreviation === n || y.type === n); if (x) return x; }
+  return null;
+}
+function stdTxt(e, names) { const x = stdStat(e, names); return x ? String(x.displayValue ?? x.summary ?? (x.value != null ? x.value : "")) : ""; }
+function stdVal(e, names) { const x = stdStat(e, names); return x && x.value != null ? +x.value : null; }
+function stdRow(e) {
+  const t = e.team || {};
+  const ab = t.abbreviation || t.shortDisplayName || "";
+  if (!ab) return null;
+  if (!CT[ab]) learnTeam({ abbreviation: ab, shortDisplayName: t.shortDisplayName || t.location || t.name, name: t.nickname || t.name, color: t.color, alternateColor: t.alternateColor, logo: t.logo, logos: t.logos });
+  const w = stdVal(e, ["wins"]) ?? 0, l = stdVal(e, ["losses"]) ?? 0;
+  const cw = stdVal(e, ["vsConf_wins", "confWins", "vsconf_wins"]), cl = stdVal(e, ["vsConf_losses", "confLosses", "vsconf_losses"]);
+  let conf = stdTxt(e, ["vsConf", "vsconf", "confRecord"]);
+  if (!/\d/.test(conf) && cw != null && cl != null) conf = cw + "-" + cl;
+  const pf = stdVal(e, ["pointsFor", "avgPointsFor"]), pa = stdVal(e, ["pointsAgainst", "avgPointsAgainst"]);
+  let diff = stdVal(e, ["differential", "pointDifferential"]);
+  if (diff == null && pf != null && pa != null) diff = pf - pa;
+  const ov = stdTxt(e, ["overall", "total", "Overall"]);
+  return { ab, name: t.shortDisplayName || t.location || t.displayName || ab,
+    w, l, ov: /\d/.test(ov) ? ov : (w + "-" + l), conf: /\d/.test(conf) ? conf : "",
+    cpct: (cw != null && cl != null) ? cw / ((cw + cl) || 1) : null,
+    pct: stdVal(e, ["winPercent"]) ?? (w / ((w + l) || 1)),
+    pf, pa, diff, streak: stdTxt(e, ["streak"]) };
+}
+async function loadCfbStand() {
+  if (LG.key !== "cfb" || (S.cstandT && Date.now() - S.cstandT < 1800e3)) return;
+  S.cstandT = Date.now();
+  try {
+    const d = await getJSON(`https://site.api.espn.com/apis/v2/sports/${LG.path}/standings${S.season ? "?season=" + S.season : ""}`);
+    const out = {};
+    (function walk(n, pid, pname) {
+      const id = String(n.id ?? pid ?? ""), nm = n.name || n.shortName || pname || "";
+      const ents = (n.standings && n.standings.entries) || [];
+      if (ents.length) {
+        const key = CONF[id] ? id : (CONF[pid] ? String(pid) : id);
+        const c = out[key] || (out[key] = { id: key, name: CONF[key] || nm, blocks: [] });
+        const rows = ents.map(stdRow).filter(Boolean);
+        if (rows.length) c.blocks.push({ name: CONF[id] ? "" : nm, rows });
+      }
+      for (const k of n.children || []) walk(k, id, nm);
+    })(d, "", "");
+    if (Object.keys(out).length) S.cstand = out;
+    else S.cstandT = Date.now() - 1740e3;   // nothing useful, try again in a minute
+  } catch (e) { console.warn("cfb standings", e); S.cstandT = Date.now() - 1740e3; }
+}
+// the game a ranked team is in this week, for the poll's right-hand column
+function rkWhen(ab) {
+  const g = S.events.find(x => x.home === ab || x.away === ab);
+  if (!g) return { txt: "Idle", live: false };
+  const opp = g.home === ab ? g.away : g.home, at = g.home === ab ? "vs" : "@";
+  if (g.state === "pre") return { txt: `${at} ${dispName(opp)}`, live: false };
+  const mine = g.home === ab ? g.hs : g.as, theirs = g.home === ab ? g.as : g.hs;
+  return { txt: `${mine}-${theirs} ${at} ${opp}`, live: g.live };
+}
+function rkMove(r) {
+  if (!r.prev || r.prev > 25) return `<i class="mv nr">NR</i>`;
+  const d = r.prev - r.rank;
+  return d === 0 ? `<i class="mv same">&ndash;</i>` : `<i class="mv ${d > 0 ? "up" : "dn"}">${d > 0 ? "&#9650;" : "&#9660;"}${Math.abs(d)}</i>`;
+}
+function rkPollCard() {
+  const rows = (S.ranks && S.ranks.length) ? S.ranks : rankedFromBoard();
+  if (!rows.length) return snCard("AP Top 25", `<div class="empty">The poll is not in yet.</div>`);
+  const body = rows.map(r => {
+    const w = rkWhen(r.ab);
+    return `<tr ${r.ab ? `data-team="${esc(r.ab)}"` : ""} class="${r.ab === CFG.fav ? "fav" : ""}">
+      <td><div class="pl lgo"><span class="rkn">${r.rank}</span>${snImg(r.ab)}<b>${esc(r.name)}</b></div></td>
+      <td>${esc(r.rec)}</td><td>${r.pts == null ? "&ndash;" : r.pts}</td><td>${r.fpv ? r.fpv : ""}</td><td>${rkMove(r)}</td>
+      <td class="rk-when${w.live ? " live" : ""}">${esc(w.txt)}</td></tr>`;
+  }).join("");
+  const o = S.poll || {};
+  const others = (o.others || []).length ? `<div class="rk-others"><b>Also receiving votes:</b> ${o.others.slice(0, 18).map(x => esc(x.name) + (x.pts ? " " + x.pts : "")).join(", ")}</div>` : "";
+  const dropped = (o.dropped || []).length ? `<div class="rk-others"><b>Dropped out:</b> ${o.dropped.map(esc).join(", ")}</div>` : "";
+  return snCard(o.name || "AP Top 25",
+    `<div class="scroll"><table class="rs"><thead><tr><th style="text-align:left">Team</th><th>Rec</th><th>Pts</th><th title="First-place votes">1st</th><th title="Movement from last week">+/-</th><th>This week</th></tr></thead><tbody>${body}</tbody></table></div>${others}${dropped}`,
+    "", esc(o.week || (S.week ? "Week " + S.week : "")));
+}
+function rkConfCard(c) {
+  const ranked = {}; ((S.ranks && S.ranks.length) ? S.ranks : rankedFromBoard()).forEach(r => { if (r.ab) ranked[r.ab] = r.rank; });
+  const blocks = c.blocks.map(b => {
+    const rows = b.rows.slice().sort((x, y) => (y.cpct ?? -1) - (x.cpct ?? -1) || y.pct - x.pct || y.w - x.w);
+    const body = rows.map((r, i) => `<tr data-team="${esc(r.ab)}" class="${r.ab === CFG.fav ? "fav" : ""}">
+      <td><div class="pl lgo"><span class="rkn">${i + 1}</span>${snImg(r.ab)}<b>${esc(r.name)}</b>${ranked[r.ab] ? `<span class="apr">#${ranked[r.ab]}</span>` : ""}</div></td>
+      <td>${esc(r.conf || "&ndash;")}</td><td>${esc(r.ov)}</td>
+      <td class="${r.diff > 0 ? "up" : r.diff < 0 ? "dn" : ""}">${r.diff == null ? "&ndash;" : (r.diff > 0 ? "+" : "") + Math.round(r.diff)}</td>
+      <td>${esc(r.streak || "&ndash;")}</td></tr>`).join("");
+    return `${b.name ? `<div class="sn-note" style="margin:6px 0 2px">${esc(b.name)}</div>` : ""}
+      <div class="scroll"><table class="rs"><thead><tr><th style="text-align:left">Team</th><th>Conf</th><th>Overall</th><th title="Points for minus points against">Diff</th><th>Strk</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  }).join("");
+  return snCard(esc(c.name), blocks || `<div class="empty">No standings.</div>`);
+}
+function renderRanks() {
+  if (S.view !== "ranks") return;
+  if (LG.key !== "cfb") { el("#rkPoll").innerHTML = ""; el("#rkConf").innerHTML = ""; return; }
+  const v = ["both", "ap", "conf"].includes(S.rkv) ? S.rkv : "both";
+  el("#rkWrap").className = "rk-wrap " + v;
+  document.querySelectorAll("#rkSeg button").forEach(b => b.classList.toggle("on", b.dataset.rkv === v));
+  el("#rkSub").textContent = `${LG.label} · ${S.poll ? S.poll.name : "AP Top 25"} and every FBS conference`;
+  el("#rkPoll").innerHTML = rkPollCard();
+  const cs = S.cstand;
+  if (!cs) { el("#rkConf").innerHTML = snCard("Conferences", `<div class="empty">Loading the conference standings</div>`); return; }
+  const seen = {}, order = RK_ORDER.filter(id => cs[id]).concat(Object.keys(cs).filter(id => !RK_ORDER.includes(id)));
+  const cards = order.filter(id => !seen[id] && (seen[id] = 1)).map(id => rkConfCard(cs[id])).join("");
+  el("#rkConf").innerHTML = `<div class="rk-confs">${cards}</div>`;
 }
 function rankedFromBoard() {
   const out = [];
@@ -2950,6 +3119,7 @@ window.addEventListener("resize", fitBoard);
 function renderAll() {
   renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderPre(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderSchedule(); renderRegroup();
   if (S.view === "season") renderSeason();
+  if (S.view === "ranks") renderRanks();
 }
 let espnTimer, slTimer;
 async function espnLoop() {
@@ -2957,7 +3127,7 @@ async function espnLoop() {
   try {
     await loadScoreboard();
     if (LG.fantasy && S.sleeper.me && S.sleeper.fxWk != null && S.sleeper.fxWk !== fxWeek()) sleeperLoop();   // board settled on a different week than the matchup
-    if (LG.key === "cfb") { try { await loadRanks(); } catch (e) { console.warn("rankings", e); } }
+    if (LG.key === "cfb") { try { await loadRanks(); } catch (e) { console.warn("rankings", e); } loadCfbStand().then(() => { if (S.view === "ranks") renderRanks(); }); }
     if (LG.key === "nfl") await loadSeeds();
     try { await loadSummary(); } catch (e) { console.warn("summary", e); }
     try { await loadOpenLine(); } catch (e) { console.warn("open line", e); }
@@ -3021,6 +3191,7 @@ function gcFrom() {
 function route() {
   let v = (location.hash.replace("#","") || defaultView());
   if (v === "fantasy" && !LG.fantasy) v = "home";
+  if (v === "ranks" && LG.key !== "cfb") v = defaultView();   // v75: Saturday only
   // v68: the game center is a page of its own, #game-<id>, with a back button to wherever you came from
   const gm = /^game-(.+)$/.exec(v);
   if (gm) {
@@ -3032,7 +3203,7 @@ function route() {
     return;
   }
   if (GC.id) { GC.id = null; clearTimeout(GC.timer); }
-  const known = ["home","season","schedule","scores","fantasy"].includes(v) ? v : defaultView();
+  const known = ["home","season","schedule","scores","fantasy","ranks"].includes(v) ? v : defaultView();
   S.view = known;
   document.querySelectorAll(".view").forEach(m => m.classList.toggle("on", m.id === "view-"+known));
   document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.dataset.v === known));
@@ -3040,6 +3211,7 @@ function route() {
   if (known === "scores" && S.events.length) renderBoard(); else fitBoard();
   if (known === "schedule") renderSchedule();
   if (known === "season") renderSeason();
+  if (known === "ranks") renderRanks();
 }
 // Saturday / Sunday: same shell, different sport
 function setLeague(k) {
@@ -3048,10 +3220,11 @@ function setLeague(k) {
   if (location.hash.startsWith("#game-")) location.hash = "#" + gcFrom();
   LG = LEAGUES[k]; store.set("cc-league", k);
   clearTimeout(espnTimer); clearTimeout(slTimer);
-  Object.assign(S, { events: [], featured: null, favGame: null, summary: null, pickId: null, scoreFeed: [], lastScores: {}, prevState: {}, finishedAt: {}, finals: [], lineTried: {}, week: null, viewWeek: null, curWeek: null, season: null, ranks: null, ranksT: 0, seeds: null, seedsT: 0, sday: null, grouped: false, nextFav: null, nextFavWk: null });
+  Object.assign(S, { events: [], featured: null, favGame: null, summary: null, pickId: null, scoreFeed: [], lastScores: {}, prevState: {}, finishedAt: {}, finals: [], lineTried: {}, week: null, viewWeek: null, curWeek: null, season: null, ranks: null, ranksT: 0, cstand: null, cstandT: 0, poll: null, seeds: null, seedsT: 0, sday: null, grouped: false, nextFav: null, nextFavWk: null });
   document.querySelectorAll("#lgSeg button").forEach(b => b.classList.toggle("on", b.dataset.lg === k));
   Object.assign(SN, { sea: "cur", split: null, onKey: "", logAll: false, rsort: {}, chart: null });
   if (!LG.fantasy && location.hash === "#fantasy") location.hash = "#home";
+  if (LG.key !== "cfb" && location.hash === "#ranks") location.hash = "#home";   // v75
   route();
   el("#board").innerHTML = `<div class="empty">Loading scores</div>`;
   el("#hero").innerHTML = `<div class="empty">Loading the ${esc(dispName(CFG.fav))} game</div>`;
@@ -3744,6 +3917,7 @@ S.cf = store.get("cc-cf", "all"); S.conf = store.get("cc-conf", "all");
 Object.defineProperty(S, "ssort", { get: () => S["_ss" + LG.key] ?? (S["_ss" + LG.key] = store.get("cc-sort-" + LG.key, "league")), set: v => { S["_ss" + LG.key] = v; }, configurable: true });
 S.sfull = store.get("cc-sfull", false);
 S.hcf = store.get("cc-hcf", "all"); S.hconf = store.get("cc-hconf", "all");
+S.rkv = store.get("cc-rkv", "both");   // v75
 document.querySelectorAll("#lgSeg button").forEach(b => b.classList.toggle("on", b.dataset.lg === LG.key));
 renderWeekBox(); renderConfPicker(); renderHomePicker();
 
@@ -4304,10 +4478,13 @@ function snLgRow(ab, y) {
 function snLeague() {
   if (LG.key !== "nfl") { snEl("snLeague").innerHTML = ""; return; }
   const ab = snTeam(), y = snY(), f = SN.lgv.f, so = SN.lgv.sort, dir = SN.lgv.dir;
-  const tabs = `<span class="gtab">${[["div", snDivOf(ab)],["conf", snConfOf(ab)],["all","League"]].map(b => `<button data-lgf="${b[0]}" class="${f === b[0] ? "on" : ""}">${esc(b[1])}</button>`).join("")}</span>`;
+  // v75: both conferences are selectable, not only his own
+  const cf = snConfOf(ab), oth = cf === "NFC" ? "AFC" : "NFC";
+  const tabs = `<span class="gtab">${[["div", snDivOf(ab)],[cf, cf],[oth, oth],["all","League"]].map(b => `<button data-lgf="${b[0]}" class="${f === b[0] ? "on" : ""}">${esc(b[1])}</button>`).join("")}</span>`;
   let ids = snAllTeams();
   if (f === "div") ids = divOf(ab)?.[1] || [ab];
-  else if (f === "conf") ids = ids.filter(t => snConfOf(t) === snConfOf(ab));
+  else if (f === "conf") ids = ids.filter(t => snConfOf(t) === cf);
+  else if (f === "NFC" || f === "AFC") ids = ids.filter(t => snConfOf(t) === f);
   const rows = ids.map(t => snLgRow(t, y));
   rows.sort((a, b) => { const x = a[so], z = b[so]; if (x == null) return 1; if (z == null) return -1; return (x - z) * dir || (b.pct - a.pct); });
   const fmt = { pct:(v, x) => snPctTxt(x.w, x.l, x.r.t), diff:v => (v > 0 ? "+" : "") + v, ppg:v => snFix(v), papg:v => snFix(v),
@@ -4686,10 +4863,12 @@ function snClick(e) {
   if ((b = t.closest("#snLeague [data-lg]"))) { /* v67: scoped, the bare selector swallowed the Saturday / Sunday toggle */ const k = b.dataset.lg, low = (SN_LG.find(c => c[0] === k) || [])[2];
     if (SN.lgv.sort === k) SN.lgv.dir = -SN.lgv.dir; else { SN.lgv.sort = k; SN.lgv.dir = low ? 1 : -1; } snLeague(); return true; }
   if ((b = t.closest("[data-lgf]"))) { SN.lgv.f = b.dataset.lgf; snLeague(); return true; }
+  if ((b = t.closest("#rkSeg [data-rkv]"))) { S.rkv = b.dataset.rkv; store.set("cc-rkv", S.rkv); renderRanks(); return true; }   // v75
   if (S.view === "season") {
     if ((b = t.closest("#view-season [data-gid]"))) { openGame(b.dataset.gid); return true; }
     if ((b = t.closest("#view-season [data-team]"))) { openTeam(b.dataset.team); return true; }
   }
+  if (S.view === "ranks" && (b = t.closest("#view-ranks [data-team]"))) { openTeam(b.dataset.team); return true; }   // v75
   return false;
 }
 document.addEventListener("click", e => { if (snClick(e)) { e.stopPropagation(); e.preventDefault(); } }, true);
