@@ -1233,6 +1233,20 @@
   #snPmod .pbars i.l { opacity: .6; }
   #snPmod .pbars s { position: absolute; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,.35); text-decoration: none; pointer-events: none; z-index: 1; }
   #snPmod .pbars s em { position: absolute; right: 0; top: -13px; font-style: normal; font-size: 9.5px; color: var(--muted); background: var(--raised); padding: 0 3px; }
+  /* v77: the game-log strip */
+  #snPmod .pstrip { position: relative; display: flex; align-items: flex-end; gap: 5px; height: 96px; margin: 8px 0 2px; }
+  #snPmod .pstrip i { flex: 0 1 42px; max-width: 42px; min-width: 13px; height: 96px; display: grid; grid-template-rows: 14px 1fr 14px; align-items: end; cursor: pointer; }
+  #snPmod .pstrip i u { width: 100%; min-height: 2px; background: var(--blue); border-radius: 3px 3px 0 0; align-self: end; }
+  #snPmod .pstrip i.zero u { background: #2a3140; }
+  #snPmod .pstrip i.l u { opacity: .55; }
+  #snPmod .pstrip i:hover u { outline: 1px solid #fff; }
+  #snPmod .pstrip i b { font-size: 10.5px; font-weight: 700; line-height: 14px; text-align: center; color: var(--ink-2); }
+  #snPmod .pstrip i span { font-size: 9.5px; line-height: 14px; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #snPmod .pstrip.dense { gap: 3px; }
+  #snPmod .pstrip.dense i b { visibility: hidden; }
+  #snPmod .pstrip s { position: absolute; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,.35); text-decoration: none; pointer-events: none; z-index: 1; }
+  #snPmod .pstrip s em { position: absolute; right: 0; top: -13px; font-style: normal; font-size: 9.5px; color: var(--muted); background: var(--raised); padding: 0 3px; }
+  #snPmod .pbk { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); }
   #snPmod .tseg.pst { margin-left: auto; flex-wrap: wrap; }
   #snPmod .tseg.pst button { padding: 3px 8px; }
   #snPmod .pgl-top { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; font-size: 11px; color: var(--muted); }
@@ -3196,7 +3210,7 @@ function bodyClass() {
 function defaultView() { return "season"; }
 function gcFrom() {
   const f = S.gcFrom;
-  return f && f !== "game" && (f !== "fantasy" || LG.fantasy) ? f : "home";
+  return f && f !== "game" && (f !== "fantasy" || LG.fantasy) ? f : "scores";   // v77: arriving cold (the Live page) backs out to the board
 }
 function route() {
   let v = (location.hash.replace("#","") || defaultView());
@@ -4797,10 +4811,14 @@ function snPlRender() {
     const vals = g.rows.map(r => snGlNum(r.st[sk]));
     const mx = Math.max(1, ...vals), avg = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
     const seg1 = `<span class="tseg pst">${plan.chart.map(c => `<button data-plst="${esc(c[0])}" class="${c[0] === sk ? "on" : ""}">${esc(c[1])}</button>`).join("")}</span>`;
-    const bars = `<div class="pbars"><s style="bottom:${(avg / mx * 100).toFixed(1)}%"><em>avg ${snGlFmt(+avg.toFixed(1))}</em></s>${g.rows.map((r, i) => {
+    /* v77: a narrow labelled strip. Two games used to stretch into a pair of slabs that carried
+       no shape at all, so the bars are a fixed width, each one wears its own number and week,
+       and with fewer than three games the chart is dropped for the rows underneath. */
+    const dense = g.rows.length > 10;
+    const bars = g.rows.length < 3 ? "" : `<div class="pstrip${dense ? " dense" : ""}"><s style="bottom:calc(14px + ${(avg / mx * 68).toFixed(1)}px)"><em>avg ${snGlFmt(+avg.toFixed(1))}</em></s>${g.rows.map((r, i) => {
       const v = vals[i];
-      return `<i data-gid="${r.id}" class="${v ? "on" : "zero"}${r.res === "L" ? " l" : ""}" style="height:${(v / mx * 100).toFixed(1)}%" title="${esc(`Wk ${r.wk || i + 1} ${r.at} ${r.opp}: ${snGlFmt(v)} ${slab}${r.res ? ` (${r.res} ${r.score})` : ""}`)}"></i>`; }).join("")}</div>
-      <div class="pbk"><span>Wk ${g.rows[0].wk || 1}</span><span>${esc(slab)} per game, tap a bar · high ${snGlFmt(mx)}</span><span>Wk ${g.rows[g.rows.length - 1].wk || g.rows.length}</span></div>`;
+      return `<i data-gid="${r.id}" class="${v ? "on" : "zero"}${r.res === "L" ? " l" : ""}" title="${esc(`Wk ${r.wk || i + 1} ${r.at} ${r.opp}: ${snGlFmt(v)} ${slab}${r.res ? ` (${r.res} ${r.score})` : ""}`)}"><b>${esc(snGlFmt(v))}</b><u style="height:${(v / mx * 100).toFixed(1)}%"></u><span>${esc(String(r.wk || i + 1))}</span></i>`; }).join("")}</div>
+      <div class="pbk"><span>${esc(slab)} by week, tap a bar</span><span>high ${snGlFmt(mx)}</span></div>`;
     const list = SP.mode === "l10" ? g.rows.slice(-10).reverse() : g.rows.slice().reverse();
     const seg2 = `<span class="tseg"><button data-plm="l10" class="${SP.mode === "l10" ? "on" : ""}">Last 10</button><button data-plm="all" class="${SP.mode === "all" ? "on" : ""}">All ${g.rows.length}</button></span>`;
     const cols = `minmax(126px,1.5fr) 58px ${plan.cols.map(() => "46px").join(" ")}${plan.more.length ? " minmax(96px,1fr)" : ""}`;
@@ -4897,6 +4915,20 @@ function snAutoRoute() {
 
 route(); tick(); setInterval(tick, 1000);
 espnLoop(); if (LG.fantasy) sleeperLoop();
+
+/* Search X and any other new-tab link: iOS quietly drops window.open from a touch, so on a
+   touch device the click falls back to navigating in place rather than doing nothing at all. */
+(function () {
+  if (!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches)) return;
+  document.addEventListener("click", function (e) {
+    var t = e.target, a = t && t.closest ? t.closest('a[target="_blank"]') : null;
+    if (!a || !/^https?:/.test(a.href)) return;
+    e.preventDefault();
+    var w = null;
+    try { w = window.open(a.href, "_blank"); } catch (err) { w = null; }
+    if (!w) window.location.href = a.href;
+  }, true);
+})();
 </script>
 </body>
 </html>
