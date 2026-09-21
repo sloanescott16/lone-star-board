@@ -958,7 +958,7 @@
   :is(#view-season) .wkc.lv { border-color: var(--live); }
   :is(#view-season) .wkc.bye { border-style: dashed; opacity: .6; }
   :is(#view-season) .wkc.bye .op { color: var(--muted); font-size: 12px; }
-  #snPmod .sheet { max-width: 720px; }
+  #snPmod .sheet { max-width: 900px; }
   :is(#view-season, #snPmod) .snab { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; font: 700 10px var(--display); letter-spacing: .04em; color: #fff; flex: none; }
   :is(#view-season,#snPmod) .sn-grid{display:grid; gap:12px; align-items:start; margin-top:12px}
   :is(#view-season,#snPmod) .sn-g3{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr)}
@@ -1136,6 +1136,46 @@
   #board .bg[data-id] { cursor: pointer; transition: border-color .15s, transform .15s; }
   #board .bg[data-id]:hover { border-color: var(--accent); transform: translateY(-1px); }
   #board .bg .mp[data-pid] { cursor: pointer; }
+
+  /* ---------- v71: one player card for everyone, with fantasy on the NFL side ---------- */
+  :is(#view-season,#snPmod) .pbars i.on{background:var(--blue)} :is(#view-season,#snPmod) .pbars i.zero{height:3px!important; background:#2a3140}
+  #snPmod .pmh { flex-wrap: wrap; }
+  #snPmod .pmh .sub .bio { display: block; width: 100%; color: var(--muted); font-size: 12px; }
+  #snPmod .pmh .sub .inj { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--warn); border: 1px solid rgba(242,184,75,.5); border-radius: 999px; padding: 1px 8px; }
+  #snPmod .pmx { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  #snPmod .pmx a.btn { text-decoration: none; }
+  #snPmod .plg { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); }
+  #snPmod .plg span i { font-style: normal; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+  #snPmod .fxt { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 12px; }
+  #snPmod .fxt div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; min-width: 0; }
+  #snPmod .fxt b { display: block; font-family: var(--display); font-size: 26px; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #snPmod .fxt b.up { color: var(--good); } #snPmod .fxt b.dn { color: var(--live); }
+  #snPmod .fxt span { display: block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  #snPmod .fxt em { display: block; font-style: normal; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #snPmod .fxw { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); gap: 3px; align-items: end; height: 132px; border-bottom: 1px solid var(--line); }
+  #snPmod .fxw .wk { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; }
+  #snPmod .fxw .wk i { display: block; width: 100%; border-radius: 3px 3px 0 0; background: var(--accent); min-height: 2px; box-sizing: border-box; }
+  #snPmod .fxw .wk.proj i { background: rgba(91,156,255,.12); border: 1px dashed rgba(91,156,255,.8); border-bottom: 0; }
+  #snPmod .fxw .wk.now i { background: var(--live); }
+  #snPmod .fxw .wk.bye i { background: var(--line); height: 2px !important; }
+  #snPmod .fxw .wk b { font-size: 10px; font-family: var(--display); font-weight: 700; color: var(--ink-2); line-height: 1; margin-bottom: 3px; white-space: nowrap; }
+  #snPmod .fxw .wk.proj b { color: var(--muted); font-weight: 600; }
+  #snPmod .fxw .wk span { font-size: 9px; color: var(--muted); margin-top: 3px; line-height: 1; }
+  #snPmod .fxw .wk.now span { color: var(--live); font-weight: 700; }
+  #snPmod .fxk { display: flex; gap: 12px; flex-wrap: wrap; font-size: 10.5px; color: var(--muted); margin-top: 6px; }
+  #snPmod .fxk i { display: inline-block; width: 10px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; background: var(--accent); }
+  #snPmod .fxk i.pj { background: rgba(91,156,255,.12); border: 1px dashed rgba(91,156,255,.8); } #snPmod .fxk i.nw { background: var(--live); }
+  body.lg-cfb #snPmod .fxw .wk i, body.lg-cfb #snPmod .fxk i { background: var(--accent); }
+  .pn { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; text-decoration-color: var(--muted); }
+  .pn:hover { color: var(--accent); text-decoration-color: var(--accent); }
+  .gc-lead .ld[data-plid], .gc-box tr[data-plid], .pv-pl .p[data-plid], .pv-inj li[data-plid] { cursor: pointer; }
+  .gc-lead .ld[data-plid]:hover b, .gc-box tr[data-plid]:hover td:first-child, .pv-pl .p[data-plid]:hover b, .pv-inj li[data-plid]:hover b { color: var(--accent); }
+  @media (max-width: 640px) {
+    #snPmod .fxw { height: 110px; gap: 2px; }
+    #snPmod .fxw .wk b { display: none; }
+    #snPmod .fxw .wk span { font-size: 8px; }
+    #snPmod .pmx { width: 100%; justify-content: flex-end; }
+  }
 
   /* ---------- v70: game center, the trip list ---------- */
   /* the sticky block: other live scores, the back bar, then the pinned score once the big header scrolls away */
@@ -1782,9 +1822,9 @@ function renderPre(g) {
     const rank = s => /out|ir|reserve|pup/i.test(s) ? 0 : /doubt/i.test(s) ? 1 : /quest/i.test(s) ? 2 : 3;
     const col = ab => {
       const T0 = sum.injuries.find(x => x.team?.abbreviation === ab);
-      const list = (T0?.injuries || []).map(x => ({ n: x.athlete?.displayName || x.athlete?.shortName || "", pos: x.athlete?.position?.abbreviation || "", st: x.status || x.type?.description || "", what: x.details?.type || "" }))
+      const list = (T0?.injuries || []).map(x => ({ id: x.athlete?.id ? String(x.athlete.id) : "", n: x.athlete?.displayName || x.athlete?.shortName || "", pos: x.athlete?.position?.abbreviation || "", st: x.status || x.type?.description || "", what: x.details?.type || "" }))
         .filter(x => x.n && rank(x.st) < 3).sort((a, b) => rank(a.st) - rank(b.st)).slice(0, 6);
-      return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div>${list.length ? `<ul class="inj">${list.map(x => `<li><b>${esc(x.n)}</b><i>${esc([x.pos, x.what].filter(Boolean).join(" · "))}</i><span class="st ${["out", "dbt", "q"][rank(x.st)]}">${esc(x.st)}</span></li>`).join("")}</ul>` : `<p class="gc-note" style="margin:4px 0 0">Nobody listed</p>`}</div>`;
+      return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div>${list.length ? `<ul class="inj">${list.map(x => `<li ${x.id ? `data-plid="${esc(x.id)}" data-pname="${esc(x.n)}" title="Player card"` : ""}><b>${esc(x.n)}</b><i>${esc([x.pos, x.what].filter(Boolean).join(" · "))}</i><span class="st ${["out", "dbt", "q"][rank(x.st)]}">${esc(x.st)}</span></li>`).join("")}</ul>` : `<p class="gc-note" style="margin:4px 0 0">Nobody listed</p>`}</div>`;
     };
     inj = `<div class="pre-sec">Injury report</div><div class="gc-lead">${col(g.away)}${col(g.home)}</div>`;
   }
@@ -1796,16 +1836,16 @@ function renderPre(g) {
    ===================================================================== */
 const SL = "https://api.sleeper.app/v1";
 async function loadPlayers() {
-  const cached = store.get("lsb-players", null);
+  const cached = store.get("lsb-players2", null);   // v71: entries carry the ESPN id as a fourth element
   if (cached && Date.now() - cached.t < 24*3600*1000) { S.sleeper.players = cached.p; return; }
   const all = await getJSON(SL + "/players/nfl");
   const keep = {};
   for (const [id, p] of Object.entries(all)) {
     if (!p || !["QB","RB","WR","TE","K","DEF"].includes(p.position)) continue;
     if (p.position !== "DEF" && p.status && !/Active|Injured|Questionable|Doubtful|Out|PUP|IR|Inactive/i.test(p.status) && !p.team) continue;
-    keep[id] = [p.position === "DEF" ? `${p.first_name} ${p.last_name}` : `${p.first_name} ${p.last_name}`, p.position, p.team || ""];
+    keep[id] = [`${p.first_name} ${p.last_name}`, p.position, p.team || "", p.espn_id ? String(p.espn_id) : ""];
   }
-  S.sleeper.players = keep; store.set("lsb-players", { t: Date.now(), p: keep });
+  S.sleeper.players = keep; store.set("lsb-players2", { t: Date.now(), p: keep });
 }
 async function loadSleeperStatic() {
   const sl = S.sleeper;
@@ -1942,6 +1982,7 @@ function breakdownFrom(pid, st) {
 }
 async function openPlayer(pid) {
   const sl = S.sleeper, p = sl.players?.[pid] || [pid, "", ""], g = gameForTeam(p[2]);
+  if (p[3]) { SP.nm[p[3]] = p[0]; return snOpenPlayer(p[3], pid); }   // v71: one pop-up for everyone; DEF units keep the old one
   const pts = +((sl.mine?.players_points?.[pid] ?? sl.oppM?.players_points?.[pid]) || 0);
   const m = el("#pmodal"); m.hidden = false;
   setMark(el("#pmMark"), p[2] || "FA");
@@ -2333,7 +2374,7 @@ function renderHero(g) {
 function preLeaders(g, sum) {   // v60: season leaders on the pregame hero
   if (!sum?.leaders?.length) return "";
   const want = [["passingYards", "Pass"], ["rushingYards", "Rush"], ["receivingYards", "Rec"]];
-  const col = ab => { const L = sum.leaders.find(x => x.team?.abbreviation === ab); if (!L) return ""; return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div>${want.map(([k, lab]) => { const x = (L.leaders || []).find(y => y.name === k)?.leaders?.[0]; return x?.athlete ? `<div class="ld"><b><i>${lab}</i>${esc(x.athlete.displayName || x.athlete.fullName || "")}</b><span>${esc(x.displayValue || "")}</span></div>` : ""; }).join("")}</div>`; };
+  const col = ab => { const L = sum.leaders.find(x => x.team?.abbreviation === ab); if (!L) return ""; return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div>${want.map(([k, lab]) => { const x = (L.leaders || []).find(y => y.name === k)?.leaders?.[0]; return x?.athlete ? `<div class="ld" ${x.athlete.id ? `data-plid="${esc(x.athlete.id)}" data-pname="${esc(x.athlete.displayName || x.athlete.fullName || "")}" title="Player card"` : ""}><b><i>${lab}</i>${esc(x.athlete.displayName || x.athlete.fullName || "")}</b><span>${esc(x.displayValue || "")}</span></div>` : ""; }).join("")}</div>`; };
   const b = col(g.away) + col(g.home);
   return b ? `<div class="pre-lead"><div class="pre-sec">Season leaders</div><div class="gc-lead">${b}</div></div>` : "";
 }
@@ -2437,7 +2478,7 @@ function renderDrive(g) {
       <span class="ball" style="left:${8+b*0.84}%"></span>
     </div>
     <div class="meta"><span><b>${cur.offensivePlays ?? (cur.plays||[]).length} plays</b>, ${cur.yards ?? 0} yds</span><span><b>${esc(cur.timeElapsed?.displayValue || "")}</b> elapsed</span><span>${esc(cur.start?.text || "")}</span></div>
-    <ul class="plays">${plays.map((p,i)=>`<li class="${i===0?'hl':''}"><span>${esc(p.start?.shortDownDistanceText || p.start?.downDistanceText || "")}</span><span>${esc(p.text)}</span></li>`).join("") || `<li><span></span><span>Drive starting</span></li>`}</ul>`;
+    <ul class="plays">${plays.map((p,i)=>`<li class="${i===0?'hl':''}"><span>${esc(p.start?.shortDownDistanceText || p.start?.downDistanceText || "")}</span><span>${linkNames(esc(p.text))}</span></li>`).join("") || `<li><span></span><span>Drive starting</span></li>`}</ul>`;
 }
 
 function myPlayersIn(g, side) {
@@ -2558,7 +2599,7 @@ function renderFeed() {
   // featured game's official scoring plays first (from summary), then derived score changes from other games
   const sp = (S.summary?.scoringPlays || []).slice().reverse().map(p => ({
     when: `${ordinal(p.period?.number)} ${p.clock?.displayValue || ""}`, team: p.team?.abbreviation || "", type: /touchdown/i.test(p.scoringType?.name||p.type?.text||"") ? "td" : /field goal/i.test(p.scoringType?.name||"") ? "fg" : "pts",
-    text: `${esc(p.text)}. ${S.featured.away} ${p.awayScore}, ${S.featured.home} ${p.homeScore}`, t: 0 }));
+    text: `${linkNames(esc(p.text))}. ${S.featured.away} ${p.awayScore}, ${S.featured.home} ${p.homeScore}`, t: 0 }));
   const others = S.scoreFeed.filter(e => !S.featured || (e.team !== S.featured.away && e.team !== S.featured.home));
   const all = [...others.map(e => ({...e})), ...sp].slice(0, 14);
   el("#feed").innerHTML = all.map(e => `<li><span class="when">${esc(e.when)}</span><span class="what"><span class="type ${e.type}">${e.type.toUpperCase()}</span><b>${esc(e.team)}</b> ${e.text}</span></li>`).join("") || `<li class="empty">No scoring yet</li>`;
@@ -3230,7 +3271,7 @@ function playRow(p, g, hl) {
   const showY = y != null && dd && !/^(KO|PUNT|TO|PEN|XP)$/.test(tag) && !/end (of )?(period|quarter|half|game)/i.test(p.type?.text || "");
   const clk = `${ordinal(p.period?.number)} ${p.clock?.displayValue || ""}`.trim();
   const sc = p.scoringPlay ? `<span class="pl-sc">${esc(g.away)} ${p.awayScore ?? ""} · ${esc(g.home)} ${p.homeScore ?? ""}</span>` : "";
-  return `<li class="${hl ? "hl" : ""} ${big ? "big" : ""}"><span class="pl-dd">${esc(dd)}<small>${esc(clk)}</small></span><span class="pl-tx">${tag ? `<b class="pl-tag ${big ? "big" : ""}">${tag}</b> ` : ""}${esc(p.text || "")}${sc}</span>${showY ? `<em class="${y > 0 ? "pos" : y < 0 ? "neg" : ""}">${y > 0 ? "+" : ""}${y}</em>` : "<em></em>"}</li>`;
+  return `<li class="${hl ? "hl" : ""} ${big ? "big" : ""}"><span class="pl-dd">${esc(dd)}<small>${esc(clk)}</small></span><span class="pl-tx">${tag ? `<b class="pl-tag ${big ? "big" : ""}">${tag}</b> ` : ""}${linkNames(esc(p.text || ""))}${sc}</span>${showY ? `<em class="${y > 0 ? "pos" : y < 0 ? "neg" : ""}">${y > 0 ? "+" : ""}${y}</em>` : "<em></em>"}</li>`;
 }
 function driveRow(d, key, isCur, g) {
   const ab = d.team?.abbreviation || "", plays = d.plays || [], lastP = plays[plays.length - 1];
@@ -3308,7 +3349,7 @@ function renderGC() {
   let drive = "";
   const cur = sum?.drives?.current;
   if (live && cur) drive = `${gcField(g, cur)}${gcSit(g, hp)}${gcDrives(sum, g, true)}`;
-  else if (live && (g.lastPlay || g.spot)) drive = `${gcField(g, null)}${gcSit(g, hp)}${g.lastPlay ? `<ul class="gc-plays"><li class="hl"><span>Last play</span><span>${esc(g.lastPlay)}</span></li></ul>` : ""}${gcDrives(sum, g, true)}`;
+  else if (live && (g.lastPlay || g.spot)) drive = `${gcField(g, null)}${gcSit(g, hp)}${g.lastPlay ? `<ul class="gc-plays"><li class="hl"><span>Last play</span><span>${linkNames(esc(g.lastPlay))}</span></li></ul>` : ""}${gcDrives(sum, g, true)}`;
   const drivesFin = fin ? gcDrives(sum, g, false) : "";
   // team stats
   let ts = "";
@@ -3328,19 +3369,19 @@ function renderGC() {
   let lead = "";
   if (sum?.leaders?.length) {
     const want = [["passingYards", "Pass"], ["rushingYards", "Rush"], ["receivingYards", "Rec"], ["sacks", "Sacks"], ["totalTackles", "Tackles"]];
-    const col = ab => { const L = sum.leaders.find(x => x.team?.abbreviation === ab); if (!L) return ""; return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div>${want.map(([k, lab]) => { const x = (L.leaders || []).find(y => y.name === k)?.leaders?.[0]; return x?.athlete ? `<div class="ld"><b><i>${lab}</i>${esc(x.athlete.displayName || x.athlete.fullName || "")}</b><span>${esc(x.displayValue || "")}</span></div>` : ""; }).join("")}</div>`; };
+    const col = ab => { const L = sum.leaders.find(x => x.team?.abbreviation === ab); if (!L) return ""; return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div>${want.map(([k, lab]) => { const x = (L.leaders || []).find(y => y.name === k)?.leaders?.[0]; return x?.athlete ? `<div class="ld" ${x.athlete.id ? `data-plid="${esc(x.athlete.id)}" data-pname="${esc(x.athlete.displayName || x.athlete.fullName || "")}" title="Player card"` : ""}><b><i>${lab}</i>${esc(x.athlete.displayName || x.athlete.fullName || "")}</b><span>${esc(x.displayValue || "")}</span></div>` : ""; }).join("")}</div>`; };
     const body = col(g.away) + col(g.home);
     if (body) lead = `<div class="gc-lead">${body}</div>`;
   }
   // scoring summary
   let sp = "";
-  if (sum?.scoringPlays?.length) sp = `<ul class="gc-sp">${sum.scoringPlays.map(p => `<li>${mark(p.team?.abbreviation || "", "mini")}<span class="w">${ordinal(p.period?.number)} ${esc(p.clock?.displayValue || "")}</span><span class="t"><b>${esc(p.type?.abbreviation || "")}</b>${esc(p.text || "")}</span><span class="s">${p.awayScore}-${p.homeScore}</span></li>`).join("")}</ul>`;
+  if (sum?.scoringPlays?.length) sp = `<ul class="gc-sp">${sum.scoringPlays.map(p => `<li>${mark(p.team?.abbreviation || "", "mini")}<span class="w">${ordinal(p.period?.number)} ${esc(p.clock?.displayValue || "")}</span><span class="t"><b>${esc(p.type?.abbreviation || "")}</b>${linkNames(esc(p.text || ""))}</span><span class="s">${p.awayScore}-${p.homeScore}</span></li>`).join("")}</ul>`;
   // box score, top three per table
   let boxS = "";
   const bp = sum?.boxscore?.players;
   if (!pre && bp?.length) {
     const tables = [["passing", "Passing", [0, 1, 3, 4]], ["rushing", "Rushing", [0, 1, 3]], ["receiving", "Receiving", [0, 1, 3]], ["defensive", "Defense", [0, 2, 5]]];
-    const col = ab => { const P = bp.find(x => x.team?.abbreviation === ab); if (!P) return ""; return `<div><div class="gc-lead"><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div></div>${tables.map(([k, lab, idx]) => { const t = (P.statistics || []).find(s => s.name === k); if (!t?.athletes?.length) return ""; return `<table><thead><tr><th>${lab}</th>${idx.map(i => `<th>${esc(t.labels?.[i] || "")}</th>`).join("")}</tr></thead><tbody>${t.athletes.slice(0, 3).map(a => `<tr><td>${esc(a.athlete?.shortName || a.athlete?.displayName || "")}</td>${idx.map(i => `<td>${esc(a.stats?.[i] ?? "")}</td>`).join("")}</tr>`).join("")}</tbody></table>`; }).join("")}</div>`; };
+    const col = ab => { const P = bp.find(x => x.team?.abbreviation === ab); if (!P) return ""; return `<div><div class="gc-lead"><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div></div>${tables.map(([k, lab, idx]) => { const t = (P.statistics || []).find(s => s.name === k); if (!t?.athletes?.length) return ""; return `<table><thead><tr><th>${lab}</th>${idx.map(i => `<th>${esc(t.labels?.[i] || "")}</th>`).join("")}</tr></thead><tbody>${t.athletes.slice(0, 3).map(a => `<tr ${a.athlete?.id ? `data-plid="${esc(a.athlete.id)}" data-pname="${esc(a.athlete.displayName || a.athlete.shortName || "")}" title="Player card"` : ""}><td>${esc(a.athlete?.shortName || a.athlete?.displayName || "")}</td>${idx.map(i => `<td>${esc(a.stats?.[i] ?? "")}</td>`).join("")}</tr>`).join("")}</tbody></table>`; }).join("")}</div>`; };
     const b = col(g.away) + col(g.home);
     if (b) boxS = `<div class="gc-box">${b}</div>`;
   }
@@ -3430,7 +3471,7 @@ function previewHTML(g, sum) {   // v62
   let pl = "";
   if (sum.leaders?.length) {
     const lab = { passingYards: "Passing", rushingYards: "Rushing", receivingYards: "Receiving", sacks: "Sacks", totalTackles: "Tackles", interceptions: "Interceptions" };
-    const col = ab => { const L = sum.leaders.find(x => x.team?.abbreviation === ab); if (!L) return ""; return `<div><div class="gc-lead"><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div></div>${(L.leaders || []).map(c => { const x = c.leaders?.[0]; if (!x?.athlete) return ""; const a = x.athlete; const hs = a.headshot?.href; return `<div class="p"><span class="hs">${hs ? `<img src="${esc(hs)}" alt="" loading="lazy" onerror="this.remove()">` : esc(a.jersey ? "#" + a.jersey : "")}</span><span class="t"><i>${esc(lab[c.name] || c.displayName || c.name)}</i><b>${esc(a.displayName || a.fullName || "")} <span>${esc([a.position?.abbreviation, a.jersey ? "#" + a.jersey : ""].filter(Boolean).join(" "))}</span></b><span>${x.mainStat ? `<em>${esc(x.mainStat.value)}</em>${esc(x.mainStat.label || "")}${x.summary ? " · " + esc(x.summary) : ""}` : esc(x.displayValue || "")}</span></span></div>`; }).join("")}</div>`; };
+    const col = ab => { const L = sum.leaders.find(x => x.team?.abbreviation === ab); if (!L) return ""; return `<div><div class="gc-lead"><div class="who">${mark(ab, "mini")}${esc(dispName(ab))}</div></div>${(L.leaders || []).map(c => { const x = c.leaders?.[0]; if (!x?.athlete) return ""; const a = x.athlete; const hs = a.headshot?.href; return `<div class="p" ${a.id ? `data-plid="${esc(a.id)}" data-pname="${esc(a.displayName || a.fullName || "")}" title="Player card"` : ""}><span class="hs">${hs ? `<img src="${esc(hs)}" alt="" loading="lazy" onerror="this.remove()">` : esc(a.jersey ? "#" + a.jersey : "")}</span><span class="t"><i>${esc(lab[c.name] || c.displayName || c.name)}</i><b>${esc(a.displayName || a.fullName || "")} <span>${esc([a.position?.abbreviation, a.jersey ? "#" + a.jersey : ""].filter(Boolean).join(" "))}</span></b><span>${x.mainStat ? `<em>${esc(x.mainStat.value)}</em>${esc(x.mainStat.label || "")}${x.summary ? " · " + esc(x.summary) : ""}` : esc(x.displayValue || "")}</span></span></div>`; }).join("")}</div>`; };
     const b = col(g.away) + col(g.home);
     if (b) pl = `<div class="pv-pl">${b}</div>`;
   }
@@ -3440,9 +3481,9 @@ function previewHTML(g, sum) {   // v62
     const rank = s => /out|ir|reserve|pup|suspend/i.test(s) ? 0 : /doubt/i.test(s) ? 1 : /quest/i.test(s) ? 2 : 3;
     const col = ab => {
       const T0 = sum.injuries.find(x => x.team?.abbreviation === ab);
-      const list = (T0?.injuries || []).map(x => ({ n: x.athlete?.displayName || "", pos: x.athlete?.position?.abbreviation || "", st: (x.status || x.type?.description || "").replace(/^Injured Reserve$/i, "IR"), what: x.details?.type || "", side: x.details?.side && !/not/i.test(x.details.side) ? x.details.side : "" }))
+      const list = (T0?.injuries || []).map(x => ({ id: x.athlete?.id ? String(x.athlete.id) : "", n: x.athlete?.displayName || "", pos: x.athlete?.position?.abbreviation || "", st: (x.status || x.type?.description || "").replace(/^Injured Reserve$/i, "IR"), what: x.details?.type || "", side: x.details?.side && !/not/i.test(x.details.side) ? x.details.side : "" }))
         .filter(x => x.n && !/^active$/i.test(x.st)).sort((a, b) => rank(a.st) - rank(b.st));
-      return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))} <span style="margin-left:auto">${list.length || ""}</span></div>${list.length ? `<ul class="inj pv-inj">${list.map(x => `<li><b>${esc(x.n)}</b><i>${esc([x.pos, [x.side, x.what].filter(Boolean).join(" ")].filter(Boolean).join(" · "))}</i><span class="st ${["out", "dbt", "q", "q"][rank(x.st)]}">${esc(x.st)}</span></li>`).join("")}</ul>` : `<p class="gc-note" style="margin:4px 0 0">Nobody listed</p>`}</div>`;
+      return `<div><div class="who">${mark(ab, "mini")}${esc(dispName(ab))} <span style="margin-left:auto">${list.length || ""}</span></div>${list.length ? `<ul class="inj pv-inj">${list.map(x => `<li ${x.id ? `data-plid="${esc(x.id)}" data-pname="${esc(x.n)}" title="Player card"` : ""}><b>${esc(x.n)}</b><i>${esc([x.pos, [x.side, x.what].filter(Boolean).join(" ")].filter(Boolean).join(" · "))}</i><span class="st ${["out", "dbt", "q", "q"][rank(x.st)]}">${esc(x.st)}</span></li>`).join("")}</ul>` : `<p class="gc-note" style="margin:4px 0 0">Nobody listed</p>`}</div>`;
     };
     inj = `<div class="gc-lead">${col(g.away)}${col(g.home)}</div>`;
   }
@@ -3664,7 +3705,7 @@ const SNS = p => `https://site.web.api.espn.com/apis/site/v2/sports/${LG.path}/$
 const SNHS = id => `https://a.espncdn.com/i/headshots/${LG.key === "cfb" ? "nfl" : "nfl"}/players/full/${id}.png`;
 const SN = { sea:"cur", sch:{}, stand:{}, byt:{}, roster:{}, lead:{}, leadCat:"pyds", rtab:"passing",
   rsort:{}, lgv:{sort:"pct",dir:-1,f:"div"}, split:null, on:null, onKey:"", logAll:false, busy:{}, chart:null, autoRouted:false };
-const SP = { id:null, mode:"l10", gl:{}, nm:{} };
+const SP = { id:null, pid:null, mode:"l10", gl:{}, nm:{}, bio:{}, ov:{}, fx:{}, fxv:"pts" };   // v71: bio, season splits and fantasy per player
 
 const snEl = id => document.getElementById(id);
 const snY = () => (SN.sea === "prev" ? snSeason() - 1 : snSeason());
@@ -4168,15 +4209,65 @@ function snLog() {
      ${rows || `<tr><td colspan="5" class="empty">No games in this split.</td></tr>`}</table></div>${more}`, "", done.length ? "newest first" : "upcoming");
 }
 
-/* ---------- player pop-up ---------- */
-function snOpenPlayer(id) {
+/* ---------- player pop-up (v71: one card for every player on the site) ----------
+   Opened by any element with data-plid (ESPN athlete id); the fantasy roster, tickers and chips route in through openPlayer()
+   with the Sleeper id, which the players cache maps to the ESPN id. NFL cards add fantasy: this season week by week in his
+   league's scoring, projections for the rest of the season, and who owns him in the Trend League. Every card has Search X. */
+function snOpenPlayer(id, pid) {
   if (!id) return;
-  SP.id = String(id); SP.mode = "l10";
+  SP.id = String(id); SP.mode = "l10"; SP.fxv = "pts";
+  SP.pid = pid || slByEspn(SP.id);
   snEl("snPmod").hidden = false; snEl("snPmod").querySelector(".sheet").scrollTop = 0;
   snPlRender();
-  snLoadGL(SP.id, snY()).then(g => { if (g && !g.rows.length && snY() === snSeason()) return snLoadGL(SP.id, snSeason() - 1); }).then(snPlRender);
+  const me = SP.id, again = () => { if (SP.id === me) snPlRender(); };
+  snLoadBio(me).then(again);
+  snLoadOv(me).then(again);
+  snLoadGL(me, snY()).then(g => { if (g && !g.rows.length && snY() === snSeason()) return snLoadGL(me, snSeason() - 1); }).then(again);
+  if (SP.pid && LG.fantasy) snLoadFx(SP.pid).then(again);
 }
-function snClosePlayer() { SP.id = null; snEl("snPmod").hidden = true; }
+function snClosePlayer() { SP.id = null; SP.pid = null; snEl("snPmod").hidden = true; }
+// Sleeper id for an ESPN athlete, off the trimmed players cache
+function slByEspn(eid) {
+  const ps = S.sleeper.players; if (!ps || !eid) return null;
+  if (!S.sleeper.byEspn) { S.sleeper.byEspn = {}; for (const [pid, p] of Object.entries(ps)) if (p[3]) S.sleeper.byEspn[p[3]] = pid; }
+  return S.sleeper.byEspn[String(eid)] || null;
+}
+function snLoadBio(id) {
+  const k = `${id}|${LG.key}`;
+  if (SP.bio[k]) return Promise.resolve(SP.bio[k]);
+  return getJSON(SNW(`athletes/${id}`)).then(x => { SP.bio[k] = x?.athlete || x || {}; return SP.bio[k]; }).catch(() => { SP.bio[k] = {}; return SP.bio[k]; });
+}
+function snLoadOv(id) {
+  const k = `${id}|${LG.key}`;
+  if (SP.ov[k]) return Promise.resolve(SP.ov[k]);
+  return getJSON(SNW(`athletes/${id}/overview`)).then(x => { SP.ov[k] = { st: x?.statistics || null, next: x?.nextGame || null }; return SP.ov[k]; }).catch(() => { SP.ov[k] = { st: null }; return SP.ov[k]; });
+}
+// Sleeper: this season's weekly stat lines and weekly projections for one player
+function snLoadFx(pid) {
+  if (SP.fx[pid]) return Promise.resolve(SP.fx[pid]);
+  const sl = S.sleeper, y = sl.season || S.season || new Date().getFullYear();
+  const wk = o => { const m = {}; if (!o) return m; const arr = Array.isArray(o) ? o : Object.values(o); for (const r of arr) { if (r && r.week != null && r.stats) m[+r.week] = r; } if (!Object.keys(m).length && o && !Array.isArray(o)) for (const [w, r] of Object.entries(o)) if (r && r.stats) m[+w] = r; return m; };
+  return Promise.all([
+    getJSON(`https://api.sleeper.com/stats/nfl/player/${pid}?season_type=regular&season=${y}&grouping=week`).catch(() => null),
+    getJSON(`https://api.sleeper.com/projections/nfl/player/${pid}?season_type=regular&season=${y}&grouping=week`).catch(() => null),
+  ]).then(([st, pj]) => { SP.fx[pid] = { st: wk(st), pj: wk(pj), y, ok: !!(st || pj) }; return SP.fx[pid]; });
+}
+// points in his league's scoring; falls back to Sleeper's own PPR/half/standard total when the league settings are not loaded yet
+function fxPts(pid, stats) {
+  if (!stats) return null;
+  const sl = S.sleeper;
+  if (sl.league?.scoring_settings) return breakdownFrom(pid, stats).reduce((a, r) => a + r.pts, 0);
+  const v = stats[sl.scoringKey || "pts_ppr"] ?? stats.pts_ppr ?? stats.pts_half_ppr ?? stats.pts_std;
+  return v == null ? null : +v;
+}
+function fxOwner(pid) {
+  const sl = S.sleeper; if (!sl.rosters) return null;
+  const r = sl.rosters.find(x => (x.players || []).includes(pid)); if (!r) return { who: "Free agent", mine: false };
+  if (sl.mine && r.roster_id === sl.mine.roster_id) return { who: "Your roster", mine: true };
+  const u = (sl.users || []).find(x => x.user_id === r.owner_id);
+  const nm = u?.metadata?.team_name || u?.display_name || "Another team";
+  return { who: nm, opp: sl.oppM && r.roster_id === sl.oppM.roster_id };
+}
 function snLoadGL(id, y) {
   const k = `${id}|${y}|${LG.key}`;
   if (SP.gl[k]) return Promise.resolve(SP.gl[k]);
@@ -4203,17 +4294,83 @@ function snPlInfo(id) {
   Object.values(SN.lead).forEach(r => { if (!r?.list) return; r.list.forEach(p => { if (p.id === id && !hit) hit = { name:p.name, pos:p.pos, ab:p.ab }; }); });
   return hit || {};
 }
+// this player's line in the game center's box score, if the card was opened from a game
+function snPlInGame(id) {
+  const bp = GC.sum?.boxscore?.players; if (!bp || !GC.g) return "";
+  const out = [];
+  for (const P of bp) for (const t of P.statistics || []) for (const a of t.athletes || []) if (String(a.athlete?.id) === String(id) && a.stats?.length) {
+    const lab = t.labels || [], txt = a.stats.map((v, i) => `${v} ${lab[i] || ""}`.trim()).filter(x => !/^0\b/.test(x)).slice(0, 5).join(" · ");
+    if (txt) out.push(`<span><i>${esc(t.text || t.name)}</i>${esc(txt)}</span>`);
+  }
+  if (!out.length) return "";
+  const g = GC.g;
+  return `<div class="tmc"><h3>${g.live ? "In this game" : g.state === "post" ? "In the game" : "This game"}<small>${esc(g.away)} ${g.state === "pre" ? "at" : g.as + " · " + g.home + " " + g.hs}${g.state === "pre" ? " " + esc(g.home) : ""}</small></h3><div class="plg">${out.join("")}</div></div>`;
+}
+function snFantasy(pid, name) {
+  const sl = S.sleeper, fx = SP.fx[pid];
+  const head = (body, note) => `<div class="tmc fxp"><h3>Fantasy · ${esc(sl.league?.name || "Trend League")}${note ? `<small>${note}</small>` : ""}</h3>${body}</div>`;
+  if (!fx) return head(`<div class="empty">Loading fantasy numbers</div>`);
+  if (!fx.ok) return head(`<div class="empty">Sleeper has no numbers for ${esc(name)} this season.</div>`);
+  const cur = fxWeek() || sl.week || 1, maxW = WKMAX(), owner = fxOwner(pid), p = sl.players?.[pid] || [];
+  const weeks = [];
+  let season = 0, rest = 0, thisWk = null, mx = 1;
+  for (let w = 1; w <= maxW; w++) {
+    const st = fx.st[w], pj = fx.pj[w];
+    const act = st ? fxPts(pid, st.stats) : null, pro = pj ? fxPts(pid, pj.stats) : null;
+    let type, v;
+    if (w < cur) { type = act != null ? "done" : "bye"; v = act; if (act != null) season += act; }
+    else if (w === cur) { type = act != null && (act || S.events.some(g => g.live)) ? "now" : pro != null ? "proj" : "bye"; v = type === "now" ? act : pro; if (act != null) season += act; thisWk = { v, type, pro }; if (type === "proj" && pro != null) rest += pro; }
+    else { type = pro != null ? "proj" : "bye"; v = pro; if (pro != null) rest += pro; }
+    if (v != null) mx = Math.max(mx, v);
+    weeks.push({ w, type, v, opp: st?.opponent || pj?.opponent || "" });
+  }
+  const gp = weeks.filter(x => (x.type === "done" || x.type === "now") && x.v != null).length;
+  const fmt = v => v == null ? "–" : (+v).toFixed(1);
+  const tiles = `<div class="fxt">
+    <div><b>${fmt(thisWk?.v)}</b><span>Week ${cur} ${thisWk?.type === "proj" ? "proj" : thisWk?.type === "now" ? "so far" : ""}</span>${thisWk?.type === "now" && thisWk.pro != null ? `<em>proj ${fmt(thisWk.pro)}</em>` : ""}</div>
+    <div><b>${fmt(season)}</b><span>Season</span><em>${gp ? `${fmt(season / gp)} per game · ${gp} played` : "no games yet"}</em></div>
+    <div><b>${fmt(rest)}</b><span>Rest of season</span><em>projected, ${weeks.filter(x => x.type === "proj").length} weeks</em></div>
+    <div><b class="${owner?.mine ? "up" : owner?.opp ? "dn" : ""}" style="font-size:17px">${esc(owner ? owner.who : "–")}</b><span>${owner?.opp ? "This week's opponent" : "Owner"}</span>${p[1] ? `<em>${esc(p[1])} · ${esc(p[2] || "FA")}</em>` : ""}</div>
+  </div>`;
+  const bars = `<div class="fxw">${weeks.map(x => `<div class="wk ${x.type}" title="${esc(`Week ${x.w}${x.opp ? " " + x.opp : ""}: ${x.type === "bye" ? "no game" : fmt(x.v) + (x.type === "proj" ? " projected" : x.type === "now" ? " so far" : "")}`)}"><b>${x.type === "bye" ? "" : fmt(x.v)}</b><i style="height:${x.v == null ? 0 : Math.max(2, x.v / mx * 100)}%"></i><span>${x.w}</span></div>`).join("")}</div>
+    <div class="fxk"><span><i></i>Scored</span><span><i class="nw"></i>This week</span><span><i class="pj"></i>Projected</span><span style="margin-left:auto">${sl.scoringKey === "pts_ppr" ? "PPR" : sl.scoringKey === "pts_half_ppr" ? "Half PPR" : "Standard"}, your league's settings</span></div>`;
+  // this week's scoring line, from the live stat feed when it has him, else the week's stat line
+  let brk = "";
+  const stNow = sl.stats?.[pid] || fx.st[cur]?.stats;
+  if (stNow && sl.league?.scoring_settings) {
+    const rows = breakdownFrom(pid, stNow), sum = rows.reduce((a, r) => a + r.pts, 0), fmtN = v => Number.isInteger(v) ? v : +v.toFixed(1);
+    if (rows.length) brk = `<div class="scroll" style="margin-top:10px"><table class="rs"><tr><th style="text-align:left">Week ${cur} scoring</th><th>Count</th><th>Each</th><th>Pts</th></tr>${rows.map(r => `<tr><td style="text-align:left">${esc(statLabel(r.k))}</td><td>${fmtN(r.v)}</td><td>${r.per > 0 ? "+" : ""}${+r.per.toFixed(3)}</td><td class="${r.pts < 0 ? "L" : ""}">${r.pts > 0 ? "+" : ""}${r.pts.toFixed(2)}</td></tr>`).join("")}<tr><td style="text-align:left"><b>Total</b></td><td></td><td></td><td><b>${sum.toFixed(2)}</b></td></tr></table></div>`;
+  }
+  return head(tiles + bars + brk, `${fx.y} season · ${sl.me?.name ? esc(sl.me.name) : "your team"}`);
+}
 function snPlRender() {
   const id = SP.id; if (!id) return;
   let g = SP.gl[`${id}|${snY()}|${LG.key}`];
   const prevG = SP.gl[`${id}|${snSeason() - 1}|${LG.key}`];
   if (g && !g.rows.length && prevG?.rows.length) g = prevG;
-  const info = snPlInfo(id);
-  const name = info.name || SP.nm[id] || "Player";
-  const tAb = info.ab || g?.team || "";
-  let h = `<div class="pmh"><img class="hs" src="${SNHS(id)}" alt="" onerror="this.style.visibility='hidden'">
-    <div style="min-width:0"><h2>${esc(name)}</h2><div class="sub">${esc(info.pos || "")}${tAb ? ` ${snImg(tAb)}<a data-team="${tAb}">${esc(snName(tAb))}</a>` : ""}</div></div>
-    <button class="btn" type="button" data-plclose style="margin-left:auto">Close</button></div>`;
+  const info = snPlInfo(id), bio = SP.bio[`${id}|${LG.key}`] || {}, ov = SP.ov[`${id}|${LG.key}`];
+  const pid = SP.pid, slp = pid ? S.sleeper.players?.[pid] : null;
+  const name = bio.displayName || bio.fullName || info.name || SP.nm[id] || (slp && slp[0]) || "Player";
+  const tAb = bio.team?.abbreviation || info.ab || g?.team || (slp && toEspn(slp[2])) || "";
+  const pos = bio.position?.abbreviation || info.pos || (slp && slp[1]) || "";
+  const bits = [pos, bio.jersey ? "#" + bio.jersey : "", bio.age ? bio.age + " yrs" : "", [bio.displayHeight, bio.displayWeight].filter(Boolean).join(" "), bio.experience?.years != null ? (bio.experience.years ? bio.experience.years + " yr" + (bio.experience.years === 1 ? "" : "s") : "Rookie") : "", bio.college?.name || bio.college?.shortName || ""].filter(Boolean);
+  const inj = (bio.injuries || [])[0];
+  const injTxt = inj ? `${inj.status || inj.type?.description || ""}${inj.details?.type ? " · " + inj.details.type : ""}${inj.details?.returnDate ? " · back " + inj.details.returnDate : ""}` : (bio.status?.name && !/active/i.test(bio.status.name) ? bio.status.name : "");
+  const xq = encodeURIComponent(name);
+  let h = `<div class="pmh"><img class="hs" src="${bio.headshot?.href || SNHS(id)}" alt="" onerror="this.style.visibility='hidden'">
+    <div style="min-width:0"><h2>${esc(name)}</h2><div class="sub">${tAb ? `${snImg(tAb)}<a data-team="${esc(tAb)}">${esc(snName(tAb))}</a>` : ""}${bits.length ? `<span class="bio">${esc(bits.join(" · "))}</span>` : ""}${injTxt ? `<span class="inj">${esc(injTxt)}</span>` : ""}</div></div>
+    <span class="pmx"><a class="btn" href="https://x.com/search?src=typed_query&q=${xq}" target="_blank" rel="noopener noreferrer" title="Latest posts about ${esc(name)} on X">Search X</a><button class="btn" type="button" data-plclose>Close</button></span></div>`;
+  // this game, when opened from a game center
+  h += snPlInGame(id);
+  // fantasy (NFL, Sleeper knows him)
+  if (LG.fantasy && pid) h += snFantasy(pid, name);
+  // season splits from ESPN
+  if (ov === undefined) h += `<div class="tmc"><h3>Season</h3><div class="empty">Loading the season line</div></div>`;
+  else if (ov?.st?.splits?.length && ov.st.labels?.length) {
+    const lab = ov.st.labels, sp = ov.st.splits.slice(0, 3);
+    h += `<div class="tmc"><h3>Season${ov.st.displayName ? `<small>${esc(ov.st.displayName)}</small>` : ""}</h3><div class="scroll"><table class="rs"><tr><th style="text-align:left"></th>${lab.map(l => `<th style="cursor:default">${esc(l)}</th>`).join("")}</tr>${sp.map(s => `<tr><td style="text-align:left">${esc(s.displayName || "")}</td>${(s.stats || []).map(v => `<td>${esc(v ?? "")}</td>`).join("")}</tr>`).join("")}</table></div></div>`;
+  }
+  // game log
   if (!g) h += `<div class="tmc"><h3>Game log</h3><div class="empty">Loading the game log</div></div>`;
   else if (!g.rows.length) h += `<div class="tmc"><h3>Game log</h3><div class="empty">No regular-season games logged yet.</div></div>`;
   else {
@@ -4221,7 +4378,7 @@ function snPlRender() {
     const num = v => { const n = parseFloat(String(v ?? "").replace(/[^0-9.\-]/g, "")); return isNaN(n) ? 0 : n; };
     const mx = Math.max(1, ...g.rows.map(r => num(r.st[pick])));
     const bars = `<div class="pbars">${g.rows.map(r => { const v = num(r.st[pick]);
-      return `<i data-gid="${r.id}" class="${v ? "p" : "z"}" style="height:${v / mx * 100}%" title="${esc(`${r.at} ${r.opp}: ${v} ${pick}`)}"></i>`; }).join("")}</div>
+      return `<i data-gid="${r.id}" class="${v ? "on" : "zero"}" style="height:${v / mx * 100}%" title="${esc(`${r.at} ${r.opp}: ${v} ${pick}`)}"></i>`; }).join("")}</div>
       <div class="pbk"><span>Week ${g.rows[0].wk || 1}</span><span>${esc(g.labels[g.names.indexOf(pick)] || pick)} per game, tap a bar</span><span>Week ${g.rows[g.rows.length - 1].wk || g.rows.length}</span></div>`;
     const idx = g.names.map((n, i) => i).slice(0, 12);
     const list = SP.mode === "l10" ? g.rows.slice(-10).reverse() : g.rows.slice().reverse();
@@ -4232,6 +4389,27 @@ function snPlRender() {
         <td class="${r.res === "W" ? "W" : r.res === "L" ? "L" : ""}">${esc(`${r.res} ${r.score}`)}</td>${idx.map(i => `<td>${esc(r.st[g.names[i]] ?? "")}</td>`).join("")}</tr>`).join("")}</table></div></div>`;
   }
   snEl("snPmBody").innerHTML = h;
+}
+// v71: player names inside play-by-play text become links, matched against the game's box score
+function plNameMap() {
+  const sum = S.view === "game" && GC.sum ? GC.sum : S.summary, bp = sum?.boxscore?.players;
+  const key = (S.view === "game" ? "g" + GC.id : "h" + (S.featured?.id || "")) + ":" + (bp ? bp.length : 0) + ":" + (bp?.[0]?.statistics?.[0]?.athletes?.length || 0);
+  if (SP.nmap && SP.nmap.key === key) return SP.nmap;
+  const m = new Map(), amb = new Set();
+  const add = (k, id, nm) => { if (!k) return; if (m.has(k) && m.get(k).id !== id) amb.add(k); else m.set(k, { id, nm }); };
+  for (const P of bp || []) for (const t of P.statistics || []) for (const a of t.athletes || []) {
+    const A = a.athlete; if (!A?.id) continue; const id = String(A.id), full = A.displayName || "", short = A.shortName || "";
+    add(full, id, full); add(short, id, full); add(short.replace(/\.\s+/, "."), id, full);
+    const parts = full.split(" "); if (parts.length >= 2) { add(`${parts[0][0]}.${parts.slice(1).join(" ")}`, id, full); add(`${parts[0][0]}. ${parts.slice(1).join(" ")}`, id, full); }
+  }
+  for (const k of amb) m.delete(k);
+  const keys = [...m.keys()].filter(k => k.length > 3).sort((a, b) => b.length - a.length);
+  SP.nmap = { key, m, re: keys.length ? new RegExp("(^|[^A-Za-z.'])(" + keys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")(?![A-Za-z'])", "g") : null };
+  return SP.nmap;
+}
+function linkNames(html) {
+  const nm = plNameMap(); if (!nm.re) return html;
+  return html.replace(nm.re, (all, pre, k) => { const hit = nm.m.get(k); return hit ? `${pre}<span class="pn" data-plid="${hit.id}" data-pname="${esc(hit.nm)}" title="Player card">${k}</span>` : all; });
 }
 
 /* ---------- wiring ---------- */
@@ -4251,7 +4429,7 @@ function snClick(e) {
   if ((b = t.closest("[data-plm]"))) { SP.mode = b.dataset.plm; snPlRender(); return true; }
   if ((b = t.closest("#snPmod [data-team]"))) { const ab = b.dataset.team; snClosePlayer(); openTeam(ab); return true; }
   if ((b = t.closest("#snPmod [data-gid]"))) { const id = b.dataset.gid; snClosePlayer(); openGame(id); return true; }
-  if ((b = t.closest("[data-plid]"))) { const nm = b.querySelector("b"); if (nm) SP.nm[b.dataset.plid] = nm.textContent; snOpenPlayer(b.dataset.plid); return true; }
+  if ((b = t.closest("[data-plid]"))) { const nm = b.dataset.pname || b.querySelector("b")?.textContent; if (nm) SP.nm[b.dataset.plid] = nm; snOpenPlayer(b.dataset.plid); return true; }
   if ((b = t.closest("[data-sea]"))) { SN.sea = b.dataset.sea; SN.split = null; SN.onKey = ""; renderSeason(); return true; }
   if ((b = t.closest("[data-snto]"))) { snGo(b.dataset.snto); return true; }
   if ((b = t.closest("[data-split]"))) { const k = b.dataset.split; SN.split = (k === "all" || SN.split === k) ? null : k; SN.logAll = false; snSplits(); snLog(); if (SN.split && innerWidth < 1180) snScroll("snLog"); return true; }
