@@ -897,9 +897,11 @@
   body.lg-cfb .tm-sch tr.next td, body.lg-cfb .tm-st tr.me td { background: rgba(232,35,42,.14); }
   @media (max-width: 860px) {
     .gc-grid, .tm-grid { grid-template-columns: 1fr; }
-    .gc-top { grid-template-columns: 1fr; gap: 6px; }
-    .gc-team.home { flex-direction: row; text-align: left; }
-    .gc-score { order: 3; justify-content: center; } .gc-team.home { order: 2; }
+    /* v76: phone header reads like the hero, the two teams side by side with the scores under them */
+    .gc-top { grid-template-columns: 1fr 1fr; gap: 10px 8px; }
+    .gc-team { order: 1; padding: 4px 2px; }
+    .gc-team.home { order: 2; flex-direction: row-reverse; text-align: right; }
+    .gc-score { order: 3; grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; justify-items: center; align-items: center; }
     .gc-score .n { font-size: 44px; }
     .gc-nm b { font-size: 20px; } .gc-team .mark { width: 40px; height: 40px; }
     .gc-box, .gc-lead { grid-template-columns: 1fr; }
@@ -910,6 +912,14 @@
   .gc-card .mini img, .tm-st .mini img, .tm-sch .mini img { width: 100%; height: 100%; object-fit: contain; }
   .gc-card .mini.lgo, .tm-st .mini.lgo, .tm-sch .mini.lgo { background: transparent !important; }
   @media (max-width: 640px) {
+    /* v76: tighten the two-up header so both names hold one line on a phone */
+    .gc-team { gap: 8px; }
+    .gc-team .mark { width: 34px; height: 34px; }
+    .gc-nm b { font-size: 17px; }
+    .gc-nm small { font-size: 11px; }
+    .gc-score .n { font-size: 38px; }
+    .gc-st { min-width: 0; }
+    .gc-st .q { font-size: 16px; }
     .tm-st .hm { display: none; }
     .tm-sch td:first-child .wk { display: none; }
     .tm-sch .res { white-space: normal; font-size: 12px; }
