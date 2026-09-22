@@ -730,9 +730,29 @@
   .gc-nm b { font-family: var(--display); font-size: 26px; font-weight: 700; text-transform: uppercase; line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .gc-nm small { font-size: 12px; color: var(--muted); } .gc-nm .poss { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #d8a24a; margin: 0 6px; vertical-align: middle; }
   .gc-nm .rk { font-style: normal; color: var(--muted); font-size: .7em; margin-right: 4px; }
-  .gc-score { display: flex; align-items: center; gap: 18px; font-family: var(--display); }
-  .gc-score .n { font-size: 60px; font-weight: 800; line-height: 1; min-width: 1.3ch; text-align: center; }
-  .gc-score .n.dim { color: var(--ink-2); }
+  /* v78: each score sits against its own team, the way ESPN and the Real app draw it, instead of
+     both numbers parking in the middle of the card miles from the team they belong to. */
+  .gc-side { display: flex; align-items: center; gap: 4px; min-width: 0; font-family: var(--display); }
+  .gc-side.home { flex-direction: row-reverse; }
+  .gc-side .n { font-size: 60px; font-weight: 800; line-height: 1; min-width: 1.3ch; text-align: center; }
+  .gc-side .n.dim { color: var(--ink-2); }
+  /* v78: the game-flow wave. The favourite rides above the line, the other side below, and every
+     play fades out over about three minutes, so a drive shows up as a swell. */
+  .mflow { margin: 0 0 12px; }
+  .mfw { position: relative; height: 124px; border-radius: 10px; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.2)); border: 1px solid var(--line); }
+  .mfw svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .mfw .mfax { stroke: #4a5566; }
+  .mfw .mfdiv { stroke: #2b3241; stroke-dasharray: 3 4; }
+  .mft { position: absolute; left: 9px; display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 1px 3px rgba(0,0,0,.7); pointer-events: none; }
+  .mft .mark { width: 18px; height: 18px; }
+  .mft i { font-style: normal; }
+  .mft.up { top: 7px; } .mft.dn { bottom: 7px; }
+  .mfg { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; border: 2px solid #0a0f17; box-shadow: 0 0 0 1px rgba(255,255,255,.85), 0 0 9px rgba(255,255,255,.3); }
+  .mfx { position: relative; height: 14px; margin-top: 3px; }
+  .mfp { position: absolute; top: 0; transform: translateX(-50%); font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); font-weight: 700; white-space: nowrap; }
+  .mfnote { font-size: 12px; color: var(--ink-2); margin-top: 5px; }
+  .mfnote b { color: var(--ink); font-weight: 600; }
+  @media (max-width: 860px) { .mfw { height: 98px; } .mft { font-size: 12px; } }
   .gc-st { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 120px; text-align: center; }
   .gc-st .q { font-weight: 700; font-size: 18px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
   .gc-st .q.live { color: var(--live); }
@@ -898,11 +918,16 @@
   @media (max-width: 860px) {
     .gc-grid, .tm-grid { grid-template-columns: 1fr; }
     /* v76: phone header reads like the hero, the two teams side by side with the scores under them */
-    .gc-top { grid-template-columns: 1fr 1fr; gap: 10px 8px; }
-    .gc-team { order: 1; padding: 4px 2px; }
-    .gc-team.home { order: 2; flex-direction: row-reverse; text-align: right; }
-    .gc-score { order: 3; grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; justify-items: center; align-items: center; }
-    .gc-score .n { font-size: 44px; }
+    /* v78: each side keeps its own number, now stacked under its own team, with the status on its
+       own row underneath. Side by side at this width the three columns squeezed the names to
+       ellipses, and the old order rules put the away score in front of its own logo. */
+    .gc-top { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .gc-team { padding: 4px 2px; }
+    .gc-team.home { flex-direction: row-reverse; text-align: right; }
+    .gc-side { flex-direction: column; align-items: flex-start; gap: 0; }
+    .gc-side.home { flex-direction: column; align-items: flex-end; }
+    .gc-side .n { font-size: 44px; }
+    .gc-st { order: 3; grid-column: 1 / -1; }
     .gc-nm b { font-size: 20px; } .gc-team .mark { width: 40px; height: 40px; }
     .gc-box, .gc-lead { grid-template-columns: 1fr; }
     .tm-stats { grid-template-columns: repeat(2, 1fr); }
@@ -917,7 +942,7 @@
     .gc-team .mark { width: 34px; height: 34px; }
     .gc-nm b { font-size: 17px; }
     .gc-nm small { font-size: 11px; }
-    .gc-score .n { font-size: 38px; }
+    .gc-side .n { font-size: 34px; }
     .gc-st { min-width: 0; }
     .gc-st .q { font-size: 16px; }
     .tm-st .hm { display: none; }
@@ -3502,6 +3527,77 @@ function renderGCStrip() {
   if (box.dataset.k !== html) { const sl = box.scrollLeft; box.innerHTML = html; box.dataset.k = html; box.scrollLeft = sl; }
   box.hidden = !html;
 }
+/* v78: game flow as a momentum wave, the same strip the other three sites got.
+   Yards, sacks, turnovers and points push the line toward the team that earned them and fade out
+   over about three minutes of game clock, so a drive reads as a swell rather than a step. */
+function gcFlowSecs(p) {
+  const n = p?.period?.number || 1, v = String(p?.clock?.displayValue || "15:00");
+  const q = v.split(":"), left = v.indexOf(":") >= 0 ? (+q[0] || 0) * 60 + (+q[1] || 0) : (+v || 0);
+  const len = n <= 4 ? 900 : 600;
+  return n <= 4 ? (n - 1) * 900 + (900 - left) : 3600 + (n - 5) * 600 + (600 - left);
+}
+function gcFlowEvents(sum, g) {
+  const out = [];
+  const drives = [...(sum?.drives?.previous || []), sum?.drives?.current].filter(Boolean);
+  let pa = 0, ph = 0;
+  for (const d of drives) for (const p of d.plays || []) {
+    const off = d.team?.abbreviation, def = off === g.home ? g.away : off === g.away ? g.home : null;
+    if (!off || !def) continue;
+    const t = gcFlowSecs(p), tag = playTag(p), yds = +p.statYardage || 0;
+    const as = p.awayScore == null ? pa : +p.awayScore, hs = p.homeScore == null ? ph : +p.homeScore;
+    const da = as - pa, dh = hs - ph; pa = as; ph = hs;
+    if (da > 0) out.push({ t, w: 2.2 * da, team: g.away, p, pts: da });
+    if (dh > 0) out.push({ t, w: 2.2 * dh, team: g.home, p, pts: dh });
+    if (/^(INT|FUM)$/.test(tag)) out.push({ t, w: 9, team: def, p });
+    else if (tag === "SACK") out.push({ t, w: 3, team: def, p });
+    else if (tag === "NO GOOD" || tag === "BLOCKED") out.push({ t, w: 3, team: def, p });
+    else if (!/^(KO|TO|XP|PEN|PUNT)$/.test(tag) && yds) out.push({ t, w: Math.min(9, 0.16 * Math.abs(yds)), team: yds > 0 ? off : def, p });
+  }
+  out.sort((a, b) => a.t - b.t);
+  return out;
+}
+function gcWave(g, sum, hc, ac) {
+  const ev = gcFlowEvents(sum, g);
+  if (ev.length < 5) return "";
+  const up = g.home === CFG.fav || g.away === CFG.fav ? CFG.fav : g.home, dn = up === g.home ? g.away : g.home;
+  const cu = up === g.home ? hc : ac, cd = up === g.home ? ac : hc;
+  let endT = 0; for (const e of ev) if (e.t > endT) endT = e.t;
+  endT = Math.max(endT, 600);
+  const W = 1000, H = 100, MID = 50, AMP = 43, N = 340, SIG = 170, step = endT / N;
+  const m = []; let maxA = 0, lo = 0;
+  for (let i = 0; i <= N; i++) {
+    const t = i * step; let v = 0;
+    while (lo < ev.length && ev[lo].t < t - 3 * SIG) lo++;
+    for (let k = lo; k < ev.length && ev[k].t < t + 3 * SIG; k++) { const d = (t - ev[k].t) / SIG; v += (ev[k].team === up ? 1 : -1) * ev[k].w * Math.exp(-d * d); }
+    m.push(v); if (Math.abs(v) > maxA) maxA = Math.abs(v);
+  }
+  maxA = Math.max(maxA, 8);
+  const X = t => t / endT * W, Y = v => MID - v / maxA * AMP;
+  const dd = m.map((v, i) => X(i * step).toFixed(2) + " " + Y(v).toFixed(2));
+  const line = "M" + dd.join("L"), area = "M0 " + MID + "L" + dd.join("L") + "L" + W + " " + MID + "Z";
+  let grid = "", labs = "", q = 0;
+  for (let s0 = 0; s0 < endT - 40; s0 += (s0 < 3600 ? 900 : 600)) {
+    q++;
+    if (s0) grid += `<line class="mfdiv" x1="${X(s0).toFixed(1)}" x2="${X(s0).toFixed(1)}" y1="5" y2="${H - 5}" vector-effect="non-scaling-stroke"/>`;
+    labs += `<span class="mfp" style="left:${((s0 + Math.min(endT, s0 + (s0 < 3600 ? 900 : 600))) / 2 / endT * 100).toFixed(2)}%">${q <= 4 ? ordinal(q) : "OT"}</span>`;
+  }
+  const svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
+    + `<defs><clipPath id="mfT"><rect x="0" y="0" width="${W}" height="${MID}"/></clipPath>`
+    + `<clipPath id="mfB"><rect x="0" y="${MID}" width="${W}" height="${H - MID}"/></clipPath></defs>${grid}`
+    + `<g clip-path="url(#mfT)"><path d="${area}" fill="${cu}" opacity=".4"/><path d="${line}" fill="none" stroke="${cu}" stroke-width="2" vector-effect="non-scaling-stroke"/></g>`
+    + `<g clip-path="url(#mfB)"><path d="${area}" fill="${cd}" opacity=".4"/><path d="${line}" fill="none" stroke="${cd}" stroke-width="2" vector-effect="non-scaling-stroke"/></g>`
+    + `<line class="mfax" x1="0" x2="${W}" y1="${MID}" y2="${MID}" vector-effect="non-scaling-stroke"/></svg>`;
+  const dots = ev.filter(e => e.pts).slice(0, 40).map(e =>
+    `<span class="mfg" style="left:${Math.min(99.5, Math.max(.5, e.t / endT * 100)).toFixed(2)}%;background:${e.team === up ? cu : cd}" title="${esc(ordinal(e.p?.period?.number || 1) + " " + (e.p?.clock?.displayValue || "") + " · " + (e.p?.text || ""))}"></span>`).join("");
+  const chips = `<span class="mft up" style="color:${cu}">${mark(up, "mini")}<i>${esc(up)}</i></span><span class="mft dn" style="color:${cd}">${mark(dn, "mini")}<i>${esc(dn)}</i></span>`;
+  const now = m[m.length - 1], rel = Math.abs(now) / maxA, who = now > 0 ? up : dn;
+  const head = rel < 0.15 ? "Even game" : dispName(who) + (rel > 0.55 ? " running it" : " with the better of it");
+  let yu = 0, yd = 0;
+  for (const e of ev) { if (e.t < endT - 300 || e.pts) continue; const y = +e.p?.statYardage || 0; if (y <= 0) continue; if (e.team === up) yu += y; else yd += y; }
+  const note = `<b>${esc(head)}</b>${g.live ? " right now." : " by the end."} Last five minutes ${esc(up)} ${yu} yards, ${esc(dn)} ${yd}.`;
+  return `<section class="gc-card"><h3>Game flow<small>who has the momentum, dots are scores</small></h3>`
+    + `<div class="mflow"><div class="mfw">${svg}${chips}${dots}</div><div class="mfx">${labs}</div><div class="mfnote">${note}</div></div></section>`;
+}
 // v70: drive list, newest on top; each drive opens into its plays with down and distance, yards and the clock
 function playTag(p) {
   const t = String(p.type?.text || "");
@@ -3559,7 +3655,7 @@ function renderGC() {
     ? `<span class="q live">${g.status === "Halftime" ? "Halftime" : `${ordinal(g.period)} · ${esc(g.clock)}`}</span><span class="dd">${g.dd ? `<b>${esc(g.dd)}</b>${g.spot ? " at " + esc(g.spot) : ""}` : ""}</span>`
     : fin ? `<span class="q">${esc(g.status)}</span>` : `<span class="q">${fmtCT(g.date, { hour: "numeric", minute: "2-digit" })}</span><span class="dd">${esc(fmtCT(g.date, { weekday: "long" }))}${g.spread ? " · " + esc(g.spread) : ""}</span>`;
   const aWin = !pre && g.as > g.hs, hWin = !pre && g.hs > g.as;
-  const top = `<div class="gc-top">${team(g.away, g.awayRec, "away")}<div class="gc-score"><span class="n ${hWin ? "dim" : ""}">${pre ? "" : g.as}</span><span class="gc-st">${st}</span><span class="n ${aWin ? "dim" : ""}">${pre ? "" : g.hs}</span></div>${team(g.home, g.homeRec, "home")}</div>`;
+  const top = `<div class="gc-top"><div class="gc-side away">${team(g.away, g.awayRec, "away")}${pre ? "" : `<span class="n ${hWin ? "dim" : ""}">${g.as}</span>`}</div><span class="gc-st">${st}</span><div class="gc-side home">${team(g.home, g.homeRec, "home")}${pre ? "" : `<span class="n ${aWin ? "dim" : ""}">${g.hs}</span>`}</div></div>`;
   const card = (title, body, note) => body ? `<section class="gc-card"><h3>${title}${note ? `<small>${note}</small>` : ""}</h3>${body}</section>` : "";
   const hdr = sum?.header?.competitions?.[0]?.competitors || [];
   const side = ab => hdr.find(c => c.team?.abbreviation === ab);
@@ -3658,7 +3754,7 @@ function renderGC() {
     card(pre ? "Season leaders" : "Leaders", lead),
     lines,
   ].join("");
-  box.innerHTML = top + `<div class="gc-grid"><div class="gc-col">${left || `<div class="empty">${sum ? "Nothing to show yet" : "Loading the details"}</div>`}</div><div class="gc-col">${right}</div></div>`
+  box.innerHTML = top + gcWave(g, sum, hc, ac) + `<div class="gc-grid"><div class="gc-col">${left || `<div class="empty">${sum ? "Nothing to show yet" : "Loading the details"}</div>`}</div><div class="gc-col">${right}</div></div>`
     + `<p class="gc-note">Tap a team for its schedule, standings and stats.${live ? " Updates every few seconds." : ""}</p>`;
   gcProbBind(g, hc, ac); gcPinCheck();
 }
