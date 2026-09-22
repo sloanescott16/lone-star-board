@@ -744,7 +744,10 @@
   .mfw .mfax { stroke: #4a5566; }
   .mfw .mfdiv { stroke: #2b3241; stroke-dasharray: 3 4; }
   .mft { position: absolute; left: 9px; display: inline-flex; align-items: center; gap: 6px; font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 1px 3px rgba(0,0,0,.7); pointer-events: none; }
-  .mft .mark { width: 18px; height: 18px; }
+  /* v79: mark(ab,"mini") is a bare .mini span; nothing in the sheet gives that class a size, so the
+     logo came through at its natural width and filled the strip. Size it here. */
+  .mfw .mft .mini, .mfw .mft .mark { width: 18px; height: 18px; flex: none; border-radius: 4px; }
+  .mfw .mft .mini img, .mfw .mft .mark img { width: 100%; height: 100%; object-fit: contain; }
   .mft i { font-style: normal; }
   .mft.up { top: 7px; } .mft.dn { bottom: 7px; }
   .mfg { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; border: 2px solid #0a0f17; box-shadow: 0 0 0 1px rgba(255,255,255,.85), 0 0 9px rgba(255,255,255,.3); }
