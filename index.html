@@ -1597,7 +1597,6 @@
           <button class="btn back" id="gcBack" type="button">&#8249; Back</button>
           <span class="gc-kick" id="gcKick">Game center</span>
           <span class="gc-meta" id="gcMeta"></span>
-          <span class="sp"><button class="btn" id="gcFeature" type="button">Feature on Home</button></span>
         </div>
         <div class="gc-pin" id="gcPin"></div>
       </div>
@@ -3647,7 +3646,6 @@ const GCBACK = { home: "Home", scores: "Scoreboard", schedule: "Schedule", seaso
 function renderGC() {
   const g = GC.g, sum = GC.sum, box = el("#gcBody");
   el("#gcBack").innerHTML = "&#8249; Back to " + esc(GCBACK[gcFrom()] || "Home");
-  el("#gcFeature").hidden = !(g && S.events.some(x => x.id === g.id));
   if (!g) { el("#gcKick").textContent = "Game center"; el("#gcMeta").textContent = ""; el("#gcPin").innerHTML = ""; renderGCStrip(); gcPinCheck(); box.innerHTML = `<div class="empty">${GC.err ? "Couldn't load this game. Trying again shortly" : "Loading the game"}</div>`; return; }
   const pre = g.state === "pre", fin = g.state === "post", live = g.live;
   const kick = el("#gcKick"); kick.textContent = live ? "Game center" : fin ? "Game breakdown" : "Preview"; kick.classList.toggle("live", live);
@@ -4012,19 +4010,18 @@ document.addEventListener("click", e => {
   const dh = e.target.closest(".gc-dr > .dr-head"); if (dh) { const li = dh.parentElement, k = li.dataset.drive, on = li.classList.toggle("open"); dh.setAttribute("aria-expanded", on); if (li.classList.contains("cur")) GC.curClosed = !on; else on ? GC.open.add(k) : GC.open.delete(k); return; }
   const pb = e.target.closest("#gcProbSeg button[data-prob]"); if (pb) { if (pb.disabled) return; GC.prob = pb.dataset.prob; store.set("cc-prob", GC.prob); return renderGC(); }
   if (e.target.closest("#tmClose") || e.target === el("#tmodal")) return closeTeam();
-  if (e.target.closest("#gcFeature")) { const id = GC.id; GC.id = null; clearTimeout(GC.timer); location.hash = "#home"; return pickGame(id); }
   const tBtn = e.target.closest(".gc-team[data-team], .tm-st tr[data-team], #standings tr[data-team]"); if (tBtn) return openTeam(tBtn.dataset.team);
   const tRow = e.target.closest(".g .row[data-team]"); if (tRow && e.target.closest(".abbr, .tn")) return openTeam(tRow.dataset.team);
   const tGame = e.target.closest(".tm-sch tr[data-game]"); if (tGame) return openGame(tGame.dataset.game);
   const scard = e.target.closest("#sched .g[data-id]"); if (scard) return openGame(scard.dataset.id);
-  const card = e.target.closest("#slots .g[data-id]"); if (card) return openGame(card.dataset.id);   // v58: home cards open the game center too
+  const card = e.target.closest("#slots .g[data-id]"); if (card) return pickGame(card.dataset.id);   // v80: a home card features that game up top; the hero button opens its game center
   const bcard = e.target.closest("#board .bg[data-id]"); if (bcard) return openGame(bcard.dataset.id);   // v68: so do the scoreboard tiles
   // v60: the featured game opens its game center / preview; its teams open the team pop-up
   const hTeam = e.target.closest("#hero .team[data-team]"); if (hTeam) return openTeam(hTeam.dataset.team);
   if (e.target.closest("#heroGC, #hero .scoreblock") && S.featured) return openGame(S.featured.id);
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!el("#tmodal").hidden) return closeTeam(); if (S.view === "game") return closeGame(); closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#hero .team[data-team]")) openTeam(e.target.dataset.team); if (e.key === "Enter" && e.target.matches("#hero .scoreblock") && S.featured) openGame(S.featured.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#board .bg[data-id]")) openGame(e.target.dataset.id); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!el("#tmodal").hidden) return closeTeam(); if (S.view === "game") return closeGame(); closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) pickGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#hero .team[data-team]")) openTeam(e.target.dataset.team); if (e.key === "Enter" && e.target.matches("#hero .scoreblock") && S.featured) openGame(S.featured.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#board .bg[data-id]")) openGame(e.target.dataset.id); });
 /* v46: full screen is desktop only. iOS and most touch browsers ignore the API,
    so the buttons are removed rather than left on screen doing nothing. */
 (function () {
