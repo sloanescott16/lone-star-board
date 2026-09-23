@@ -1795,10 +1795,12 @@ const store = {
   get(k, d){ try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
   set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
+// v81: it's the Jones and always will be. Whatever ESPN calls the building, the page never shows it
+const JONES = /\b(?:Samsung\s+)?Galaxy\s+Stadium\b|\bAT(?:&|\\u0026|&amp;)T\s+Stadium\b/gi;
 async function getJSON(url) {
   const r = await fetch(url, { cache:"no-store" });
   if (!r.ok) throw new Error(r.status + " " + url);
-  return r.json();
+  return JSON.parse((await r.text()).replace(JONES, "The Jones"));
 }
 
 /* =====================================================================
