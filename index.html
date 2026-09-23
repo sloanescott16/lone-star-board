@@ -3599,7 +3599,7 @@ function gcWave(g, sum, hc, ac) {
   let yu = 0, yd = 0;
   for (const e of ev) { if (e.t < endT - 300 || e.pts) continue; const y = +e.p?.statYardage || 0; if (y <= 0) continue; if (e.team === up) yu += y; else yd += y; }
   const note = `<b>${esc(head)}</b>${g.live ? " right now." : " by the end."} Last five minutes ${esc(up)} ${yu} yards, ${esc(dn)} ${yd}.`;
-  return `<section class="gc-card"><h3>Game flow<small>who has the momentum, dots are scores</small></h3>`
+  return `<section class="gc-card"><h3>Game flow</h3>`
     + `<div class="mflow"><div class="mfw">${svg}${chips}${dots}</div><div class="mfx">${labs}</div><div class="mfnote">${note}</div></div></section>`;
 }
 // v70: drive list, newest on top; each drive opens into its plays with down and distance, yards and the clock
