@@ -1244,8 +1244,8 @@
   #snPmod .fxk i { display: inline-block; width: 10px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; background: var(--accent); }
   #snPmod .fxk i.pj { background: rgba(91,156,255,.12); border: 1px dashed rgba(91,156,255,.8); } #snPmod .fxk i.nw { background: var(--live); }
   body.lg-cfb #snPmod .fxw .wk i, body.lg-cfb #snPmod .fxk i { background: var(--accent); }
-  .pn { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; text-decoration-color: var(--muted); }
-  .pn:hover { color: var(--accent); text-decoration-color: var(--accent); }
+  .pn { cursor: pointer; color: #bcd0f2; }   /* v83: no underline, a quiet blue tint says clickable */
+  .pn:hover { color: var(--accent); }
   .gc-lead .ld[data-plid], .gc-box tr[data-plid], .pv-pl .p[data-plid], .pv-inj li[data-plid] { cursor: pointer; }
   .gc-lead .ld[data-plid]:hover b, .gc-box tr[data-plid]:hover td:first-child, .pv-pl .p[data-plid]:hover b, .pv-inj li[data-plid]:hover b { color: var(--accent); }
   @media (max-width: 640px) {
@@ -4936,18 +4936,27 @@ function snPlRender() {
   }
   snEl("snPmBody").innerHTML = h;
 }
-// v71: player names inside play-by-play text become links, matched against the game's box score
+// v71: player names inside play-by-play text become links. v83: matched accent-blind against every athlete the summary carries
+function plFold(str) { return String(str ?? "").normalize("NFD").replace(/[̀-ͯ]/g, ""); }
 function plNameMap() {
   const sum = S.view === "game" && GC.sum ? GC.sum : S.summary, bp = sum?.boxscore?.players;
-  const key = (S.view === "game" ? "g" + GC.id : "h" + (S.featured?.id || "")) + ":" + (bp ? bp.length : 0) + ":" + (bp?.[0]?.statistics?.[0]?.athletes?.length || 0);
+  const drives = [...(sum?.drives?.previous || []), sum?.drives?.current].filter(Boolean), nPlays = drives.reduce((a, d) => a + (d.plays || []).length, 0);
+  const key = (S.view === "game" ? "g" + GC.id : "h" + (S.featured?.id || "")) + ":" + (bp ? bp.length : 0) + ":" + (bp?.[0]?.statistics?.[0]?.athletes?.length || 0) + ":" + nPlays + ":" + (sum?.rosters?.length || 0);
   if (SP.nmap && SP.nmap.key === key) return SP.nmap;
   const m = new Map(), amb = new Set();
-  const add = (k, id, nm) => { if (!k) return; if (m.has(k) && m.get(k).id !== id) amb.add(k); else m.set(k, { id, nm }); };
-  for (const P of bp || []) for (const t of P.statistics || []) for (const a of t.athletes || []) {
-    const A = a.athlete; if (!A?.id) continue; const id = String(A.id), full = A.displayName || "", short = A.shortName || "";
+  const add = (k, id, nm) => { k = plFold(k); if (!k) return; if (m.has(k) && m.get(k).id !== id) amb.add(k); else m.set(k, { id, nm }); };
+  const learn = A => {
+    if (!A?.id) return; const id = String(A.id), full = A.displayName || A.fullName || "", short = A.shortName || ""; if (!full) return;
     add(full, id, full); add(short, id, full); add(short.replace(/\.\s+/, "."), id, full);
     const parts = full.split(" "); if (parts.length >= 2) { add(`${parts[0][0]}.${parts.slice(1).join(" ")}`, id, full); add(`${parts[0][0]}. ${parts.slice(1).join(" ")}`, id, full); }
-  }
+  };
+  for (const P of bp || []) for (const t of P.statistics || []) for (const a of t.athletes || []) learn(a.athlete);
+  for (const R of sum?.rosters || []) for (const r of R.roster || []) learn(r.athlete || r);
+  for (const d of drives) for (const p of d.plays || []) for (const x of p.participants || []) learn(x.athlete);
+  for (const p of sum?.scoringPlays || []) for (const x of p.participants || []) learn(x.athlete);
+  for (const T of sum?.leaders || []) for (const c of T.leaders || []) for (const x of c.leaders || []) learn(x.athlete);
+  for (const t of sum?.injuries || []) for (const i of t.injuries || []) learn(i.athlete);
+  for (const x of sum?.header?.competitions?.[0]?.status?.featuredAthletes || []) learn(x.athlete);
   for (const k of amb) m.delete(k);
   const keys = [...m.keys()].filter(k => k.length > 3).sort((a, b) => b.length - a.length);
   SP.nmap = { key, m, re: keys.length ? new RegExp("(^|[^A-Za-z.'])(" + keys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")(?![A-Za-z'])", "g") : null };
@@ -4955,7 +4964,15 @@ function plNameMap() {
 }
 function linkNames(html) {
   const nm = plNameMap(); if (!nm.re) return html;
-  return html.replace(nm.re, (all, pre, k) => { const hit = nm.m.get(k); return hit ? `${pre}<span class="pn" data-plid="${hit.id}" data-pname="${esc(hit.nm)}" title="Player card">${k}</span>` : all; });
+  // v83: match on the accent-stripped text, splice the original characters back in
+  const src = String(html ?? ""); let fold = ""; const map = [];
+  for (let i = 0; i < src.length; i++) { const f = src[i].normalize("NFD").replace(/[̀-ͯ]/g, ""); if (!f && /[̀-ͯ]/.test(src[i])) continue; fold += f; for (let q = 0; q < f.length; q++) map.push(i); }
+  map.push(src.length);
+  let out = "", last = 0, mt; const re = new RegExp(nm.re.source, "g");
+  while ((mt = re.exec(fold))) { const hit = nm.m.get(mt[2]); if (!hit) continue;
+    const a = map[mt.index + mt[1].length], b = map[mt.index + mt[0].length];
+    out += src.slice(last, a) + `<span class="pn" data-plid="${hit.id}" data-pname="${esc(hit.nm)}" title="Player card">${src.slice(a, b)}</span>`; last = b; }
+  return out + src.slice(last);
 }
 
 /* ---------- wiring ---------- */
