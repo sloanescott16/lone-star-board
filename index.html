@@ -1897,6 +1897,23 @@
   }
   /* phone guard: a wide sticky strip must not widen the page */
   body .wrap > * { min-width: 0; }
+  /* score slots, v87: digits dead centre in every black slot. The line box is trimmed to cap height and
+     baseline, so centring no longer depends on how each browser reads the font's ascent and descent;
+     padding is even top and bottom and keeps each slot about the size it was. Big scores use
+     proportional digits so a 1 does not carry a tabular gap on its left. */
+  @supports (text-box: trim-both cap alphabetic) {
+    .big, .gc-side .n, .gc-pin .side i, .bg .sc, .fx-score .n, .g .sc, .tw-t b,
+    .linescore td:not(:first-child), .gc-ls td:not(:first-child) { text-box: trim-both cap alphabetic; }
+    .big, .gc-side .n, .gc-pin .side i { padding-top: .19em; padding-bottom: .19em; }
+    body.lg-cfb .big, body.lg-cfb .gc-side .n, body.lg-cfb .gc-pin .side i { padding-top: .17em; padding-bottom: .17em; }
+    .bg .sc, .fx-score .n { padding-top: .14em; padding-bottom: .14em; }
+    body.lg-cfb .bg .sc, body.lg-cfb .fx-score .n { padding-top: .12em; padding-bottom: .12em; }
+    .g .sc { padding-top: .3em; padding-bottom: .3em; }
+    .tw-t b { padding-top: .43em; padding-bottom: .43em; }
+    .linescore td:not(:first-child) { padding-top: .63em; padding-bottom: .63em; vertical-align: middle; }
+    .gc-ls td:not(:first-child) { padding-top: .65em; padding-bottom: .65em; vertical-align: middle; }
+  }
+  .big, .gc-side .n, .gc-pin .side i, .bg .sc, .fx-score .n { font-variant-numeric: proportional-nums; }
   /* ==== SKIN:gameday end ==== */
 </style>
 </head>
