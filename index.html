@@ -756,6 +756,24 @@
   .mfnote { font-size: 12px; color: var(--ink-2); margin-top: 5px; }
   .mfnote b { color: var(--ink); font-weight: 600; }
   @media (max-width: 860px) { .mfw { height: 98px; } .mft { font-size: 12px; } }
+  /* v85: Game flow sits on top of Win probability in the side column, both on one quarter axis laid
+     out from kickoff, and one hover drives both. .mfpl is inset to the Win probability plot area
+     (x 30..592 of 600); the -1px allows for the .mfw border. */
+  .gc-card.mfcard { position: relative; z-index: 2; }
+  .mfcard .mflow { margin: 0; position: relative; }
+  .mfpl { position: absolute; top: 0; bottom: 0; left: calc(5% - .9px); right: calc(1.3333% - .97px); }
+  .mfx { margin-left: 5%; margin-right: 1.3333%; }
+  .mfp.fut { opacity: .45; }
+  .mfnow { position: absolute; top: 6px; bottom: 6px; width: 0; border-left: 1px dashed rgba(255,255,255,.35); pointer-events: none; }
+  .mfw, .gc-prob svg { touch-action: pan-y; }
+  .mfcur { position: absolute; top: 4px; bottom: 4px; width: 0; border-left: 1px solid rgba(255,255,255,.5); pointer-events: none; display: none; z-index: 2; }
+  .mfhd { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; border: 2px solid #fff; pointer-events: none; display: none; z-index: 3; }
+  .gc-prob .tip, .mftip { white-space: normal; width: max-content; max-width: 250px; line-height: 1.35; }
+  .mftip { transform: none; z-index: 6; }
+  .mftip > b { display: block; font-family: var(--display); font-size: 14px; letter-spacing: .04em; }
+  .gc-prob .tip .sc, .mftip .sc { display: block; font-weight: 700; font-size: 12px; margin: 2px 0; letter-spacing: .02em; color: var(--ink); }
+  .gc-prob .tip .sc i, .mftip .sc i { font-style: normal; color: var(--muted); margin: 0 3px; }
+  .gc-prob .tip .pl, .mftip .pl { display: block; color: var(--ink-2); font-size: 11.5px; }
   .gc-st { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 120px; text-align: center; }
   .gc-st .q { font-weight: 700; font-size: 18px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
   .gc-st .q.live { color: var(--live); }
@@ -2564,9 +2582,12 @@ function wpTrack(sum, g, wp, maxPts) {
   const keep = (_, i) => i % step === 0 || i === raw.length - 1;
   const series = raw.filter(keep);
   // where each play sits in game time, so the line only reaches the right edge when the game is actually over
-  const periodOf = {}, clockOf = {}, scoreOf = {};
-  for (const d of [...(sum?.drives?.previous||[]), sum?.drives?.current].filter(Boolean)) for (const p of d.plays||[]) { periodOf[p.id] = p.period?.number; clockOf[p.id] = p.clock?.displayValue ?? p.clock?.value; if (p.homeScore != null) scoreOf[p.id] = (+p.homeScore || 0) - (+p.awayScore || 0); }
+  const periodOf = {}, clockOf = {}, scoreOf = {}, playOf = {};
+  for (const d of [...(sum?.drives?.previous||[]), sum?.drives?.current].filter(Boolean)) for (const p of d.plays||[]) { playOf[p.id] = p; periodOf[p.id] = p.period?.number; clockOf[p.id] = p.clock?.displayValue ?? p.clock?.value; if (p.homeScore != null) scoreOf[p.id] = (+p.homeScore || 0) - (+p.awayScore || 0); }
   const kept = wp.filter(keep);
+  let sa = 0, sh = 0;   // v85: the score after each kept play, and the play itself, for the hover
+  const score = kept.map(x => { const p = playOf[x.playId]; if (p && p.homeScore != null) { sa = +p.awayScore || 0; sh = +p.homeScore || 0; } return [sa, sh]; });
+  const plays = kept.map(x => playOf[x.playId] || null);
   let mg = 0; const margin = kept.map(x => { if (scoreOf[x.playId] != null) mg = scoreOf[x.playId]; return mg; });   // v70: home margin at each point, for the cover chart and the tooltip
   const periods = kept.map(x => periodOf[x.playId] || 0);
   const maxP = Math.max(4, g.period || 0, ...periods);
@@ -2581,7 +2602,7 @@ function wpTrack(sum, g, wp, maxPts) {
   for (let i = 0; i < fr.length; i++) if (fr[i] == null) { let a = i-1; while (a >= 0 && fr[a] == null) a--; let b = i+1; while (b < fr.length && fr[b] == null) b++; const av = a >= 0 ? fr[a] : 0, bv = b < fr.length ? fr[b] : (g.state === "post" ? 1 : (g.period ? (g.period - 1 + (1 - Math.min(1, (secs(g.clock) ?? 0)/(g.period > 4 ? 600 : 900))))/maxP : av)); fr[i] = av + (bv - av) * ((i - a) / (b - a)); }
   for (let i = 1; i < fr.length; i++) if (fr[i] < fr[i-1]) fr[i] = fr[i-1];
   if (g.state === "post") fr[fr.length-1] = 1;
-  return { series, fr, periods, maxP, step, margin };
+  return { series, fr, periods, maxP, step, margin, score, plays };
 }
 function renderWP(g) {
   const sum = S.summary, box = el("#wpChart");
@@ -3465,7 +3486,7 @@ function gcProb(wpl, g, hc, ac, sum) {
   let heat = "";
   for (let i = 0; i < n - 1; i++) { const v = series[i], w = Math.max(0.6, x(i + 1) - x(i)); heat += `<rect x="${x(i).toFixed(1)}" y="${plotB + 3}" width="${w.toFixed(1)}" height="${strip}" fill="${v >= 50 ? hc : ac}" fill-opacity="${(Math.min(1, Math.abs(v - 50) / 35) * 0.9 + 0.08).toFixed(2)}"/>`; }
   const last = series[n - 1], lc = last >= 50 ? hc : ac;
-  GC.pts = { W, H, xs: series.map((_, i) => x(i)), ys: series.map(v => y(v)), win, cover, periods: tr.periods, margin: tr.margin, step: tr.step, mode };
+  GC.pts = { W, H, xs: series.map((_, i) => x(i)), ys: series.map(v => y(v)), win, cover, periods: tr.periods, margin: tr.margin, step: tr.step, mode, px, plotW, maxP, score: tr.score, plays: tr.plays };
   const ax = (ab, top) => { const l = logoOf(ab); return `<span class="ax ${l ? "lgo" : ""}" style="top:${(top / H * 100).toFixed(1)}%;background:${T(ab)[2]}">${l ? `<img src="${esc(l)}" alt="${esc(ab)}" onerror="this.remove()">` : esc(ab)}</span>`; };
   return `<div class="gc-prob">${ax(g.home, y(100))}${ax(g.away, y(0))}
     <svg class="gc-spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="${mode === "cover" ? "Cover" : "Win"} probability through the game">
@@ -3487,19 +3508,73 @@ function gcProb(wpl, g, hc, ac, sum) {
     <line id="gcPX" x1="0" x2="0" y1="${py}" y2="${plotB}" stroke="#b7c0ce" style="display:none"/><circle id="gcPDot" r="4" fill="#eef2f7" style="display:none"/>
     <rect id="gcPHit" x="0" y="0" width="${W}" height="${H}" fill="transparent"/></svg><div class="tip" id="gcPTip"></div></div>`;
 }
-function gcProbBind(g, hc, ac) {
-  const svg = el("#gcBody .gc-prob svg"), hit = el("#gcPHit"), tip = el("#gcPTip"), xl = el("#gcPX"), dot = el("#gcPDot"), P = GC.pts;
-  if (!svg || !hit || !P) return;
-  hit.onmousemove = e => {
-    const r = svg.getBoundingClientRect(), rx = (e.clientX - r.left) / r.width * P.W; let i = 0, best = Infinity;
-    P.xs.forEach((xv, k) => { const dd = Math.abs(xv - rx); if (dd < best) { best = dd; i = k; } });
-    xl.setAttribute("x1", P.xs[i]); xl.setAttribute("x2", P.xs[i]); xl.style.display = ""; dot.setAttribute("cx", P.xs[i]); dot.setAttribute("cy", P.ys[i]); dot.style.display = "";
-    tip.style.display = "block"; tip.style.left = (P.xs[i] / P.W * r.width) + "px"; tip.style.top = (P.ys[i] / P.H * r.height) + "px";
-    const s = P.mode === "cover" ? P.cover : P.win, m = P.margin[i] || 0;
-    tip.innerHTML = `<b style="color:${hc}">${esc(g.home)} ${Math.round(s[i])}%</b> · <b style="color:${ac}">${esc(g.away)} ${Math.round(100 - s[i])}%</b>${P.periods[i] ? " · " + ordinal(P.periods[i]) : ""} · ${m ? `${esc(m > 0 ? g.home : g.away)} by ${Math.abs(m)}` : "tied"}`;
-  };
-  hit.onmouseleave = () => { xl.style.display = "none"; dot.style.display = "none"; tip.style.display = "none"; };
+function gcProbBind(g, hc, ac) {   // v85: the hover itself lives in gcHover, shared with Game flow
+  if (GC.pts) Object.assign(GC.pts, { g, hc, ac });
 }
+/* v85: one hover for Game flow and Win probability. The chart under the pointer snaps to its
+   nearest play and shows the tip (score after the play, the clock, the play); the other chart
+   shows a guide line and a dot at the same moment. Both sit on the same quarter axis. */
+function gcScoreLine(g, sc) { return sc ? `<span class="sc">${esc(g.away)} ${sc[0]}<i>·</i>${esc(g.home)} ${sc[1]}</span>` : ""; }
+function gcPlayLine(p) {
+  if (!p) return `<span class="pl">Kickoff</span>`;
+  const t = String(p.text || p.type?.text || ""), c = `${ordinal(p.period?.number)} ${p.clock?.displayValue || ""}`.trim();
+  return `<span class="pl">${esc(c)}${c ? " · " : ""}${esc(t.length > 110 ? t.slice(0, 107) + "..." : t)}</span>`;
+}
+function gcTipPlace(tip, cx, w, lo) {   // keep the tip inside its card
+  const tw = tip.offsetWidth || 200;
+  return Math.max(lo ? tw / 2 : 0, Math.min(w - (lo ? tw / 2 : tw), lo ? cx : cx - tw / 2));
+}
+function wpShow(u, withTip) {
+  const P = GC.pts, svg = el("#gcBody .gc-prob svg"), xl = el("#gcPX"), dot = el("#gcPDot"), tip = el("#gcPTip");
+  if (u == null || !P || !svg || !xl || !dot || !P.g) { if (xl) xl.style.display = "none"; if (dot) dot.style.display = "none"; if (tip) tip.style.display = "none"; return null; }
+  const sx = P.px + Math.min(P.maxP, Math.max(0, u)) / P.maxP * P.plotW;
+  let i = 0; P.xs.forEach((v, k) => { if (Math.abs(v - sx) < Math.abs(P.xs[i] - sx)) i = k; });
+  xl.setAttribute("x1", P.xs[i]); xl.setAttribute("x2", P.xs[i]); xl.style.display = ""; dot.setAttribute("cx", P.xs[i]); dot.setAttribute("cy", P.ys[i]); dot.style.display = "";
+  if (tip) {
+    if (withTip) {
+      const g = P.g, s = P.mode === "cover" ? P.cover : P.win, r = svg.getBoundingClientRect();
+      tip.innerHTML = `<b style="color:${P.hc}">${esc(g.home)} ${Math.round(s[i])}%</b> · <b style="color:${P.ac}">${esc(g.away)} ${Math.round(100 - s[i])}%</b>${P.mode === "cover" ? " to cover" : ""}${gcScoreLine(g, P.score?.[i])}${gcPlayLine(P.plays?.[i])}`;
+      tip.style.display = "block";
+      tip.style.left = gcTipPlace(tip, P.xs[i] / P.W * r.width, r.width, true) + "px"; tip.style.top = (P.ys[i] / P.H * r.height) + "px";
+    } else tip.style.display = "none";
+  }
+  return (P.xs[i] - P.px) / P.plotW * P.maxP;
+}
+function mfShow(u, withTip) {
+  const M = GC.mf, pl = el("#gcBody .mfpl"), cur = el("#mfcur"), hd = el("#mfhd"), tip = el("#mftip");
+  if (u == null || !M || !pl || !cur || !hd) { if (cur) cur.style.display = "none"; if (hd) hd.style.display = "none"; if (tip) tip.style.display = "none"; return null; }
+  let best = M.plays[0];
+  for (const q of M.plays) if (Math.abs(q.u - u) < Math.abs(best.u - u)) best = q;
+  const x = Math.min(best.u, M.endU), v = M.m[Math.min(M.m.length - 1, Math.round(x / M.step))] || 0;
+  const lp = (x / M.maxP * 100).toFixed(2) + "%";
+  cur.style.display = "block"; cur.style.left = lp;
+  hd.style.display = "block"; hd.style.left = lp; hd.style.top = ((M.MID - v / M.maxA * M.AMP) / M.H * 100).toFixed(2) + "%"; hd.style.background = v >= 0 ? M.cu : M.cd;
+  if (tip) {
+    if (withTip) {
+      const fw = pl.closest(".mflow"), wr = fw.getBoundingClientRect(), pr = pl.getBoundingClientRect(), mw = pl.parentNode.getBoundingClientRect();
+      const lean = Math.abs(v) / M.maxA < 0.15 ? "Even" : dispName(v > 0 ? M.up : M.dn) + " pushing";
+      tip.innerHTML = `<b style="color:${Math.abs(v) / M.maxA < 0.15 ? "var(--ink)" : v > 0 ? M.cu : M.cd}">${esc(lean)}</b>${gcScoreLine(M.g, best.sc)}${gcPlayLine(best.p)}`;
+      tip.style.display = "block";
+      tip.style.left = gcTipPlace(tip, pr.left - wr.left + x / M.maxP * pr.width, wr.width, false) + "px"; tip.style.top = (mw.bottom - wr.top + 4) + "px";
+    } else tip.style.display = "none";
+  }
+  return x;
+}
+function gcHover(ev) {
+  const t = ev.target, P = GC.pts, M = GC.mf;
+  const wc = t && t.closest && t.closest("#gcBody .gc-prob"), fw = t && t.closest && t.closest("#gcBody .mfw");
+  if (wc && P) {
+    const r = wc.querySelector("svg").getBoundingClientRect(), sx = (ev.clientX - r.left) * P.W / r.width;
+    mfShow(wpShow(Math.max(0, (sx - P.px) / P.plotW * P.maxP), true), false);
+  } else if (fw && M) {
+    const r = fw.querySelector(".mfpl").getBoundingClientRect();
+    wpShow(mfShow(Math.max(0, (ev.clientX - r.left) / r.width * M.maxP), true), false);
+  } else { if (GC.lh) { wpShow(null); mfShow(null); GC.lh = null; } return; }
+  GC.lh = { x: ev.clientX, y: ev.clientY };
+}
+document.addEventListener("pointermove", e => { if (S.view === "game") gcHover(e); }, { passive: true });
+document.addEventListener("pointerdown", e => { if (S.view === "game") gcHover(e); }, { passive: true });
+document.documentElement.addEventListener("mouseleave", () => { if (GC.lh) { wpShow(null); mfShow(null); GC.lh = null; } });
 function fieldSpot(txt, g) {   // "DET 40" -> yards from the away team's own goal line
   const m = String(txt || "").match(/\b([A-Z]{2,4})\s+(\d+)/);
   if (!m) return null;
@@ -3617,6 +3692,17 @@ function gcFlowSecs(p) {
   const len = n <= 4 ? 900 : 600;
   return n <= 4 ? (n - 1) * 900 + (900 - left) : 3600 + (n - 5) * 600 + (600 - left);
 }
+/* v85: position on the same quarter axis as Win probability: quarter number minus one plus the share
+   of that quarter already played (overtime periods are 10 minutes but take a full quarter's width) */
+function gcFlowU(p) {
+  const n = p?.period?.number || 1, len = n <= 4 ? 900 : 600, c = p?.clock;
+  const v = c?.displayValue != null ? String(c.displayValue) : null;
+  let left = len;
+  if (v != null && v.indexOf(":") >= 0) { const q = v.split(":"); left = (+q[0] || 0) * 60 + (+q[1] || 0); }
+  else if (v != null && v !== "" && !isNaN(+v)) left = +v;
+  else if (typeof c?.value === "number") left = c.value;
+  return n - 1 + Math.min(1, Math.max(0, 1 - left / len));
+}
 function gcFlowEvents(sum, g) {
   const out = [];
   const drives = [...(sum?.drives?.previous || []), sum?.drives?.current].filter(Boolean);
@@ -3624,7 +3710,7 @@ function gcFlowEvents(sum, g) {
   for (const d of drives) for (const p of d.plays || []) {
     const off = d.team?.abbreviation, def = off === g.home ? g.away : off === g.away ? g.home : null;
     if (!off || !def) continue;
-    const t = gcFlowSecs(p), tag = playTag(p), yds = +p.statYardage || 0;
+    const t = gcFlowU(p), tag = playTag(p), yds = +p.statYardage || 0;
     const as = p.awayScore == null ? pa : +p.awayScore, hs = p.homeScore == null ? ph : +p.homeScore;
     const da = as - pa, dh = hs - ph; pa = as; ph = hs;
     if (da > 0) out.push({ t, w: 2.2 * da, team: g.away, p, pts: da });
@@ -3638,13 +3724,24 @@ function gcFlowEvents(sum, g) {
   return out;
 }
 function gcWave(g, sum, hc, ac) {
+  GC.mf = null;
   const ev = gcFlowEvents(sum, g);
   if (ev.length < 5) return "";
   const up = g.home === CFG.fav || g.away === CFG.fav ? CFG.fav : g.home, dn = up === g.home ? g.away : g.home;
   const cu = up === g.home ? hc : ac, cd = up === g.home ? ac : hc;
-  let endT = 0; for (const e of ev) if (e.t > endT) endT = e.t;
-  endT = Math.max(endT, 600);
-  const W = 1000, H = 100, MID = 50, AMP = 43, N = 340, SIG = 170, step = endT / N;
+  // v85: every play on the quarter axis with the score after it, for the end of the line and the hover
+  const plays = [{ u: 0, p: null, sc: [0, 0] }];
+  let pa = 0, ph = 0, lastU = 0;
+  for (const d of [...(sum?.drives?.previous || []), sum?.drives?.current].filter(Boolean)) for (const p of d.plays || []) {
+    if (p.awayScore != null) pa = +p.awayScore || 0; if (p.homeScore != null) ph = +p.homeScore || 0;
+    const u = gcFlowU(p); if (u > lastU) lastU = u;
+    plays.push({ u, p, sc: [pa, ph] });
+  }
+  for (const e of ev) if (e.t > lastU) lastU = e.t;
+  const fin = g.state === "post";
+  const maxP = GC.pts?.maxP || Math.max(4, g.period || 0, Math.ceil(lastU - 1e-6));
+  const endU = fin ? maxP : Math.min(maxP, Math.max(lastU, 0.05));
+  const W = 1000, H = 100, MID = 50, AMP = 43, SIG = 170 / 900, N = Math.max(24, Math.round(400 * endU / maxP)), step = endU / N;
   const m = []; let maxA = 0, lo = 0;
   for (let i = 0; i <= N; i++) {
     const t = i * step; let v = 0;
@@ -3653,31 +3750,33 @@ function gcWave(g, sum, hc, ac) {
     m.push(v); if (Math.abs(v) > maxA) maxA = Math.abs(v);
   }
   maxA = Math.max(maxA, 8);
-  const X = t => t / endT * W, Y = v => MID - v / maxA * AMP;
+  const X = u => u / maxP * W, Y = v => MID - v / maxA * AMP;
   const dd = m.map((v, i) => X(i * step).toFixed(2) + " " + Y(v).toFixed(2));
-  const line = "M" + dd.join("L"), area = "M0 " + MID + "L" + dd.join("L") + "L" + W + " " + MID + "Z";
-  let grid = "", labs = "", q = 0;
-  for (let s0 = 0; s0 < endT - 40; s0 += (s0 < 3600 ? 900 : 600)) {
-    q++;
-    if (s0) grid += `<line class="mfdiv" x1="${X(s0).toFixed(1)}" x2="${X(s0).toFixed(1)}" y1="5" y2="${H - 5}" vector-effect="non-scaling-stroke"/>`;
-    labs += `<span class="mfp" style="left:${((s0 + Math.min(endT, s0 + (s0 < 3600 ? 900 : 600))) / 2 / endT * 100).toFixed(2)}%">${q <= 4 ? ordinal(q) : "OT"}</span>`;
+  const line = "M" + dd.join("L"), area = "M0 " + MID + "L" + dd.join("L") + "L" + X(endU).toFixed(2) + " " + MID + "Z";
+  let grid = "", labs = "";
+  const played = Math.ceil(endU - 1e-6);
+  for (let q = 1; q <= maxP; q++) {
+    if (q > 1) grid += `<line class="mfdiv" x1="${X(q - 1).toFixed(1)}" x2="${X(q - 1).toFixed(1)}" y1="5" y2="${H - 5}" vector-effect="non-scaling-stroke"/>`;
+    labs += `<span class="mfp${!fin && q > played ? " fut" : ""}" style="left:${((q - 0.5) / maxP * 100).toFixed(2)}%">${q <= 4 ? ordinal(q) : "OT"}</span>`;
   }
   const svg = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
     + `<defs><clipPath id="mfT"><rect x="0" y="0" width="${W}" height="${MID}"/></clipPath>`
     + `<clipPath id="mfB"><rect x="0" y="${MID}" width="${W}" height="${H - MID}"/></clipPath></defs>${grid}`
+    + `<line class="mfax" x1="0" x2="${W}" y1="${MID}" y2="${MID}" vector-effect="non-scaling-stroke"/>`
     + `<g clip-path="url(#mfT)"><path d="${area}" fill="${cu}" opacity=".4"/><path d="${line}" fill="none" stroke="${cu}" stroke-width="2" vector-effect="non-scaling-stroke"/></g>`
-    + `<g clip-path="url(#mfB)"><path d="${area}" fill="${cd}" opacity=".4"/><path d="${line}" fill="none" stroke="${cd}" stroke-width="2" vector-effect="non-scaling-stroke"/></g>`
-    + `<line class="mfax" x1="0" x2="${W}" y1="${MID}" y2="${MID}" vector-effect="non-scaling-stroke"/></svg>`;
+    + `<g clip-path="url(#mfB)"><path d="${area}" fill="${cd}" opacity=".4"/><path d="${line}" fill="none" stroke="${cd}" stroke-width="2" vector-effect="non-scaling-stroke"/></g></svg>`;
   const dots = ev.filter(e => e.pts).slice(0, 40).map(e =>
-    `<span class="mfg" style="left:${Math.min(99.5, Math.max(.5, e.t / endT * 100)).toFixed(2)}%;background:${e.team === up ? cu : cd}" title="${esc(ordinal(e.p?.period?.number || 1) + " " + (e.p?.clock?.displayValue || "") + " · " + (e.p?.text || ""))}"></span>`).join("");
+    `<span class="mfg" style="left:${Math.min(99.5, Math.max(.5, e.t / maxP * 100)).toFixed(2)}%;background:${e.team === up ? cu : cd}" title="${esc(ordinal(e.p?.period?.number || 1) + " " + (e.p?.clock?.displayValue || "") + " · " + (e.p?.text || ""))}"></span>`).join("");
+  const nowMark = g.live ? `<span class="mfnow" style="left:${(endU / maxP * 100).toFixed(2)}%"></span>` : "";
   const chips = `<span class="mft up" style="color:${cu}">${mark(up, "mini")}<i>${esc(up)}</i></span><span class="mft dn" style="color:${cd}">${mark(dn, "mini")}<i>${esc(dn)}</i></span>`;
+  GC.mf = { maxP, endU, step, m, maxA, up, dn, cu, cd, g, MID, AMP, H, plays: plays.filter(q => q.u <= endU + 1e-9).sort((a, b) => a.u - b.u) };
   const now = m[m.length - 1], rel = Math.abs(now) / maxA, who = now > 0 ? up : dn;
   const head = rel < 0.15 ? "Even game" : dispName(who) + (rel > 0.55 ? " running it" : " with the better of it");
   let yu = 0, yd = 0;
-  for (const e of ev) { if (e.t < endT - 300 || e.pts) continue; const y = +e.p?.statYardage || 0; if (y <= 0) continue; if (e.team === up) yu += y; else yd += y; }
+  for (const e of ev) { if (e.t < endU - 300 / 900 || e.pts) continue; const y = +e.p?.statYardage || 0; if (y <= 0) continue; if (e.team === up) yu += y; else yd += y; }
   const note = `<b>${esc(head)}</b>${g.live ? " right now." : " by the end."} Last five minutes ${esc(up)} ${yu} yards, ${esc(dn)} ${yd}.`;
-  return `<section class="gc-card"><h3>Game flow</h3>`
-    + `<div class="mflow"><div class="mfw">${svg}${chips}${dots}</div><div class="mfx">${labs}</div><div class="mfnote">${note}</div></div></section>`;
+  return `<section class="gc-card mfcard"><h3>Game flow</h3>`
+    + `<div class="mflow"><div class="mfw"><div class="mfpl">${svg}${nowMark}${dots}<span class="mfcur" id="mfcur"></span><span class="mfhd" id="mfhd"></span></div>${chips}</div><div class="mfx">${labs}</div><div class="mfnote">${note}</div><div class="tip mftip" id="mftip"></div></div></section>`;
 }
 // v70: drive list, newest on top; each drive opens into its plays with down and distance, yards and the clock
 function playTag(p) {
@@ -3755,6 +3854,7 @@ function renderGC() {
   if (hp == null && sum?.predictor) { const p = sum.predictor; const h = numOf(p.homeTeam?.gameProjection), a = numOf(p.awayTeam?.gameProjection); if (h || a) { hp = h / ((h + a) || 100) * 100; wpNote = "matchup predictor"; } }
   // v70: logo and number on each side, a Win / Cover switch, the chart with quarter shading; a pregame keeps the predictor bar
   let probCard = "", probTitle = pre ? "Win chances" : "Win probability";
+  GC.pts = null; GC.mf = null;   // v85: rebuilt by gcProb below, read by Game flow and the shared hover
   if (hp != null && !(fin && !wpl?.length)) {
     const chart = gcProb(wpl, g, hc, ac, sum);
     const mode = chart && GC.pts ? GC.pts.mode : "win";
@@ -3829,14 +3929,16 @@ function renderGC() {
     pre ? card("Last five", l5) : "",
   ].join("");
   const right = [
+    gcWave(g, sum, hc, ac),   // v85: Game flow on top of Win probability, same axis, same hover
     probCard,
     card("Team stats", ts),
     card(pre ? "Season leaders" : "Leaders", lead),
     lines,
   ].join("");
-  box.innerHTML = top + gcWave(g, sum, hc, ac) + `<div class="gc-grid"><div class="gc-col">${left || `<div class="empty">${sum ? "Nothing to show yet" : "Loading the details"}</div>`}</div><div class="gc-col">${right}</div></div>`
+  box.innerHTML = top + `<div class="gc-grid"><div class="gc-col">${left || `<div class="empty">${sum ? "Nothing to show yet" : "Loading the details"}</div>`}</div><div class="gc-col">${right}</div></div>`
     + `<p class="gc-note">Tap a team for its schedule, standings and stats.${live ? " Updates every few seconds." : ""}</p>`;
   gcProbBind(g, hc, ac); gcPinCheck();
+  const lh = GC.lh; if (lh && S.view === "game") { const t = document.elementFromPoint(lh.x, lh.y); if (t) gcHover({ target: t, clientX: lh.x, clientY: lh.y }); }   // v85
 }
 
 function previewHTML(g, sum) {   // v62
