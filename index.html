@@ -3742,14 +3742,18 @@ function renderConfPicker() {
 }
 function renderBoard() {
   const live = S.events.filter(g=>g.live).length, fin = S.events.filter(g=>g.state==="post").length;
-  el("#boardSub").textContent = `${S.events.length} games · ${live} live · ${fin} final · ${S.events.length-live-fin} to come`;
+  el("#boardSub").textContent = `${S.events.length} games · ${live} live · ${fin} final · ${S.events.length-live-fin} to come` + (LG.key === "cfb" && S.cf !== "all" ? " · least time left first" : "");
   renderConfPicker();
   // v53: live games only, the Schedule tab has the rest; v70: a game that just ended stays up two minutes with its Final before it clears
   const held = offWeek() ? [] : S.events.filter(g => g.live || (g.state === "post" && S.finishedAt?.[g.id] && Date.now() - S.finishedAt[g.id] < 120000) || onDeck(g));
   // v94: nothing live or due yet, but it's game day: the next kickoff slot goes up so the board is never blank at game time
   if (!offWeek() && !held.length) { const nx = S.events.filter(g => g.state === "pre" && g.date > Date.now()).sort((a, b) => a.date - b.date)[0];
     if (nx && fmtCT(nx.date, { dateStyle: "short" }) === fmtCT(Date.now(), { dateStyle: "short" })) held.push(...S.events.filter(g => g.state === "pre" && +g.date === +nx.date)); }
-  const liveGames = boardFilter(held).map(g => ({ g, w: g.live ? importance(g) : { score: 0, why: [] } })).sort((a, b) => (b.g.live - a.g.live) || ((b.g.state === "post") - (a.g.state === "post")) || b.w.score - a.w.score || a.g.date - b.g.date || favFirst(a.g, b.g) || bestRank(a.g) - bestRank(b.g));
+  // v103: All FBS keeps the importance order; Conference and Top 25 run least time left first, Tech still on top while live
+  const byClock = LG.key === "cfb" && S.cf !== "all";
+  const liveGames = boardFilter(held).map(g => ({ g, w: g.live ? importance(g) : { score: 0, why: [] } })).sort((a, b) => (b.g.live - a.g.live) || ((b.g.state === "post") - (a.g.state === "post"))
+    || (byClock && a.g.live ? favFirst(a.g, b.g) || timeLeft(a.g) - timeLeft(b.g) : 0)
+    || b.w.score - a.w.score || a.g.date - b.g.date || favFirst(a.g, b.g) || bestRank(a.g) - bestRank(b.g));
   const card = x => gameCard(x.g, true, { imp: x.w.score > 0, why: x.w.why });
   const next = S.events.find(g => g.state === "pre");
   const board = el("#board");
@@ -3769,6 +3773,12 @@ function renderBoard() {
   if (S.view === "game") { renderGCStrip(); if (GC.g) { const fresh = S.events.find(x => x.id === GC.g.id); if (fresh) GC.g = fresh; el("#gcPin").innerHTML = GC.g.state === "pre" ? "" : gcPinHTML(GC.g, GC.sum?.drives?.current); } }   // v70: the strip and the pinned score follow every board poll
 }
 
+// v103: seconds of regulation left in a live game; overtime counts as none left, so it leads
+function timeLeft(g) {
+  if (g.period > 4) return -1;
+  const [m, sec] = String(g.clock || "0:00").split(":").map(Number);
+  return Math.max(0, 4 - (g.period || 0)) * 900 + (m || 0) * 60 + (sec || 0);
+}
 // v94/v95: a pregame game within 5 minutes of kickoff, or past it and not yet flipped live, belongs on the board
 function onDeck(g) { return g.state === "pre" && g.date - Date.now() <= 5 * 60e3 && Date.now() - g.date < 3 * 3600e3; }
 function kickLabel(g) { return g.date <= Date.now() ? "Kickoff" : fmtCT(g.date, { hour: "numeric", minute: "2-digit" }); }
