@@ -3554,8 +3554,8 @@ function renderBoard() {
   if (S.view === "game") { renderGCStrip(); if (GC.g) { const fresh = S.events.find(x => x.id === GC.g.id); if (fresh) GC.g = fresh; el("#gcPin").innerHTML = GC.g.state === "pre" ? "" : gcPinHTML(GC.g, GC.sum?.drives?.current); } }   // v70: the strip and the pinned score follow every board poll
 }
 
-// v94: a pregame game within 30 minutes of kickoff, or past it and not yet flipped live, belongs on the board
-function onDeck(g) { return g.state === "pre" && g.date - Date.now() <= 30 * 60e3 && Date.now() - g.date < 3 * 3600e3; }
+// v94/v95: a pregame game within 5 minutes of kickoff, or past it and not yet flipped live, belongs on the board
+function onDeck(g) { return g.state === "pre" && g.date - Date.now() <= 5 * 60e3 && Date.now() - g.date < 3 * 3600e3; }
 function kickLabel(g) { return g.date <= Date.now() ? "Kickoff" : fmtCT(g.date, { hour: "numeric", minute: "2-digit" }); }
 // v53: why a live game matters. Only called for live games, so the treatment disappears at the final whistle.
 function importance(g) {
