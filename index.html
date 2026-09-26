@@ -1914,6 +1914,21 @@
     .gc-ls td:not(:first-child) { padding-top: .65em; padding-bottom: .65em; vertical-align: middle; }
   }
   .big, .gc-side .n, .gc-pin .side i, .bg .sc, .fx-score .n { font-variant-numeric: proportional-nums; }
+
+  /* v88: Texas Tech band, always on (Home, Schedule), sticks out from the plain scarlet clash band */
+  body.lg-cfb .g.ttu, body.lg-cfb #sched .g.ttu.dal, body.lg-cfb #sched .g.ttu:not(.live).dal {
+    border: 2px solid var(--fill);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--fill) 24%, transparent), transparent 70%), radial-gradient(90% 60px at 50% 0, var(--lamp), transparent 100%), linear-gradient(180deg, var(--board), var(--board2));
+    box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 0 22px color-mix(in srgb, var(--fill) 38%, transparent), var(--lift);
+  }
+  body.lg-cfb .g.ttu .clash.ttub {
+    margin: -12px -14px 2px; padding: 8px 14px 9px; border-radius: 6px 6px 0 0;
+    background: linear-gradient(180deg, #000 0 calc(100% - 7px), #fff calc(100% - 7px) calc(100% - 5px), var(--fill) calc(100% - 5px) calc(100% - 3px), #fff calc(100% - 3px) calc(100% - 1px), #000 calc(100% - 1px));
+    color: #fff; font-family: var(--display); font-weight: 400; font-size: 15px; letter-spacing: .08em; text-transform: uppercase;
+  }
+  body.lg-cfb .g.ttu .clash.ttub span { display: inline-flex; align-items: center; gap: 8px; }
+  body.lg-cfb .g.ttu .clash.ttub b { font-family: var(--cond); font-size: 13px; font-weight: 800; letter-spacing: .12em; color: #ff5a5a; white-space: nowrap; }
+  body.lg-cfb .g.ttu .ttmk { width: 22px; height: 22px; flex: none; background: var(--ttmk) center / contain no-repeat; filter: drop-shadow(0 0 1px rgba(255,255,255,.7)); }
   /* ==== SKIN:gameday end ==== */
 </style>
 </head>
@@ -3183,6 +3198,18 @@ function clashHTML(g, f) {
   const lo = Math.min(g.homeRank, g.awayRank), hi = Math.max(g.homeRank, g.awayRank);
   return `<div class="clash"><span>${f.top10 ? "Top 10 clash" : "Top 25 clash"}</span><b>#${lo} v #${hi}</b></div>`;
 }
+// v88: Texas Tech gets its own band on every Saturday card, pregame, live and final; a ranked clash folds into its right side
+const hasFav = g => !!g && (g.home === CFG.fav || g.away === CFG.fav);
+const favFirst = (a, b) => (hasFav(a) ? 0 : 1) - (hasFav(b) ? 0 : 1);
+function ttuMark() {
+  if (document.body.style.getPropertyValue("--ttmk")) return;
+  const src = el(".mk-cfb")?.getAttribute("src"); if (src) document.body.style.setProperty("--ttmk", `url("${src}")`);
+}
+function ttuHTML(g, f) {
+  ttuMark();
+  const lo = f?.clash ? Math.min(g.homeRank, g.awayRank) : 0, hi = f?.clash ? Math.max(g.homeRank, g.awayRank) : 0;
+  return `<div class="clash ttub"><span><i class="ttmk" aria-hidden="true"></i>Red Raiders</span><b>${f?.clash ? `${f.top10 ? "Top 10" : "Top 25"} clash #${lo} v #${hi}` : "Wreck 'Em"}</b></div>`;
+}
 // the week's ranked-v-ranked games in kickoff order, above the home cards, so he knows when to be on the couch
 function renderTopWeek() {
   const box = el("#topWeek"); if (!box) return;
@@ -3198,7 +3225,7 @@ function renderTopWeek() {
 function gameCard(g, big, ex) {
   ex = ex || {};
   const up = g.state === "pre", fin = g.state === "post", isFav = (g.home === CFG.fav || g.away === CFG.fav) && (!big || g.live);
-  const cls = [big ? "bg" : "g", !big && LG.key === "cfb" && g.homeRank && g.awayRank ? "clashg" : "", g.live?"live":"", isFav?"dal":"", ex.imp ? "imp" : "", up?"upcoming":"", fin?"final":"", fin && big ? "held" : "", !big && S.featured && S.featured.id === g.id ? "picked" : ""].join(" ");
+  const cls = [big ? "bg" : "g", !big && LG.key === "cfb" && g.homeRank && g.awayRank ? "clashg" : "", !big && LG.key === "cfb" && hasFav(g) ? "ttu" : "", g.live?"live":"", isFav?"dal":"", ex.imp ? "imp" : "", up?"upcoming":"", fin?"final":"", fin && big ? "held" : "", !big && S.featured && S.featured.id === g.id ? "picked" : ""].join(" ");
   const row = (ab, s, other, rec) => {
     const trail = !up && s < other, win = fin && s > other;
     const rk = ab === g.home ? g.homeRank : g.awayRank, rkh = rk ? `<em class="rk">#${rk}</em>` : "";
@@ -3217,7 +3244,7 @@ function gameCard(g, big, ex) {
   const fun = !big ? cfbFun(g) : null;   // v84
   const rzc = g.rz && g.poss ? chartColor(g.poss) : "";
   const gcT = g.live ? "Open the game center" : fin ? "Open the game breakdown" : "Open the preview";   // v68: board tiles open it too
-  return `<article class="${cls} ${g.rz ? "rz" : ""}" ${rzc ? `style="--rzc:${rzc}"` : ""} data-id="${g.id}" role="button" tabindex="0" title="${big || ex.gc ? gcT : "Show this game up top"}">${clashHTML(g, fun)}${row(g.away,g.as,g.hs,g.awayRec)}${row(g.home,g.hs,g.as,g.homeRec)}${mineRow}${lm}${funTagsHTML(fun)}${foot}</article>`;
+  return `<article class="${cls} ${g.rz ? "rz" : ""}" ${rzc ? `style="--rzc:${rzc}"` : ""} data-id="${g.id}" role="button" tabindex="0" title="${big || ex.gc ? gcT : "Show this game up top"}">${fun && hasFav(g) ? ttuHTML(g, fun) : clashHTML(g, fun)}${row(g.away,g.as,g.hs,g.awayRec)}${row(g.home,g.hs,g.as,g.homeRec)}${mineRow}${lm}${funTagsHTML(fun)}${foot}</article>`;
 }
 
 // home cards: same three filters as the scoreboard, kept separately so the two pages do not yank each other around
@@ -3252,7 +3279,7 @@ function renderSlots() {
   if (byConf) { for (const [id, gs] of confSections(list)) groups.set(confName(id), gs); }
   else for (const g of list) { const k = slotOf(g); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(g); }
   // v70: every block reads in kickoff order, first game to last, rank only breaking ties (ranked-first made the times jump around)
-  if (cfb) for (const gs of groups.values()) gs.sort((a, b) => (a.date - b.date) || (bestRank(a) - bestRank(b)));
+  if (cfb) for (const gs of groups.values()) gs.sort((a, b) => (a.date - b.date) || favFirst(a, b) || (bestRank(a) - bestRank(b)));   // v88: fav first at its kickoff
   el("#slots").innerHTML = [...groups].map(([name, gs]) => `
     <section class="slot">
       <div class="slot-head"><h2>${esc(name)}</h2><span class="sub">${byConf ? "" : fmtCT(gs[0].date,{weekday:"short",month:"short",day:"numeric"}) + " · "}${gs.length} game${gs.length>1?'s':''}</span></div>
@@ -3580,7 +3607,7 @@ function renderSchedule() {
   const card = (g, seed) => gameCard(g, false, { imp: g.live && importance(g).score > 0, seed, gc: true });
   const sec = (name, sub, gs, seed) => `<section class="slot"><div class="slot-head"><h2>${esc(name)}</h2><span class="sub">${sub}</span></div><div class="games">${gs.map(g => card(g, seed)).join("")}</div></section>`;
   const cnt = n => `${n} game${n === 1 ? "" : "s"}`;
-  const byTime = (a, b) => a.date - b.date || (bestRank(a) - bestRank(b));
+  const byTime = (a, b) => a.date - b.date || favFirst(a, b) || (bestRank(a) - bestRank(b));   // v88: fav first at its kickoff
   let html = "", shown = list.length;
   if (!list.length) html = `<div class="empty">${S.events.length ? "No games on this day" : "No games scheduled"}</div>`;
   else if (S.ssort === "league") {
