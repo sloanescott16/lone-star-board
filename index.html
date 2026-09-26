@@ -1974,6 +1974,51 @@
   /* v98: tile padding in cq units resolved against the whole board (a container cannot size its own padding), leaving a tall empty band on top; size it from the tile's width instead */
   .board.fill .bg { padding: 2.6% 3.4% 2.4%; }
   @media (max-width: 640px) { .bg .foot > a.watch { font-size: 12px; } }
+  /* v99: phone scoreboard, logos only. One broadcast row per game (away logo and score, clock, home score and logo), tags and down and distance
+     under it, Watch bottom right. Names and records are dropped here only; desktop and the fill board are untouched. Delete this block and the
+     .mid span in gameCard() to go back. */
+  .bg > .mid { display: none; }
+  @media (max-width: 699px) {
+    #board .bg { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto minmax(0, 1fr) auto; column-gap: 7px; row-gap: 8px; align-items: center; padding: 10px 12px; }
+    #board .bg > .row { display: contents; }
+    #board .bg > :not(.row):not(.mid) { grid-column: 1 / -1; }
+    #board .bg .abbr { width: 42px; height: 42px; font-size: 15px; }
+    #board .bg .abbr.w4 { font-size: 12px; }
+    #board .bg .ra > .abbr { grid-area: 1 / 1; }
+    #board .bg .ra > .nm { grid-area: 1 / 2; justify-self: start; }
+    #board .bg .ra > .sc { grid-area: 1 / 3; }
+    #board .bg > .mid { grid-area: 1 / 4; }
+    #board .bg .rh > .sc { grid-area: 1 / 5; }
+    #board .bg .rh > .nm { grid-area: 1 / 6; justify-self: end; flex-direction: row-reverse; }
+    #board .bg .rh > .abbr { grid-area: 1 / 7; }
+    #board .bg .nm { font-size: 13px; gap: 4px; }
+    #board .bg .nm .tn, #board .bg .nm small { display: none; }
+    #board .bg .nm { overflow: visible; }
+    #board .bg .nm .rk { font-size: 12px; flex: none; }
+    #board .bg .sc { font-size: 34px; min-width: 1.45em; }
+    #board .bg > .mid { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 50px; font-family: var(--cond); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; line-height: 1.1; color: var(--ink-2); text-align: center; }
+    #board .bg > .mid b { font-weight: inherit; font-size: 13px; white-space: nowrap; }
+    #board .bg > .mid b + b { font-size: 16px; color: var(--ink); letter-spacing: .04em; }
+    #board .bg.live > .mid b:first-child { color: var(--live); }
+    #board .bg.upcoming .sc { display: none; }
+    #board .bg.upcoming > .mid { grid-column: 3 / 6; }
+    #board .bg.upcoming > .mid b { font-size: 18px; color: var(--ink); }
+    #board .bg .foot { padding-top: 7px; row-gap: 0; grid-template-rows: auto auto; }
+    #board .bg .foot .f1 .st { display: none; }
+    #board .bg .foot .f1 { grid-area: 1 / 1; height: auto; max-height: 1.7em; margin-bottom: 5px; }
+    #board .bg .foot .f1:not(:has(.rz, .why span)) { display: none; }
+    #board .bg .foot .f2 { grid-area: 2 / 1; }
+    #board .bg .foot > a.watch, #board .bg .foot > .net { grid-area: 1 / 2 / 3 / 3; align-self: end; }
+    #board .bg .foot:not(:has(.f1 .rz, .f1 .why span)) > :is(a.watch, .net) { grid-area: 2 / 2; align-self: center; }
+  }
+  @media (max-width: 389px) {
+    #board .bg { column-gap: 5px; padding: 10px; }
+    #board .bg .abbr { width: 36px; height: 36px; }
+    #board .bg .sc { font-size: 30px; }
+    #board .bg > .mid { min-width: 44px; }
+    #board .bg > .mid b + b { font-size: 14px; }
+    #board .bg .nm .rk { font-size: 11px; }
+  }
   /* v89: fit every width. Home hero sizes from its own card (cqi), not the window (vw) */
   .hero{container-type:inline-size}
   .hero .big:empty{display:none}
@@ -3385,7 +3430,7 @@ function gameCard(g, big, ex) {
     const inner = big
       ? `<span class="nm">${rkh}<span class="tn">${esc(dispName(ab))}</span>${g.poss===ab?'<span class="poss" title="possession"></span>':''}<small>${esc(rec)}</small></span>`
       : `<span class="nm">${rkh}<span class="tn">${esc(dispName(ab))}</span>${sd}${g.poss===ab?'<span class="poss" title="possession"></span>':''} <small>${esc(rec)}</small></span>`;
-    return `<div class="row" ${big ? "" : `data-team="${esc(ab)}"`}>${mark(ab,"abbr")}${inner}<span class="sc ${trail?'trail':''} ${win?'win':''}">${up ? (big ? (ab===g.away ? esc(kickLabel(g)) : "") : "") : s}</span></div>`;
+    return `<div class="row ${ab === g.home ? "rh" : "ra"}" ${big ? "" : `data-team="${esc(ab)}"`}>${mark(ab,"abbr")}${inner}<span class="sc ${trail?'trail':''} ${win?'win':''}">${up ? (big ? (ab===g.away ? esc(kickLabel(g)) : "") : "") : s}</span></div>`;
   };
   const why = big && ex.why && ex.why.length ? `<span class="why">${ex.why.map(w => `<span>${esc(w)}</span>`).join("")}</span>` : "";
   const stH = `<span class="st">${up ? (big ? (g.date <= Date.now() ? "Awaiting kickoff" : "Up next") : esc(g.status)) : esc(g.status)}</span>`, rzH = g.rz ? '<span class="rz">Red zone</span>' : '';
@@ -3393,6 +3438,8 @@ function gameCard(g, big, ex) {
   const wH = watchHTML(g) || (g.net ? `<span class="net">${esc(g.net)}</span>` : "");
   // v98: scoreboard tiles keep status/tags on line 1, down and distance on line 2, and Watch in its own right-hand slot
   const foot = big ? `<div class="foot"><span class="f1">${stH}${rzH}${why}</span><span class="f2">${ddH}</span>${wH}</div>` : `<div class="foot">${stH}${rzH}${ddH}${wH}</div>`;
+  // v99: phone scoreboard shows logos only in one broadcast row; the clock sits between the two scores (hidden on wider screens)
+  const midH = big ? `<span class="mid">${(up ? [kickLabel(g)] : String(g.status || "").split(/\s*·\s*/)).map(p => `<b>${esc(p)}</b>`).join("")}</span>` : "";
   const lm = !big && g.odds ? `<div class="lm">${linesHTML(g, true)}</div>` : "";
   const mine = big && LG.fantasy ? myPlayersIn(g) : [], theirs = big && LG.fantasy ? myPlayersIn(g, "opp") : [];
   const chips = arr => arr.map(m => `<span class="mp" data-pid="${esc(m.pid)}" role="button" title="Points breakdown"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
@@ -3400,7 +3447,7 @@ function gameCard(g, big, ex) {
   const fun = !big ? cfbFun(g) : null;   // v84
   const rzc = g.rz && g.poss ? chartColor(g.poss) : "";
   const gcT = g.live ? "Open the game center" : fin ? "Open the game breakdown" : "Open the preview";   // v68: board tiles open it too
-  return `<article class="${cls} ${g.rz ? "rz" : ""}" ${rzc ? `style="--rzc:${rzc}"` : ""} data-id="${g.id}" role="button" tabindex="0" title="${big || ex.gc ? gcT : "Show this game up top"}">${fun && hasFav(g) ? ttuHTML(g, fun) : clashHTML(g, fun)}${row(g.away,g.as,g.hs,g.awayRec)}${row(g.home,g.hs,g.as,g.homeRec)}${mineRow}${lm}${funTagsHTML(fun)}${foot}</article>`;
+  return `<article class="${cls} ${g.rz ? "rz" : ""}" ${rzc ? `style="--rzc:${rzc}"` : ""} data-id="${g.id}" role="button" tabindex="0" title="${big || ex.gc ? gcT : "Show this game up top"}">${fun && hasFav(g) ? ttuHTML(g, fun) : clashHTML(g, fun)}${row(g.away,g.as,g.hs,g.awayRec)}${midH}${row(g.home,g.hs,g.as,g.homeRec)}${mineRow}${lm}${funTagsHTML(fun)}${foot}</article>`;
 }
 
 // home cards: same three filters as the scoreboard, kept separately so the two pages do not yank each other around
