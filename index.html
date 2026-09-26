@@ -1947,6 +1947,17 @@
     .showbar .sb-s { flex: 1 0 100%; padding: 10px 12px; }
     .showbar .sb-s b { font-size: 17px; }
   }
+  /* v90: Watch button on each game */
+  a.watch { flex: none; margin-left: auto; display: inline-flex; align-items: center; gap: .45em; padding: .28em .7em .28em .6em; border-radius: 999px; background: var(--fill, #1f6feb); color: #fff; text-decoration: none; font-family: var(--cond); font-weight: 800; font-size: 1em; line-height: 1; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; box-shadow: 0 0 0 1px rgba(255,255,255,.14); }
+  a.watch i { width: 0; height: 0; border-style: solid; border-width: .38em 0 .38em .6em; border-color: transparent transparent transparent #fff; }
+  a.watch span { font-weight: 600; opacity: .85; }
+  a.watch:hover, a.watch:focus-visible { filter: brightness(1.15); box-shadow: 0 0 0 2px #fff; }
+  body.lg-cfb a.watch { background: #e8232a; }
+  body:not(.lg-cfb) a.watch { background: #1f6feb; }
+  .hero-head a.watch.chip { font-size: 13px; padding: 7px 12px; }
+  #gcWatch { margin-left: auto; display: flex; }
+  #gcWatch a.watch { font-size: 14px; padding: 7px 14px; }
+  @media (max-width: 640px) { .g .foot a.watch, .bg .foot a.watch { font-size: 12px; } a.watch span { display: none; } }
   /* ==== SKIN:gameday end ==== */
 </style>
 </head>
@@ -2134,6 +2145,7 @@
           <button class="btn back" id="gcBack" type="button">&#8249; Back</button>
           <span class="gc-kick" id="gcKick">Game center</span>
           <span class="gc-meta" id="gcMeta"></span>
+          <span id="gcWatch"></span>
         </div>
         <div class="gc-pin" id="gcPin"></div>
       </div>
@@ -2383,7 +2395,7 @@ function normGame(ev) {
     as: state === "pre" ? undefined : +away.score, hs: state === "pre" ? undefined : +home.score,
     awayRec: rec(away), homeRec: rec(home),
     poss, rz, dd: sit.shortDownDistanceText || sit.downDistanceText || "", spot: (sit.downDistanceText||"").includes(" at ") && !(sit.shortDownDistanceText) ? "" : (sit.possessionText || ""), lastPlay: sit.lastPlay?.text || "",
-    net, odds, spread: odds ? [odds.details, odds.ou ? "O/U " + odds.ou : ""].filter(Boolean).join(" · ") : "",
+    net, nets: [...(c.broadcasts || []).flatMap(b => b.names || []), ...(c.geoBroadcasts || []).map(b => b.media?.shortName)].filter(Boolean), odds, spread: odds ? [odds.details, odds.ou ? "O/U " + odds.ou : ""].filter(Boolean).join(" · ") : "",
     venue: c.venue?.fullName || "", period: st.period, clock: st.displayClock,
     away_lines: (away.linescores||[]).map(l => l.value ?? l.displayValue), home_lines: (home.linescores||[]).map(l => l.value ?? l.displayValue),
   };
@@ -3044,7 +3056,7 @@ function renderHero(g) {
       <span class="venue">${esc(g.venue)}</span>
       ${S.pickId && S.favGame && S.favGame.id !== g.id ? `<button class="btn" id="backFav" type="button">Back to ${esc(dispName(CFG.fav))}</button>` : ""}
       <button class="btn" id="heroGC" type="button">${pre ? "Preview" : g.state === "post" ? "Game breakdown" : "Game center"}</button>
-      ${g.net ? `<span class="chip net">${esc(g.net)}</span>` : ""}
+      ${watchHTML(g, "chip") || (g.net ? `<span class="chip net">${esc(g.net)}</span>` : "")}
     </div>
     <div class="matchup">
       ${team(g.away,"away",g.awayRec,g.poss===g.away)}
@@ -3255,7 +3267,7 @@ function gameCard(g, big, ex) {
     return `<div class="row" ${big ? "" : `data-team="${esc(ab)}"`}>${mark(ab,"abbr")}${inner}<span class="sc ${trail?'trail':''} ${win?'win':''}">${up ? (big ? (ab===g.away ? esc(g.status) : "") : "") : s}</span></div>`;
   };
   const why = big && ex.why && ex.why.length ? `<span class="why">${ex.why.map(w => `<span>${esc(w)}</span>`).join("")}</span>` : "";
-  const foot = `<div class="foot"><span class="st">${up ? (big ? slotOf(g) : esc(g.status)) : esc(g.status)}</span>${why}${g.rz?'<span class="rz">Red zone</span>':''}${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${big && g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}${g.net ? `<span class="net">${esc(g.net)}</span>` : ""}</div>`;
+  const foot = `<div class="foot"><span class="st">${up ? (big ? slotOf(g) : esc(g.status)) : esc(g.status)}</span>${why}${g.rz?'<span class="rz">Red zone</span>':''}${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${big && g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}${watchHTML(g) || (g.net ? `<span class="net">${esc(g.net)}</span>` : "")}</div>`;
   const lm = !big && g.odds ? `<div class="lm">${linesHTML(g, true)}</div>` : "";
   const mine = big && LG.fantasy ? myPlayersIn(g) : [], theirs = big && LG.fantasy ? myPlayersIn(g, "opp") : [];
   const chips = arr => arr.map(m => `<span class="mp" data-pid="${esc(m.pid)}" role="button" title="Points breakdown"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
@@ -3855,8 +3867,64 @@ function renderShowBar() {
   bar.innerHTML = on.length ? `<span class="sb-k"><i></i>On air</span>` + on.map(s =>
     `<a class="sb-s" data-show="${s.key}" href="${s.url}" target="_blank" rel="noopener"><b>${s.name}</b><small>${s.net}</small><span class="sb-go">Watch \u203a</span></a>`).join("") : "";
 }
+/* v90: Watch button on every game. From 30 minutes before kickoff until the final, the network label on a
+   game becomes a Watch link that opens the game on a service he pays for, in a new tab. ESPN-family games
+   (ESPN, ABC, ESPN+, SEC/ACC Network...) go to that game's own stream, looked up by ESPN event id in ESPN's
+   public watch listings; FOX/FS1/FS2/BTN go to that channel's live stream (which is the game while it's on);
+   CBS goes to Paramount+ live TV. Networks he has no service for keep the plain label. */
+const W = { map: {}, at: 0, busy: false };
+const ESPN_FAM = /^(ESPN|ESPN2|ESPNU|ESPNEWS|ESPN\+|ESPN Unlimited|ABC|SEC Network|SECN|SECN\+|ACC Network|ACCN|ACCNX|LHN|Longhorn Network|ESPN Deportes|Disney\+)$/i;
+const WATCH_NETS = [
+  [/^(FOX|FOX Sports)$/i, "FOX", "https://www.foxsports.com/live/fox"],
+  [/^FS1$/i, "FS1", "https://www.foxsports.com/live/fs1"],
+  [/^FS2$/i, "FS2", "https://www.foxsports.com/live/fs2"],
+  [/^(BTN|Big Ten Network)$/i, "BTN", "https://www.foxsports.com/live/btn"],
+  [/^(CBS)$/i, "CBS", "https://www.paramountplus.com/live-tv/"],
+];
+const watchable = g => g && (g.live || (g.state === "pre" && g.date - Date.now() <= 30 * 60e3 && Date.now() - g.date < 4 * 36e5));
+function watchLink(g) {
+  const nets = g.nets && g.nets.length ? g.nets : g.net ? [g.net] : [];
+  const fam = nets.find(n => ESPN_FAM.test(n));
+  if (fam) {
+    const air = W.map[g.id];
+    if (air) return { net: fam, url: "https://www.espn.com/watch/player/_/id/" + air };
+    if (/^ESPN2?$/i.test(fam)) return { net: fam, url: "https://www.espn.com/watch/player/_/channel/" + fam.toLowerCase() };
+    return { net: fam, url: `https://www.espn.com/${LG.key === "cfb" ? "college-football" : "nfl"}/game/_/gameId/${g.id}` };
+  }
+  for (const n of nets) for (const [re, lab, url] of WATCH_NETS) if (re.test(n)) return { net: lab, url };
+  return null;
+}
+function watchHTML(g, kind) {
+  if (!watchable(g)) return "";
+  const w = watchLink(g); if (!w) return "";
+  return `<a class="watch${kind ? " " + kind : ""}" href="${esc(w.url)}" target="_blank" rel="noopener" title="Watch on ${esc(w.net)} (new tab)"><i></i>Watch<span>${esc(w.net)}</span></a>`;
+}
+async function watchTick() {
+  if (W.busy || Date.now() - W.at < 120e3) return;
+  if (!(S.events || []).some(g => watchable(g) && (g.nets || [g.net]).some(n => ESPN_FAM.test(n || "")))) return;
+  W.busy = true; W.at = Date.now();
+  try {
+    const j = await fetch("https://watch.product.api.espn.com/api/product/v3/watchespn/web/home?lang=en&features=pbov7&countryCode=US&entitlements=ESPN_PLUS&tz=America%2FChicago").then(r => r.ok ? r.json() : null);
+    const map = {};
+    (function walk(o) {
+      if (!o || typeof o !== "object") return;
+      if (o.eventId && Array.isArray(o.streams) && o.streams.length) {
+        const s = o.streams.find(x => x.status === "live") || o.streams.find(x => x.tier === "primary") || o.streams[0];
+        if (s && s.id && !map[o.eventId]) map[String(o.eventId)] = s.id;
+      }
+      for (const k in o) walk(o[k]);
+    })(j);
+    Object.assign(W.map, map);
+  } catch (e) { /* keep the fallback links */ }
+  W.busy = false;
+}
+/* a Watch link sits inside clickable cards: let the link open, but don't let the card also feature/open the game */
+document.addEventListener("click", e => { if (e.target.closest?.("a.watch")) e.stopPropagation(); }, true);
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.closest?.("a.watch")) e.stopPropagation(); }, true);
+
 function tick() {
   renderShowBar();   // v89
+  watchTick();       // v90
   el("#clock").textContent = fmtCT(Date.now(), { hour:"numeric", minute:"2-digit" }) + " CT";
   el("#fsClock").textContent = el("#clock").textContent;
   const s = S.lastOk ? Math.round((Date.now() - S.lastOk)/1000) : null;
@@ -4357,6 +4425,7 @@ function renderGC() {
   el("#gcBack").innerHTML = "&#8249; Back to " + esc(GCBACK[gcFrom()] || "Home");
   if (!g) { el("#gcKick").textContent = "Game center"; el("#gcMeta").textContent = ""; el("#gcPin").innerHTML = ""; renderGCStrip(); gcPinCheck(); box.innerHTML = `<div class="empty">${GC.err ? "Couldn't load this game. Trying again shortly" : "Loading the game"}</div>`; return; }
   const pre = g.state === "pre", fin = g.state === "post", live = g.live;
+  el("#gcWatch").innerHTML = watchHTML(g, "gcw");   // v90
   const kick = el("#gcKick"); kick.textContent = live ? "Game center" : fin ? "Game breakdown" : "Preview"; kick.classList.toggle("live", live);
   el("#gcMeta").textContent = [fmtCT(g.date, { weekday: "short", month: "short", day: "numeric", ...(pre ? { hour: "numeric", minute: "2-digit" } : {}) }) + (pre ? " CT" : ""), g.venue, g.net].filter(Boolean).join(" · ");
   const { hc, ac } = matchupColors(g.home, g.away);
