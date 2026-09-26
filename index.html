@@ -3846,7 +3846,7 @@ function setWeek(w) {
    Saturday Home; each pill opens that show's live stream in a new tab. Windows are CT, college season only. */
 const SHOWS = [
   { key: "gd",  name: "College GameDay",  net: "ESPN", from: 8 * 60, to: 11 * 60, url: "https://www.espn.com/watch/player/_/channel/espn" },
-  { key: "bnk", name: "Big Noon Kickoff", net: "FOX",  from: 9 * 60, to: 11 * 60, url: "https://www.foxsports.com/live/fox" },
+  { key: "bnk", name: "Big Noon Kickoff", net: "FOX",  from: 9 * 60, to: 11 * 60, url: "fox1" },
 ];
 const ctFmt = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", weekday: "short", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", hourCycle: "h23" });
 function showsOn(t) {
@@ -3855,7 +3855,8 @@ function showsOn(t) {
   const m = +p.month, d = +p.day;
   if (!((m === 8 && d >= 20) || (m >= 9 && m <= 11) || (m === 12 && d <= 14))) return [];
   const mins = (+p.hour % 24) * 60 + (+p.minute);
-  return SHOWS.filter(s => mins >= s.from && mins < s.to);
+  const t0 = Math.floor(t / 60e3) * 60e3;
+  return SHOWS.filter(s => mins >= s.from && mins < s.to).map(s => s.url === "fox1" ? { ...s, url: foxOne(t0 - (mins - s.from) * 60e3) } : s);
 }
 function renderShowBar() {
   const bar = el("#showBar"); if (!bar) return;
@@ -3867,7 +3868,7 @@ function renderShowBar() {
   bar.innerHTML = on.length ? `<span class="sb-k"><i></i>On air</span>` + on.map(s =>
     `<a class="sb-s" data-show="${s.key}" href="${s.url}" target="_blank" rel="noopener"><b>${s.name}</b><small>${s.net}</small><span class="sb-go">Watch \u203a</span></a>`).join("") : "";
 }
-/* v90: Watch button on every game. From 30 minutes before kickoff until the final, the network label on a
+/* v90/v91: Watch button on every game. From 30 minutes before kickoff until the final, the network label on a
    game becomes a Watch link that opens the game on a service he pays for, in a new tab. ESPN-family games
    (ESPN, ABC, ESPN+, SEC/ACC Network...) go to that game's own stream, looked up by ESPN event id in ESPN's
    public watch listings; FOX/FS1/FS2/BTN go to that channel's live stream (which is the game while it's on);
@@ -3875,12 +3876,14 @@ function renderShowBar() {
 const W = { map: {}, at: 0, busy: false };
 const ESPN_FAM = /^(ESPN|ESPN2|ESPNU|ESPNEWS|ESPN\+|ESPN Unlimited|ABC|SEC Network|SECN|SECN\+|ACC Network|ACCN|ACCNX|LHN|Longhorn Network|ESPN Deportes|Disney\+)$/i;
 const WATCH_NETS = [
-  [/^(FOX|FOX Sports)$/i, "FOX", "https://www.foxsports.com/live/fox"],
-  [/^FS1$/i, "FS1", "https://www.foxsports.com/live/fs1"],
-  [/^FS2$/i, "FS2", "https://www.foxsports.com/live/fs2"],
-  [/^(BTN|Big Ten Network)$/i, "BTN", "https://www.foxsports.com/live/btn"],
+  [/^(FOX|FOX Sports)$/i, "FOX", g => foxOne(+g.date)],
+  [/^FS1$/i, "FS1", "https://www.fox.com/live"],   // Fox One addresses FS1/FS2/BTN airings by program id, so these land on the live guide
+  [/^FS2$/i, "FS2", "https://www.fox.com/live"],
+  [/^(BTN|Big Ten Network)$/i, "BTN", "https://www.fox.com/live"],
   [/^(CBS)$/i, "CBS", "https://www.paramountplus.com/live-tv/"],
 ];
+/* v91: Fox One plays his local FOX (KDFW Dallas) program that starts at a given moment; a FOX game's program starts at its listed kickoff */
+const foxOne = ms => `https://www.fox.com/watch/epg/KDFW-program-KDFW-${Math.round(ms / 60e3) * 60e3}_dtc/live`;
 const watchable = g => g && (g.live || (g.state === "pre" && g.date - Date.now() <= 30 * 60e3 && Date.now() - g.date < 4 * 36e5));
 function watchLink(g) {
   const nets = g.nets && g.nets.length ? g.nets : g.net ? [g.net] : [];
@@ -3891,7 +3894,7 @@ function watchLink(g) {
     if (/^ESPN2?$/i.test(fam)) return { net: fam, url: "https://www.espn.com/watch/player/_/channel/" + fam.toLowerCase() };
     return { net: fam, url: `https://www.espn.com/${LG.key === "cfb" ? "college-football" : "nfl"}/game/_/gameId/${g.id}` };
   }
-  for (const n of nets) for (const [re, lab, url] of WATCH_NETS) if (re.test(n)) return { net: lab, url };
+  for (const n of nets) for (const [re, lab, url] of WATCH_NETS) if (re.test(n)) return { net: lab, url: typeof url === "function" ? url(g) : url };
   return null;
 }
 function watchHTML(g, kind) {
