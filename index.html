@@ -611,8 +611,7 @@
   /* v75: the Rankings page is Saturday only */
   .nav a[data-v="ranks"] { display: none; }
   body.lg-cfb .nav a[data-v="ranks"] { display: block; }
-  body.lg-cfb .ticker { display: none !important; }
-  body.lg-cfb.v-scores { padding-bottom: 0; }
+  /* v100: Saturday has its own ticker now (scores, upset alerts, finals, big plays), so it keeps Sunday's bottom padding too */
   body.lg-cfb .settings .fx { display: none; }
   /* Saturday wears scarlet and black */
   body.lg-cfb {
@@ -942,6 +941,8 @@
        so the momentum read sits right under the score instead of below the box score */
     .gc-grid > .gc-col { display: contents; }
     .gc-grid .mfcard { order: -2; } .gc-grid .wpcard { order: -1; }
+    /* v102: his phone order: On the field, Line score, Game flow, Win probability, the drive list; the rest keep their order */
+    .gc-grid .ofcard { order: -5; } .gc-grid .lscard { order: -4; } .gc-grid .mfcard { order: -3; } .gc-grid .wpcard { order: -2; } .gc-grid .drcard { order: -1; }
     /* v76: phone header reads like the hero, the two teams side by side with the scores under them */
     /* v78: each side keeps its own number, now stacked under its own team, with the status on its
        own row underneath. Side by side at this width the three columns squeezed the names to
@@ -2129,6 +2130,44 @@
   /* ==== SKIN:gameday end ==== */
   /* v94: pregame tiles on the board: kickoff time, no score slot (black slot is for scores only) */
   #board .bg.upcoming .sc { font-size: clamp(18px, min(13cqh, 7.5cqw), 54px); background: none; box-shadow: none; text-shadow: none; color: var(--muted); font-weight: 600; min-width: 0; padding: 0; white-space: nowrap; }
+
+  /* ================= v100: Game Center live strip scrolls (arrows, wheel, drag) ================= */
+  .gc-stripw { position: relative; }
+  .gc-stripw[hidden] { display: none; }
+  .gc-stripw .gc-strip { scroll-behavior: auto; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .gc-stripw .gc-strip.drag { cursor: grabbing; }
+  .gc-stripw .gc-strip.drag button { pointer-events: none; }
+  .gcs-nav { position: absolute; top: 6px; bottom: 8px; width: 34px; z-index: 3; display: grid; place-items: center; padding: 0; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); color: var(--ink); font: 700 22px/1 var(--cond, sans-serif); cursor: pointer; box-shadow: 0 0 18px 10px var(--ground); transition: opacity .15s; }
+  .gcs-nav.l { left: 0; } .gcs-nav.r { right: 0; }
+  .gcs-nav:hover { border-color: var(--accent); color: var(--accent); }
+  .gcs-nav[hidden] { display: none; }
+  body.lg-cfb .gcs-nav:hover { border-color: var(--fill); color: #fff; background: var(--fill); }
+
+  /* ================= v100: Saturday ticker ================= */
+  body.lg-cfb .ticker { border-top-color: var(--fill); }
+  body.lg-cfb .ticker .tag { min-width: 170px; }
+  body.lg-cfb .ticker .tag .tn { font-family: var(--cond, sans-serif); font-weight: 800; }
+  body.lg-cfb .ticker .tag .tsc { font-family: var(--display); font-weight: 400; font-size: 22px; }
+  .tk[data-gid] { cursor: pointer; }
+  .tk[data-gid]:hover .who { text-decoration: underline; text-underline-offset: 3px; }
+  .tk .mini { width: 24px; height: 24px; display: inline-grid; place-items: center; border-radius: 4px; font-size: 8px; font-weight: 800; color: #fff; overflow: hidden; flex: none; }
+  .tk .mini.lgo { background: transparent !important; }
+  .tk .ts { font-size: 12px; color: var(--muted); letter-spacing: .04em; white-space: nowrap; }
+  .tk .who small { font-size: .7em; color: var(--muted); margin-right: 3px; }
+  .tk .tx { max-width: 48ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tk .sl { font-family: var(--cond, sans-serif); font-size: 17px; font-weight: 700; color: var(--ink-2); white-space: nowrap; letter-spacing: .03em; }
+  .tk .sl b { color: var(--ink); font-weight: 800; }
+  .tk .sl b.w { color: var(--good); }
+  .tk .kd { font-family: var(--cond, sans-serif); font-weight: 800; font-size: 12px; letter-spacing: .12em; padding: 3px 7px; border-radius: 4px; white-space: nowrap; background: rgba(255,255,255,.08); color: var(--ink); }
+  .tk.k-td .kd { background: rgba(52,199,120,.18); color: var(--good); }
+  .tk.k-fg .kd, .tk.k-pts .kd { background: rgba(52,199,120,.12); color: var(--good); }
+  .tk.k-alert .kd, .tk.k-upset .kd { background: var(--live); color: #fff; }
+  .tk.k-big .kd, .tk.k-take .kd, .tk.k-stop .kd, .tk.k-miss .kd { background: rgba(242,184,75,.2); color: var(--warn); }
+  .tk.k-final .kd { background: rgba(255,255,255,.12); color: #fff; }
+  .tk.k-live .kd { background: transparent; border: 1px solid var(--live); color: var(--live); }
+  .tk.fav { background: linear-gradient(180deg, rgba(204,0,0,.22), rgba(204,0,0,.06)); }
+  .tk.k-alert, .tk.k-upset { background: rgba(255,90,95,.07); }
+  @media (max-width: 640px) { .tk .tx { max-width: 30ch; } body.lg-cfb .ticker .tag { min-width: 120px; } }
 </style>
 </head>
 <body class="v-home">
@@ -2310,7 +2349,7 @@
     <div class="sheet wide" id="gcSheet">
       <!-- v70: everything in here sticks to the top: other live scores, the back bar, and the pinned score with its drive bar -->
       <div class="gc-sticky" id="gcSticky">
-        <div class="gc-strip" id="gcStrip" hidden aria-label="Other live games"></div>
+        <div class="gc-stripw" id="gcStripW" hidden><button type="button" class="gcs-nav l" id="gcsL" hidden aria-label="Scroll live games left">&#8249;</button><div class="gc-strip" id="gcStrip" hidden aria-label="Other live games"></div><button type="button" class="gcs-nav r" id="gcsR" hidden aria-label="Scroll live games right">&#8250;</button></div>
         <div class="gc-bar">
           <button class="btn back" id="gcBack" type="button">&#8249; Back</button>
           <span class="gc-kick" id="gcKick">Game center</span>
@@ -2565,6 +2604,7 @@ function normGame(ev) {
     as: state === "pre" ? undefined : +away.score, hs: state === "pre" ? undefined : +home.score,
     awayRec: rec(away), homeRec: rec(home),
     poss, rz, dd: sit.shortDownDistanceText || sit.downDistanceText || "", spot: (sit.downDistanceText||"").includes(" at ") && !(sit.shortDownDistanceText) ? "" : (sit.possessionText || ""), lastPlay: sit.lastPlay?.text || "",
+    lp: sit.lastPlay ? { id: String(sit.lastPlay.id ?? ""), type: String(sit.lastPlay.type?.text || ""), text: String(sit.lastPlay.text || ""), yds: +sit.lastPlay.statYardage || 0, sv: +sit.lastPlay.scoreValue || 0, down: +sit.lastPlay.start?.down || 0, dist: +sit.lastPlay.start?.distance || 0 } : null,   // v100: Saturday ticker
     net, nets: [...(c.broadcasts || []).flatMap(b => b.names || []), ...(c.geoBroadcasts || []).map(b => b.media?.shortName)].filter(Boolean), odds, spread: odds ? [odds.details, odds.ou ? "O/U " + odds.ou : ""].filter(Boolean).join(" · ") : "",
     venue: c.venue?.fullName || "", period: st.period, clock: st.displayClock,
     away_lines: (away.linescores||[]).map(l => l.value ?? l.displayValue), home_lines: (home.linescores||[]).map(l => l.value ?? l.displayValue),
@@ -2600,6 +2640,7 @@ async function loadScoreboard() {
   S.favGame = S.events.find(g => g.home === CFG.fav || g.away === CFG.fav) || null;
   S.featured = pick || S.favGame || S.events.find(g => g.live) || S.events.find(g => g.state === "pre") || S.events[0];
   deriveScoreFeed();
+  if (LG.key === "cfb") deriveSatTicker();   // v100
   await backfillLines();
 }
 
@@ -3968,6 +4009,7 @@ window.addEventListener("resize", fitBoard);
    ===================================================================== */
 function renderAll() {
   renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderPre(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderSchedule(); renderRegroup();
+  if (LG.key === "cfb") renderSatTicker();   // v100
   if (S.view === "season") renderSeason();
   if (S.view === "ranks") renderRanks();
 }
@@ -4165,6 +4207,7 @@ function setLeague(k) {
   if (!LG.fantasy && location.hash === "#fantasy") location.hash = "#home";
   if (LG.key !== "cfb" && location.hash === "#ranks") location.hash = "#home";   // v75
   route();
+  { const r = el("#reel"); r.innerHTML = ""; r.dataset.k = ""; el("#tkTag").innerHTML = ""; }   // v100
   el("#board").innerHTML = `<div class="empty">Loading scores</div>`;
   el("#hero").innerHTML = `<div class="empty">Loading the ${esc(dispName(CFG.fav))} game</div>`;
   el("#slots").innerHTML = ""; el("#sched").innerHTML = `<div class="empty">Loading the schedule</div>`; el("#feed").innerHTML = `<li class="empty">Nothing yet</li>`; el("#standings").innerHTML = "";
@@ -4470,6 +4513,162 @@ function renderGCStrip() {
   }).join("");
   if (box.dataset.k !== html) { const sl = box.scrollLeft; box.innerHTML = html; box.dataset.k = html; box.scrollLeft = sl; }
   box.hidden = !html;
+  const w = el("#gcStripW"); if (w) w.hidden = !html;
+  gcsArrows();
+}
+/* v100: the live strip scrolls. Arrows page it, the mouse wheel moves it sideways, and it drags like a phone. */
+function gcsArrows() {
+  const s = el("#gcStrip"), l = el("#gcsL"), r = el("#gcsR"); if (!s || !l || !r) return;
+  const max = s.scrollWidth - s.clientWidth;
+  l.hidden = s.hidden || s.scrollLeft <= 2;
+  r.hidden = s.hidden || s.scrollLeft >= max - 2;
+}
+function gcsPage(dir) {
+  const s = el("#gcStrip"); if (!s) return;
+  const step = Math.max(160, s.clientWidth * 0.8);
+  s.scrollTo({ left: s.scrollLeft + dir * step, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+(function gcsWire() {
+  const s = el("#gcStrip"); if (!s) return;
+  el("#gcsL").addEventListener("click", e => { e.stopPropagation(); gcsPage(-1); });
+  el("#gcsR").addEventListener("click", e => { e.stopPropagation(); gcsPage(1); });
+  s.addEventListener("scroll", gcsArrows, { passive: true });
+  window.addEventListener("resize", gcsArrows);
+  s.addEventListener("wheel", e => {
+    if (s.scrollWidth <= s.clientWidth) return;
+    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (!d) return;
+    const max = s.scrollWidth - s.clientWidth;
+    if ((d < 0 && s.scrollLeft <= 0) || (d > 0 && s.scrollLeft >= max)) return;   // at the end: let the page scroll
+    e.preventDefault(); s.scrollLeft += d * (e.deltaMode === 1 ? 32 : 1);
+  }, { passive: false });
+  let down = null, moved = false;
+  s.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse" || e.button !== 0) return; down = { x: e.clientX, sl: s.scrollLeft, id: e.pointerId }; moved = false; });
+  s.addEventListener("pointermove", e => {
+    if (!down) return;
+    const dx = e.clientX - down.x;
+    if (!moved && Math.abs(dx) > 5) { moved = true; s.classList.add("drag"); try { s.setPointerCapture(down.id); } catch (_) {} }
+    if (moved) s.scrollLeft = down.sl - dx;
+  });
+  const up = () => { if (!down) return; down = null; setTimeout(() => s.classList.remove("drag"), 0); };
+  s.addEventListener("pointerup", up); s.addEventListener("pointercancel", up); s.addEventListener("lostpointercapture", up);
+  s.addEventListener("click", e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);   // a drag is not a click
+})();
+
+/* =====================================================================
+   v100: SATURDAY TICKER. Sunday's ticker is fantasy; Saturday's carries the whole slate:
+   scoring plays, upset alerts (a ranked team trailing in the second half), finals as they
+   land, and big plays (takeaways, 4th-down stops, missed kicks, 40+ yard gains).
+   Everything is read off the 5-second board poll, so no extra feeds. Items are kept per week
+   in localStorage; the first poll after a load only seeds, so a refresh never replays old plays.
+   ===================================================================== */
+const TK_MAX = 30, TK_SHOW = 16;
+function tkPri(g) {
+  const has = ab => g.home === ab || g.away === ab;
+  return (has(CFG.fav) ? 100 : 0) + (g.homeRank && g.awayRank ? 30 : (g.homeRank || g.awayRank) ? 15 : 0) + (g.homeConf === "4" || g.awayConf === "4" ? 10 : 0);
+}
+const tkOther = (g, ab) => ab === g.home ? g.away : ab === g.away ? g.home : null;
+const tkClean = s => String(s || "").replace(/^\(\s*\d{1,2}:\d{2}\s*\)\s*/, "").replace(/^(No Huddle-?\s*)?(Shotgun\s*)?/i, "").replace(/\s+/g, " ").trim();
+function tkUpset(g) {   // who is ranked and behind a worse or unranked team, or null
+  if (g.as == null || g.hs == null || g.as === g.hs) return null;
+  const lo = g.as < g.hs ? g.away : g.home, wi = tkOther(g, lo);
+  const lr = lo === g.home ? g.homeRank : g.awayRank, wr = wi === g.home ? g.homeRank : g.awayRank;
+  return lr && (!wr || wr > lr) ? { lo, wi, lr, wr } : null;
+}
+function deriveSatTicker() {
+  const key = `lsb-cfb-tick-${S.week}`;
+  let items = store.get(key, []);
+  if (offWeek()) { S.satTick = items; return; }
+  const prev = S.tkPrev || store.get("lsb-cfb-tkprev", {}), seed = !S.tkPrev, now = Date.now();
+  const next = {}, add = it => { if (!items.some(x => x.k === it.k)) items.unshift({ t: now, ...it }); };
+  for (const g of S.events) {
+    const p = prev[g.id], pri = tkPri(g), sc = { a: g.away, h: g.home, as: g.as, hs: g.hs, ar: g.awayRank, hr: g.homeRank };
+    const up = g.live && g.period >= 3 ? tkUpset(g) : null;
+    next[g.id] = { st: g.state, as: g.as, hs: g.hs, poss: g.poss || p?.poss || null, lp: g.lp?.id || p?.lp || "", up: up ? up.lo : "" };
+    if (!p || seed) continue;   // first poll after a load only takes notes
+    if (g.state === "pre") continue;
+    const when = g.status;
+    // scores
+    if (p.as != null && (g.as !== p.as || g.hs !== p.hs)) {
+      const da = (g.as || 0) - (p.as || 0), dh = (g.hs || 0) - (p.hs || 0);
+      for (const [ab, d] of [[g.away, da], [g.home, dh]]) {
+        if (d <= 0) continue;
+        const lpt = g.lp && g.lp.sv > 0 && g.lp.id !== p.lp ? g.lp : null;
+        const recent = items.find(x => x.gid === g.id && x.team === ab && x.kind === "td" && now - x.t < 240e3 && !x.pat);
+        if (recent && d <= 2) { Object.assign(recent, { pat: true, sc, pts: recent.pts + d, sub: d === 2 ? "TD + 2" : "TD + XP" }); continue; }
+        if (d === 1) continue;   // a lone extra point with no touchdown on the reel is noise
+        const kind = d >= 6 ? "td" : d >= 3 ? "fg" : "pts";
+        const lbl = d >= 6 ? (lpt && /interception|fumble|punt|kickoff|blocked/i.test(lpt.type) ? lpt.type.replace(/ touchdown/i, " TD") : "Touchdown") : d >= 3 ? "Field goal" : d === 2 ? (lpt && /safety/i.test(lpt.type) ? "Safety" : "2 points") : "Score";
+        add({ k: `s-${g.id}-${g.as}-${g.hs}-${ab}`, kind, gid: g.id, team: ab, lbl, pts: d, text: lpt ? tkClean(lpt.text) : "", when, sc, pri });
+      }
+    }
+    // big plays (not for whoever is playing Texas Tech, same as the Game Center banners)
+    if (g.live && g.lp && g.lp.id && g.lp.id !== p.lp && !(g.lp.sv > 0)) {
+      const t = g.lp.type, off = p.poss || g.poss, def = off ? tkOther(g, off) : null;
+      let b = null;
+      if (def && /interception/i.test(t)) b = { kind: "take", team: def, lbl: "Interception" };
+      else if (def && /fumble recovery \(opponent\)|fumble return/i.test(t)) b = { kind: "take", team: def, lbl: "Fumble recovered" };
+      else if (def && /blocked/i.test(t)) b = { kind: "miss", team: def, lbl: /punt/i.test(t) ? "Blocked punt" : "Blocked kick" };
+      else if (def && /field goal missed|missed field goal/i.test(t)) b = { kind: "miss", team: def, lbl: "Missed field goal" };
+      else if (def && (/turnover on downs/i.test(t) || (g.lp.down === 4 && g.lp.yds < (g.lp.dist || 1) && !/punt|field goal|penalty|timeout|kick/i.test(t)))) b = { kind: "stop", team: def, lbl: "4th-down stop" };
+      else if (off && g.lp.yds >= 40 && /rush|pass|reception/i.test(t)) b = { kind: "big", team: off, lbl: `${g.lp.yds}-yard ${/rush/i.test(t) ? "run" : "catch"}` };
+      const hostile = (g.home === CFG.fav || g.away === CFG.fav) && b && b.team !== CFG.fav;
+      if (b && !hostile) add({ k: `b-${g.id}-${g.lp.id}`, ...b, gid: g.id, text: tkClean(g.lp.text), when, sc, pri });
+    }
+    // upset alert: flips on when a ranked team falls behind in the second half, again if it happens again
+    if (up && p.up !== up.lo) add({ k: `u-${g.id}-${up.lo}-${g.as}-${g.hs}-${g.period}`, kind: "alert", gid: g.id, team: up.lo, lbl: "Upset alert", when, sc, pri: pri + 40, up });
+    // finals
+    if (p.st === "in" && g.state === "post") {
+      const u = tkUpset(g), w = g.as > g.hs ? g.away : g.home;
+      add({ k: `f-${g.id}`, kind: u ? "upset" : "final", gid: g.id, team: u ? u.wi : w, lbl: u ? "Upset" : (g.status || "Final"), when: g.status || "Final", sc, pri: pri + (u ? 40 : 0), up: u });
+    }
+  }
+  // the first poll after a load: note the state, and put upsets already underway on the reel
+  if (seed) for (const g of S.events) { const up = g.live && g.period >= 3 ? tkUpset(g) : null;
+    if (up) add({ k: `u-${g.id}-${up.lo}-${g.as}-${g.hs}-${g.period}`, kind: "alert", gid: g.id, team: up.lo, lbl: "Upset alert", when: g.status, sc: { a: g.away, h: g.home, as: g.as, hs: g.hs, ar: g.awayRank, hr: g.homeRank }, pri: tkPri(g) + 40, up }); }
+  // trim: over the cap, the oldest low-priority items go first
+  items.sort((a, b) => b.t - a.t);
+  while (items.length > TK_MAX) { let drop = items.length - 1, lo = Infinity; items.forEach((x, i) => { const v = (x.pri || 0) * 60e3 + x.t; if (v < lo) { lo = v; drop = i; } }); items.splice(drop, 1); }
+  S.tkPrev = next; store.set("lsb-cfb-tkprev", next);
+  S.satTick = items; store.set(key, items);
+}
+function tkName(ab, rk) { return `${rk ? `<small>#${rk}</small>` : ""}${esc(dispName(ab))}`; }
+function tkLine(sc, g) {
+  if (!sc) return "";
+  const aw = sc.as > sc.hs, hw = sc.hs > sc.as;
+  return `<span class="sl">${esc(sc.a)} <b class="${aw ? "w" : ""}">${sc.as ?? ""}</b> · ${esc(sc.h)} <b class="${hw ? "w" : ""}">${sc.hs ?? ""}</b></span>`;
+}
+function tkItem(x) {
+  const g = S.events.find(e => e.id === x.gid), rk = ab => ab === x.sc?.a ? x.sc.ar : ab === x.sc?.h ? x.sc.hr : 0;
+  const fav = x.sc && (x.sc.a === CFG.fav || x.sc.h === CFG.fav);
+  const ts = x.t ? `<span class="ts">${fmtCT(x.t, { hour: "numeric", minute: "2-digit" })}${x.when ? " · " + esc(x.when) : ""}</span>` : (x.when ? `<span class="ts">${esc(x.when)}</span>` : "");
+  let what = "";
+  if (x.kind === "alert" && x.up) what = `<span class="tx">trails ${x.up.wr ? "#" + x.up.wr + " " : ""}${esc(dispName(x.up.wi))}</span>`;
+  else if (x.kind === "upset" && x.up) what = `<span class="tx">knocks off #${x.up.lr} ${esc(dispName(x.up.lo))}</span>`;
+  else if (x.kind === "final") { const lo = x.team === x.sc.a ? x.sc.h : x.sc.a; what = `<span class="tx">beat ${rk(lo) ? "#" + rk(lo) + " " : ""}${esc(dispName(lo))}</span>`; }
+  else if (x.kind === "live") what = "";
+  else what = x.text ? `<span class="tx" title="${esc(x.text)}">${esc(x.text)}</span>` : "";
+  const kd = x.kind === "td" || x.kind === "fg" || x.kind === "pts" ? `${esc(x.lbl)}${x.sub ? " · " + esc(x.sub) : ""}` : esc(x.lbl);
+  return `<span class="tk k-${x.kind}${fav ? " fav" : ""}" data-gid="${esc(x.gid)}" title="Open the game center"><span class="kd">${kd}</span>${ts}${mark(x.team, "mini")}<span class="who">${tkName(x.team, rk(x.team))}</span>${what}${tkLine(x.sc, g)}</span>`;
+}
+function renderSatTicker() {
+  const reel = el("#reel"); if (!reel || LG.key !== "cfb") return;
+  const items = (S.satTick || []).slice(0, TK_SHOW);
+  // a quiet reel still shows something: the ranked and Big 12 games in progress
+  const fill = items.length >= 4 ? [] : S.events.filter(g => g.live && tkPri(g) > 0 && !items.some(x => x.gid === g.id))
+    .sort((a, b) => tkPri(b) - tkPri(a)).slice(0, 8 - items.length)
+    .map(g => ({ kind: "live", lbl: g.status === "Halftime" ? "Half" : ordinal(g.period) + " " + (g.clock || ""), gid: g.id, team: g.as >= g.hs ? g.away : g.home, sc: { a: g.away, h: g.home, as: g.as, hs: g.hs, ar: g.awayRank, hr: g.homeRank } }));
+  const all = [...items, ...fill];
+  const html = all.length ? all.map(tkItem).join("") : `<span class="tk"><span class="tx">${S.events.some(g => g.live) ? "Scores, upset alerts, finals and big plays land here as they happen" : "Nothing live right now. Scores, upsets, finals and big plays land here once games kick off"}</span></span>`;
+  if (reel.dataset.k !== html) { reel.innerHTML = html + html; reel.dataset.k = html; requestAnimationFrame(() => { reel.style.animationDuration = Math.max(30, (reel.scrollWidth / 2) / 45) + "s"; }); }
+  el(".ticker").setAttribute("aria-label", "Saturday updates: scores, upset alerts, finals and big plays");
+  const fg = S.favGame, tag = el("#tkTag");
+  let th;
+  if (fg && fg.state !== "pre") { const home = fg.home === CFG.fav, me = home ? fg.hs : fg.as, op = home ? fg.as : fg.hs, oab = home ? fg.away : fg.home;
+    th = `<span class="tn">${esc(dispName(CFG.fav))} ${fg.state === "post" ? "· Final" : "· " + esc(fg.status === "Halftime" ? "Half" : ordinal(fg.period) + " " + (fg.clock || ""))}</span><span class="tsc">${me} <span class="op">· ${esc(oab)} ${op}</span></span>`; }
+  else if (fg) th = `<span class="tn">${esc(dispName(CFG.fav))}</span><span class="tsc">${esc(fmtCT(fg.date, { hour: "numeric", minute: "2-digit" }))} <span class="op">· ${esc(fg.home === CFG.fav ? fg.away : fg.home)}</span></span>`;
+  else th = `<span class="tn">Saturday</span><span class="tsc">${S.events.filter(g => g.live).length} <span class="op">live</span></span>`;
+  if (tag.innerHTML !== th) tag.innerHTML = th;
 }
 /* v78: game flow as a momentum wave, the same strip the other three sites got.
    Yards, sacks, turnovers and points push the line toward the team that earned them and fade out
@@ -4608,6 +4807,8 @@ function gcDrives(sum, g, live) {
   prev.slice().reverse().forEach((d, i) => rows.push(driveRow(d, String(d.id ?? "d" + (prev.length - 1 - i)), false, g)));
   return `<ul class="gc-drives">${rows.join("")}</ul>`;
 }
+const GC_PHONE = matchMedia("(max-width: 860px)");   // v102: same breakpoint as the one-column game center
+GC_PHONE.addEventListener?.("change", () => { if (S.view === "game" && GC.g) renderGC(); });
 const GCBACK = { home: "Home", scores: "Scoreboard", schedule: "Schedule", season: "Season", fantasy: "Fantasy" };
 function renderGC() {
   const g = GC.g, sum = GC.sum, box = el("#gcBody");
@@ -4658,10 +4859,11 @@ function renderGC() {
     probCard = `<section class="gc-card wpcard"><h3>${probTitle}${seg}<small>${wpNote}</small></h3>${wp}</section>`;
   }
   // current drive, then every drive newest first (v70)
-  let drive = "";
+  // v102: the situation and the drive list are built apart; desktop joins them in one card, a phone splits them
+  let drive = "", driveList = "";
   const cur = sum?.drives?.current;
-  if (live && cur) drive = `${gcField(g, cur)}${gcSit(g, hp)}${gcDrives(sum, g, true)}`;
-  else if (live && (g.lastPlay || g.spot)) drive = `${gcField(g, null)}${gcSit(g, hp)}${g.lastPlay ? `<ul class="gc-plays"><li class="hl"><span>Last play</span><span>${linkNames(esc(g.lastPlay))}</span></li></ul>` : ""}${gcDrives(sum, g, true)}`;
+  if (live && cur) { drive = `${gcField(g, cur)}${gcSit(g, hp)}`; driveList = gcDrives(sum, g, true); }
+  else if (live && (g.lastPlay || g.spot)) { drive = `${gcField(g, null)}${gcSit(g, hp)}${g.lastPlay ? `<ul class="gc-plays"><li class="hl"><span>Last play</span><span>${linkNames(esc(g.lastPlay))}</span></li></ul>` : ""}`; driveList = gcDrives(sum, g, true); }
   const drivesFin = fin ? gcDrives(sum, g, false) : "";
   // team stats
   let ts = "";
@@ -4709,9 +4911,12 @@ function renderGC() {
   el("#gcPin").innerHTML = pre ? "" : gcPinHTML(g, cur);
   if (pre) { box.innerHTML = top + previewHTML(g, sum) + `<p class="gc-note">Tap a team for its schedule, standings and stats. Refreshes every minute until kickoff.</p>`; gcPinCheck(); return; }
   const lines = g.odds ? `<div class="gc-card"><h3>Lines${fin ? "<small>how they landed</small>" : ""}</h3>${linesHTML(g, false)}</div>` : "";
+  const ph = GC_PHONE.matches;   // v102
+  const cardC = (cls, title, body, note) => body ? `<section class="gc-card ${cls}"><h3>${title}${note ? `<small>${note}</small>` : ""}</h3>${body}</section>` : "";
   const left = [
-    live ? card("On the field", drive) : "",
-    card("Line score", ls),
+    live ? cardC("ofcard", "On the field", ph ? drive : drive + driveList) : "",
+    live && ph ? cardC("drcard", "Drives", driveList, "newest first, tap one for its plays") : "",
+    cardC("lscard", "Line score", ls),
     card("Scoring", sp, fin ? "every score" : ""),
     fin ? card("Drives", drivesFin, "newest first, tap one for its plays") : "",
     fin || live ? card("Box score", boxS, "top three each") : "",
@@ -4977,6 +5182,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("#gcBack")) return closeGame();
   // v70: the live strip, the drive list and the Win / Cover switch on the game page
   const sb = e.target.closest("#gcStrip button[data-id]"); if (sb) return openGame(sb.dataset.id);
+  const tkg = e.target.closest(".tk[data-gid]"); if (tkg && tkg.dataset.gid) return openGame(tkg.dataset.gid);   // v100
   const dh = e.target.closest(".gc-dr > .dr-head"); if (dh) { const li = dh.parentElement, k = li.dataset.drive, on = li.classList.toggle("open"); dh.setAttribute("aria-expanded", on); if (li.classList.contains("cur")) GC.curClosed = !on; else on ? GC.open.add(k) : GC.open.delete(k); return; }
   const pb = e.target.closest("#gcProbSeg button[data-prob]"); if (pb) { if (pb.disabled) return; GC.prob = pb.dataset.prob; store.set("cc-prob", GC.prob); return renderGC(); }
   if (e.target.closest("#tmClose") || e.target === el("#tmodal")) return closeTeam();
