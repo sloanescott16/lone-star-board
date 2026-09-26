@@ -3874,7 +3874,7 @@ function renderShowBar() {
    public watch listings; FOX/FS1/FS2/BTN go to that channel's live stream (which is the game while it's on);
    CBS goes to Paramount+ live TV. Networks he has no service for keep the plain label. */
 const W = { map: {}, at: 0, busy: false };
-const ESPN_FAM = /^(ESPN|ESPN2|ESPNU|ESPNEWS|ESPN\+|ESPN Unlimited|ABC|SEC Network|SECN|SECN\+|ACC Network|ACCN|ACCNX|LHN|Longhorn Network|ESPN Deportes|Disney\+)$/i;
+const ESPN_FAM = /^(ESPN|ESPN2|ESPNU|ESPNEWS|ESPN\+|ESPN Unlimited|ABC|SEC Network|SECN|SECN\+|ACC Network|ACCN|ACCNX|LHN|Longhorn Network|ESPN Deportes|Disney\+|CW|The CW|CW Network)$/i;   // v93: CW Sports streams on the ESPN App with ESPN Unlimited (since Aug 4 2026)
 const WATCH_NETS = [
   [/^(FOX|FOX Sports)$/i, "FOX", g => foxOne(+g.date)],
   [/^FS1$/i, "FS1", "https://www.fox.com/live"],   // Fox One addresses FS1/FS2/BTN airings by program id, so these land on the live guide
