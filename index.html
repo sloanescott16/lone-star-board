@@ -1958,6 +1958,91 @@
   #gcWatch { margin-left: auto; display: flex; }
   #gcWatch a.watch { font-size: 14px; padding: 7px 14px; }
   @media (max-width: 640px) { .g .foot a.watch, .bg .foot a.watch { font-size: 12px; } a.watch span { display: none; } }
+  /* v89: fit every width. Home hero sizes from its own card (cqi), not the window (vw) */
+  .hero{container-type:inline-size}
+  .hero .big:empty{display:none}
+  .hero .team .names{min-width:0}
+  .hero .team .city,.hero .team .rec{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hero .team .name{text-wrap:balance}
+  @media (min-width:861px){
+    .hero .matchup{gap:min(16px,1.6cqi)}
+    .hero .team{gap:min(14px,1.4cqi)}
+    .hero .team .mark{width:min(58px,6cqi);height:min(58px,6cqi)}
+    body:not(.lg-cfb) .hero .team .name{font-size:min(34px,3.6cqi)}
+    body.lg-cfb .hero .team .name{font-size:min(24px,2.7cqi)}
+    body .hero .team .city,body .hero .team .rec{font-size:clamp(11px,1.8cqi,14px)}
+    /* no score plates before kickoff, so the names get the room */
+    body:not(.lg-cfb) .hero .matchup:has(.big:empty) .team .name{font-size:min(34px,4.8cqi)}
+    body.lg-cfb .hero .matchup:has(.big:empty) .team .name{font-size:min(24px,3.6cqi)}
+    .hero .matchup:has(.big:empty) .team .mark{width:min(58px,7.5cqi);height:min(58px,7.5cqi)}
+    .hero .scoreblock{gap:min(20px,2cqi)}
+    body .hero .big{font-size:min(100px,8.6cqi)}
+    body .hero .status .t{font-size:min(44px,5.2cqi)}
+    body .hero .status .q{font-size:min(22px,2.4cqi)}
+    .hero .status .dd{white-space:nowrap}
+  }
+  /* Lines: the cells re-flow by the card's own width; fantasy starters takes a full row when it is tight */
+  :is(.hero,.gc-card):has(.lines){container-type:inline-size}
+  .ln .v,.ln .k,.ln .op{white-space:nowrap}
+  .ln .pl li{grid-template-columns:minmax(0,1fr) auto auto}
+  @container (max-width:720px){
+    .lines{grid-template-columns:repeat(3,minmax(0,1fr)) !important}
+    .lines>.ln:nth-child(4){grid-column:1/-1}
+    .lines>.ln:nth-child(4) .pl{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));column-gap:18px}
+  }
+  @container (max-width:360px){
+    .lines{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+    .lines>.ln:nth-child(3){grid-column:auto}
+  }
+  /* two-team columns never grow past their half; injury rows fold to two lines when the column is narrow */
+  .gc-lead>div{min-width:0}
+  @media (min-width:861px){ .gc-lead{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  .inj{container-type:inline-size}
+  @container (max-width:340px){
+    .inj li{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:1px}
+    .inj li b{grid-column:1;grid-row:1}
+    .inj li .st{grid-column:2;grid-row:1;margin-left:0}
+    .inj li i{grid-column:1/-1;grid-row:2}
+  }
+  .feed li{grid-template-columns:max-content minmax(0,1fr)}
+  .feed .when{white-space:nowrap}
+  /* panel titles hold one line; the grey note beside them drops underneath when the panel is narrow */
+  .panel h2{flex-wrap:wrap;row-gap:2px;white-space:nowrap}
+  .panel h2 small{white-space:normal;min-width:0}
+  /* Season pulse tiles: wide enough for their labels, and a long label or note wraps rather than trailing off */
+  @media (min-width:761px){ :is(#view-season,#snPmod,#view-ranks) .pulse{grid-template-columns:repeat(auto-fill,minmax(142px,1fr))} }
+  :is(#view-season,#snPmod,#view-ranks) .pulse span,:is(#view-season,#snPmod,#view-ranks) .pulse em{white-space:normal;overflow:visible;text-overflow:clip}
+  .pv-pl .t b span{white-space:nowrap}
+  /* game cards: the team line shrinks with the card before a name has to trail off */
+  .g{container-type:inline-size}
+  body:not(.lg-cfb) .g .nm{font-size:min(19px,7cqi)}
+  body.lg-cfb .g .nm{font-size:min(16px,5.5cqi)}
+  @media (min-width:861px){ .games{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))} }
+  .g .foot{flex-wrap:wrap;row-gap:4px}
+  .g .foot .net{white-space:nowrap}
+  .gc-lead .who{white-space:nowrap;min-width:0}
+  /* Rankings: the poll column gets the room its skinned type needs; if it is still narrow the "This week" column steps aside, as on a phone */
+  @media (min-width:1101px){ #view-ranks .rk-wrap:not(.ap):not(.conf){grid-template-columns:minmax(0,480px) minmax(0,1fr)} }
+  #view-ranks #rkPoll{container-type:inline-size}
+  @container (max-width:470px){ #view-ranks .rk-when, #view-ranks #rkPoll table.rs th:nth-child(6){display:none} }
+  .hero .status .t{white-space:nowrap}
+  @media (max-width:860px){
+    body:not(.lg-cfb) .hero .team .name{font-size:min(22px,6cqi)}
+    body.lg-cfb .hero .team .name{font-size:min(18px,5cqi)}
+  }
+  /* Season card heads: the title holds one line and the tab strip wraps under it */
+  :is(#view-season,#snPmod,#view-ranks) .gh{flex-wrap:wrap;row-gap:6px}
+  :is(#view-season,#snPmod,#view-ranks) .gh h3{white-space:nowrap}
+  /* Game Center card titles: same rule, the title never breaks and its switch and note wrap under it */
+  .gc-card h3{flex-wrap:wrap;row-gap:6px;white-space:nowrap}
+  .gc-card h3 small{white-space:normal;min-width:0}
+  .gc-sp .w{white-space:nowrap}
+  @media (min-width:641px){ #view-ranks .rk-confs{grid-template-columns:repeat(auto-fill,minmax(330px,1fr))} }
+  /* the rail table (NFC East / AP Top 25): records and today's result hold one line */
+  #standings td:not(:first-child),#standings th{white-space:nowrap}
+  /* hero line score: the plates' outer spacing sat 4px past the scroller and put a scrollbar under it; cells narrow with the card */
+  .linescore{padding-left:4px;padding-right:4px}
+  .linescore th:not(:first-child),.linescore td:not(:first-child){width:min(66px,11cqi)}
   /* ==== SKIN:gameday end ==== */
   /* v94: pregame tiles on the board: kickoff time, no score slot (black slot is for scores only) */
   #board .bg.upcoming .sc { font-size: clamp(18px, min(13cqh, 7.5cqw), 54px); background: none; box-shadow: none; text-shadow: none; color: var(--muted); font-weight: 600; min-width: 0; padding: 0; white-space: nowrap; }
@@ -5263,7 +5348,7 @@ function snChart() {
   let g = "";
   for (let v = -lim; v <= lim; v += 2) g += `<line class="gl" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"${v === 0 ? ' style="stroke:#3a4353"' : ""}/><text class="ax" x="${L - 5}" y="${Y(v) + 3}" text-anchor="end">${v > 0 ? "+" : ""}${v}</text>`;
   for (let n = 0; n <= maxX; n += 2) g += `<text class="ax" x="${X(n)}" y="${H - 8}" text-anchor="middle">${n}</text>`;
-  g += `<text class="ax" x="${W - R}" y="${H - 8}" text-anchor="end">G</text>`;
+  g += `<text class="ax" x="${W - R + 12}" y="${H - 8}" text-anchor="start">G</text>`;   // v89: in the margin, clear of the last tick
   if (cut) { const e = (cut.w - cut.l) / NG * maxX; g += `<line class="pl" x1="${X(0)}" y1="${Y(0)}" x2="${X(maxX)}" y2="${Y(e)}"/><text class="ax" x="${X(maxX) + 3}" y="${Y(e) + 3}">7th</text>`; }
   const cols = {}; let paths = ""; const ends = [];
   want.sort((a, b) => a === ab ? 1 : b === ab ? -1 : 0).forEach(t => {
@@ -5274,7 +5359,7 @@ function snChart() {
   });
   /* teams on the same record land on the same line, so nudge the labels apart */
   ends.sort((a, b) => a.y - b.y);
-  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i-1].y < 9) ends[i].y = ends[i-1].y + 9;
+  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i-1].y < 11) ends[i].y = ends[i-1].y + 11;   // v89: a full line apart
   const drop = ends.length ? ends[ends.length - 1].y - (H - B) : 0;
   if (drop > 0) ends.forEach(e => e.y -= drop);
   ends.forEach(e => { paths += `<text x="${e.x.toFixed(1)}" y="${e.y.toFixed(1)}" style="font:700 9px var(--body)" fill="${e.c}">${esc(e.t)}</text>`; });
