@@ -1929,6 +1929,24 @@
   body.lg-cfb .g.ttu .clash.ttub span { display: inline-flex; align-items: center; gap: 8px; }
   body.lg-cfb .g.ttu .clash.ttub b { font-family: var(--cond); font-size: 13px; font-weight: 800; letter-spacing: .12em; color: #ff5a5a; white-space: nowrap; }
   body.lg-cfb .g.ttu .ttmk { width: 22px; height: 22px; flex: none; background: var(--ttmk) center / contain no-repeat; filter: drop-shadow(0 0 1px rgba(255,255,255,.7)); }
+  /* v89: Saturday pregame show banner (GameDay / Big Noon), top of Saturday Home while on air */
+  .showbar { display: flex; gap: 10px; align-items: stretch; margin: 0 0 14px; }
+  .showbar[hidden] { display: none; }
+  .showbar .sb-k { display: flex; align-items: center; gap: 8px; padding: 0 16px; border-radius: 8px; background: var(--fill, #e8232a); color: #fff; font-family: var(--cond); font-weight: 800; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
+  .showbar .sb-k i { width: 9px; height: 9px; border-radius: 50%; background: #fff; animation: sbPulse 1.4s ease-in-out infinite; }
+  @keyframes sbPulse { 50% { opacity: .25; } }
+  .showbar .sb-s { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; border: 2px solid var(--fill, #e8232a); background: #000; color: #fff; text-decoration: none; box-shadow: 0 0 18px color-mix(in srgb, var(--fill, #e8232a) 30%, transparent); }
+  .showbar .sb-s b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1.1; }
+  .showbar .sb-s small { flex: none; font-family: var(--cond); font-weight: 800; font-size: 12px; letter-spacing: .12em; color: #d9cccd; }
+  .showbar .sb-go { flex: none; margin-left: auto; font-family: var(--cond); font-weight: 800; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: #ff5a5a; white-space: nowrap; }
+  .showbar .sb-s:hover, .showbar .sb-s:focus-visible { background: #1a0b0e; }
+  .showbar .sb-s:hover .sb-go { color: #fff; }
+  @media (max-width: 760px) {
+    .showbar { flex-wrap: wrap; }
+    .showbar .sb-k { flex: 1 0 100%; padding: 8px 12px; }
+    .showbar .sb-s { flex: 1 0 100%; padding: 10px 12px; }
+    .showbar .sb-s b { font-size: 17px; }
+  }
   /* ==== SKIN:gameday end ==== */
 </style>
 </head>
@@ -2053,6 +2071,7 @@
 
   <!-- ================= HOME ================= -->
   <main class="view" id="view-home">
+    <nav class="showbar" id="showBar" hidden aria-label="On air now"></nav>
     <section class="rg" id="regroup" hidden>
       <div class="rg-head">
         <span class="rg-kick">Regroup</span>
@@ -3811,7 +3830,33 @@ function setWeek(w) {
   renderWeekBox();
   espnLoop(); sleeperLoop();
 }
+/* v89: Saturday pregame shows. While College GameDay or Big Noon Kickoff is on air, a banner tops the
+   Saturday Home; each pill opens that show's live stream in a new tab. Windows are CT, college season only. */
+const SHOWS = [
+  { key: "gd",  name: "College GameDay",  net: "ESPN", from: 8 * 60, to: 11 * 60, url: "https://www.espn.com/watch/player/_/channel/espn" },
+  { key: "bnk", name: "Big Noon Kickoff", net: "FOX",  from: 9 * 60, to: 11 * 60, url: "https://www.foxsports.com/live/fox" },
+];
+const ctFmt = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", weekday: "short", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", hourCycle: "h23" });
+function showsOn(t) {
+  const p = {}; ctFmt.formatToParts(new Date(t)).forEach(x => p[x.type] = x.value);
+  if (p.weekday !== "Sat") return [];
+  const m = +p.month, d = +p.day;
+  if (!((m === 8 && d >= 20) || (m >= 9 && m <= 11) || (m === 12 && d <= 14))) return [];
+  const mins = (+p.hour % 24) * 60 + (+p.minute);
+  return SHOWS.filter(s => mins >= s.from && mins < s.to);
+}
+function renderShowBar() {
+  const bar = el("#showBar"); if (!bar) return;
+  const on = LG.key === "cfb" ? showsOn(Date.now()) : [];
+  const sig = on.map(s => s.key).join(",");
+  if (bar.dataset.sig === sig) return;
+  bar.dataset.sig = sig;
+  bar.hidden = !on.length;
+  bar.innerHTML = on.length ? `<span class="sb-k"><i></i>On air</span>` + on.map(s =>
+    `<a class="sb-s" data-show="${s.key}" href="${s.url}" target="_blank" rel="noopener"><b>${s.name}</b><small>${s.net}</small><span class="sb-go">Watch \u203a</span></a>`).join("") : "";
+}
 function tick() {
+  renderShowBar();   // v89
   el("#clock").textContent = fmtCT(Date.now(), { hour:"numeric", minute:"2-digit" }) + " CT";
   el("#fsClock").textContent = el("#clock").textContent;
   const s = S.lastOk ? Math.round((Date.now() - S.lastOk)/1000) : null;
