@@ -3881,6 +3881,10 @@ const WATCH_NETS = [
   [/^FS2$/i, "FS2", "https://www.fox.com/live"],
   [/^(BTN|Big Ten Network)$/i, "BTN", "https://www.fox.com/live"],
   [/^(CBS)$/i, "CBS", "https://www.paramountplus.com/live-tv/"],
+  // v92: NBC and Peacock games stream on Peacock; its search page leads with today's live games
+  [/^(NBC|Peacock|NBCSN)$/i, "Peacock", "https://www.peacocktv.com/watch/search"],
+  // v92: TNT/TBS/truTV stream on HBO Max; its game ids aren't public, so search the home team (the live game is the top hit)
+  [/^(TNT|TBS|truTV|TNT Sports|HBO Max|Max)$/i, "TNT", g => "https://play.hbomax.com/search?q=" + encodeURIComponent(dispName(g.home === CFG.fav || g.away === CFG.fav ? CFG.fav : g.home))],
 ];
 /* v91: Fox One plays his local FOX (KDFW Dallas) program that starts at a given moment; a FOX game's program starts at its listed kickoff */
 const foxOne = ms => `https://www.fox.com/watch/epg/KDFW-program-KDFW-${Math.round(ms / 60e3) * 60e3}_dtc/live`;
