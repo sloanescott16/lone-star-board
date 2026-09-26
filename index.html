@@ -891,6 +891,7 @@
   .gc-sp .w { color: var(--muted); font-size: 12px; } .gc-sp .t { color: var(--ink-2); } .gc-sp .t b { color: var(--ink); font-weight: 600; margin-right: 4px; }
   .gc-sp .s { font-family: var(--display); font-weight: 700; white-space: nowrap; }
   .gc-plays { list-style: none; margin: 0; padding: 0; }
+  .gc-curdr { margin-top: 8px; }   /* v104 */
   .gc-plays li { display: grid; grid-template-columns: 70px 1fr; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-2); }
   .gc-plays li span:first-child { color: var(--muted); font-size: 12px; } .gc-plays li.hl span:last-child { color: var(--ink); font-weight: 500; }
   .gc-box { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -4230,7 +4231,7 @@ function setLeague(k) {
    Opened from the Schedule tab; team names and logos open the team.
    ===================================================================== */
 const TID = {};   // abbr -> ESPN team id, learned from every feed
-const GC = { id: null, g: null, sum: null, timer: null, err: "", open: new Set(), curClosed: false, prob: store.get("cc-prob", "win"), seen: null, seenId: null, pts: null };   // v70: open drives, probability mode, seen play ids
+const GC = { id: null, g: null, sum: null, timer: null, err: "", open: new Set(), curClosed: false, curOpenPh: false, prob: store.get("cc-prob", "win"), seen: null, seenId: null, pts: null };   // v70: open drives, probability mode, seen play ids
 const TM = { ab: null, stand: {}, standT: {} };
 const numOf = v => { const m = String(v ?? "").match(/-?\d+(\.\d+)?/); return m ? +m[0] : 0; };
 function gameFromHeader(sum, id) {
@@ -4250,7 +4251,7 @@ async function showGame(id) {
   if (!id || GC.id === id) { if (id) renderGC(); return; }
   closeTeam();
   GC.id = id; GC.sum = null; GC.err = ""; GC.g = S.events.find(x => x.id === id) || null;
-  GC.open = new Set(); GC.curClosed = false; GC.seen = null;   // v70: fresh drive list and a silent first load for the banners
+  GC.open = new Set(); GC.curClosed = false; GC.curOpenPh = false; GC.seen = null;   // v70: fresh drive list and a silent first load for the banners
   window.scrollTo(0, 0);
   renderGC();
   if (GC.g && GC.g.state === "pre") loadTape(GC.g).then(() => { if (GC.id === id) renderGC(); });
@@ -4803,17 +4804,17 @@ function driveRow(d, key, isCur, g) {
   const when = d.start?.period?.number ? `${ordinal(d.start.period.number)} ${d.start.clock?.displayValue || ""}`.trim() : "";
   const from = d.start?.text || "", end = d.end?.text || "";
   const sc = lastP && lastP.awayScore != null ? `${lastP.awayScore}-${lastP.homeScore}` : "";
-  const open = isCur ? !GC.curClosed : GC.open.has(key);
+  const open = isCur ? (GC_PHONE.matches ? GC.curOpenPh : !GC.curClosed) : GC.open.has(key);   // v104: on a phone the live drive starts folded
   return `<li class="gc-dr ${open ? "open" : ""} ${isCur ? "cur" : ""} ${isScore ? "score" : ""} ${to ? "to" : ""}" data-drive="${esc(key)}">
     <button type="button" class="dr-head" aria-expanded="${open}">${mark(ab, "mini")}<span class="dr-main"><b>${esc(isCur && !/progress/i.test(res) ? res + " · live" : res)}</b><span>${esc(desc)}${from ? " · from " + esc(from) : ""}</span></span><span class="dr-side"><span>${esc(when)}</span>${end && !isCur ? `<span>to ${esc(end)}</span>` : ""}</span><span class="dr-sc">${esc(sc)}</span><span class="dr-caret"></span></button>
     <ul class="dr-plays">${plays.slice().reverse().map((p, i) => playRow(p, g, isCur && i === 0)).join("") || `<li class="empty">Drive starting</li>`}</ul></li>`;
 }
-function gcDrives(sum, g, live) {
+function gcDrives(sum, g, live, noCur) {   // v104: noCur leaves the live drive out (a phone shows it under the field)
   let prev = sum?.drives?.previous || []; const cur = live ? sum?.drives?.current : null;
   if (cur && prev.length && prev[prev.length - 1].id != null && prev[prev.length - 1].id === cur.id) prev = prev.slice(0, -1);   // ESPN sometimes lists the live drive in both
-  if (!prev.length && !cur) return "";
+  if (!prev.length && (!cur || noCur)) return "";
   const rows = [];
-  if (cur) rows.push(driveRow(cur, "cur", true, g));
+  if (cur && !noCur) rows.push(driveRow(cur, "cur", true, g));
   prev.slice().reverse().forEach((d, i) => rows.push(driveRow(d, String(d.id ?? "d" + (prev.length - 1 - i)), false, g)));
   return `<ul class="gc-drives">${rows.join("")}</ul>`;
 }
@@ -4872,7 +4873,12 @@ function renderGC() {
   // v102: the situation and the drive list are built apart; desktop joins them in one card, a phone splits them
   let drive = "", driveList = "";
   const cur = sum?.drives?.current;
-  if (live && cur) { drive = `${gcField(g, cur)}${gcSit(g, hp)}`; driveList = gcDrives(sum, g, true); }
+  if (live && cur && GC_PHONE.matches) {   // v104: phone: under the field, the situation, the latest play, then this drive folded (tap for its plays)
+    const cp = cur.plays || [], lpT = g.lastPlay || cp[cp.length - 1]?.text || "";
+    drive = `${gcField(g, cur)}${gcSit(g, hp)}${lpT ? `<ul class="gc-plays gc-last"><li class="hl"><span>Last play</span><span>${linkNames(esc(lpT))}</span></li></ul>` : ""}<ul class="gc-drives gc-curdr">${driveRow(cur, "cur", true, g)}</ul>`;
+    driveList = gcDrives(sum, g, true, true);
+  }
+  else if (live && cur) { drive = `${gcField(g, cur)}${gcSit(g, hp)}`; driveList = gcDrives(sum, g, true); }
   else if (live && (g.lastPlay || g.spot)) { drive = `${gcField(g, null)}${gcSit(g, hp)}${g.lastPlay ? `<ul class="gc-plays"><li class="hl"><span>Last play</span><span>${linkNames(esc(g.lastPlay))}</span></li></ul>` : ""}`; driveList = gcDrives(sum, g, true); }
   const drivesFin = fin ? gcDrives(sum, g, false) : "";
   // team stats
@@ -5193,7 +5199,7 @@ document.addEventListener("click", e => {
   // v70: the live strip, the drive list and the Win / Cover switch on the game page
   const sb = e.target.closest("#gcStrip button[data-id]"); if (sb) return openGame(sb.dataset.id);
   const tkg = e.target.closest(".tk[data-gid]"); if (tkg && tkg.dataset.gid) return openGame(tkg.dataset.gid);   // v100
-  const dh = e.target.closest(".gc-dr > .dr-head"); if (dh) { const li = dh.parentElement, k = li.dataset.drive, on = li.classList.toggle("open"); dh.setAttribute("aria-expanded", on); if (li.classList.contains("cur")) GC.curClosed = !on; else on ? GC.open.add(k) : GC.open.delete(k); return; }
+  const dh = e.target.closest(".gc-dr > .dr-head"); if (dh) { const li = dh.parentElement, k = li.dataset.drive, on = li.classList.toggle("open"); dh.setAttribute("aria-expanded", on); if (li.classList.contains("cur")) { if (GC_PHONE.matches) GC.curOpenPh = on; else GC.curClosed = !on; } else on ? GC.open.add(k) : GC.open.delete(k); return; }
   const pb = e.target.closest("#gcProbSeg button[data-prob]"); if (pb) { if (pb.disabled) return; GC.prob = pb.dataset.prob; store.set("cc-prob", GC.prob); return renderGC(); }
   if (e.target.closest("#tmClose") || e.target === el("#tmodal")) return closeTeam();
   const tBtn = e.target.closest(".gc-team[data-team], .tm-st tr[data-team], #standings tr[data-team]"); if (tBtn) return openTeam(tBtn.dataset.team);
