@@ -1959,6 +1959,8 @@
   #gcWatch a.watch { font-size: 14px; padding: 7px 14px; }
   @media (max-width: 640px) { .g .foot a.watch, .bg .foot a.watch { font-size: 12px; } a.watch span { display: none; } }
   /* ==== SKIN:gameday end ==== */
+  /* v94: pregame tiles on the board: kickoff time, no score slot (black slot is for scores only) */
+  #board .bg.upcoming .sc { font-size: clamp(18px, min(13cqh, 7.5cqw), 54px); background: none; box-shadow: none; text-shadow: none; color: var(--muted); font-weight: 600; min-width: 0; padding: 0; white-space: nowrap; }
 </style>
 </head>
 <body class="v-home">
@@ -3264,10 +3266,10 @@ function gameCard(g, big, ex) {
     const inner = big
       ? `<span class="nm">${rkh}<span class="tn">${esc(dispName(ab))}</span>${g.poss===ab?'<span class="poss" title="possession"></span>':''}<small>${esc(rec)}</small></span>`
       : `<span class="nm">${rkh}<span class="tn">${esc(dispName(ab))}</span>${sd}${g.poss===ab?'<span class="poss" title="possession"></span>':''} <small>${esc(rec)}</small></span>`;
-    return `<div class="row" ${big ? "" : `data-team="${esc(ab)}"`}>${mark(ab,"abbr")}${inner}<span class="sc ${trail?'trail':''} ${win?'win':''}">${up ? (big ? (ab===g.away ? esc(g.status) : "") : "") : s}</span></div>`;
+    return `<div class="row" ${big ? "" : `data-team="${esc(ab)}"`}>${mark(ab,"abbr")}${inner}<span class="sc ${trail?'trail':''} ${win?'win':''}">${up ? (big ? (ab===g.away ? esc(kickLabel(g)) : "") : "") : s}</span></div>`;
   };
   const why = big && ex.why && ex.why.length ? `<span class="why">${ex.why.map(w => `<span>${esc(w)}</span>`).join("")}</span>` : "";
-  const foot = `<div class="foot"><span class="st">${up ? (big ? slotOf(g) : esc(g.status)) : esc(g.status)}</span>${why}${g.rz?'<span class="rz">Red zone</span>':''}${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${big && g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}${watchHTML(g) || (g.net ? `<span class="net">${esc(g.net)}</span>` : "")}</div>`;
+  const foot = `<div class="foot"><span class="st">${up ? (big ? (g.date <= Date.now() ? "Awaiting kickoff" : "Up next") : esc(g.status)) : esc(g.status)}</span>${why}${g.rz?'<span class="rz">Red zone</span>':''}${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${big && g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}${watchHTML(g) || (g.net ? `<span class="net">${esc(g.net)}</span>` : "")}</div>`;
   const lm = !big && g.odds ? `<div class="lm">${linesHTML(g, true)}</div>` : "";
   const mine = big && LG.fantasy ? myPlayersIn(g) : [], theirs = big && LG.fantasy ? myPlayersIn(g, "opp") : [];
   const chips = arr => arr.map(m => `<span class="mp" data-pid="${esc(m.pid)}" role="button" title="Points breakdown"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
@@ -3528,8 +3530,11 @@ function renderBoard() {
   el("#boardSub").textContent = `${S.events.length} games · ${live} live · ${fin} final · ${S.events.length-live-fin} to come`;
   renderConfPicker();
   // v53: live games only, the Schedule tab has the rest; v70: a game that just ended stays up two minutes with its Final before it clears
-  const held = offWeek() ? [] : S.events.filter(g => g.live || (g.state === "post" && S.finishedAt?.[g.id] && Date.now() - S.finishedAt[g.id] < 120000));
-  const liveGames = boardFilter(held).map(g => ({ g, w: g.live ? importance(g) : { score: 0, why: [] } })).sort((a, b) => (b.g.live - a.g.live) || b.w.score - a.w.score || a.g.date - b.g.date);
+  const held = offWeek() ? [] : S.events.filter(g => g.live || (g.state === "post" && S.finishedAt?.[g.id] && Date.now() - S.finishedAt[g.id] < 120000) || onDeck(g));
+  // v94: nothing live or due yet, but it's game day: the next kickoff slot goes up so the board is never blank at game time
+  if (!offWeek() && !held.length) { const nx = S.events.filter(g => g.state === "pre" && g.date > Date.now()).sort((a, b) => a.date - b.date)[0];
+    if (nx && fmtCT(nx.date, { dateStyle: "short" }) === fmtCT(Date.now(), { dateStyle: "short" })) held.push(...S.events.filter(g => g.state === "pre" && +g.date === +nx.date)); }
+  const liveGames = boardFilter(held).map(g => ({ g, w: g.live ? importance(g) : { score: 0, why: [] } })).sort((a, b) => (b.g.live - a.g.live) || ((b.g.state === "post") - (a.g.state === "post")) || b.w.score - a.w.score || a.g.date - b.g.date || favFirst(a.g, b.g) || bestRank(a.g) - bestRank(b.g));
   const card = x => gameCard(x.g, true, { imp: x.w.score > 0, why: x.w.why });
   const next = S.events.find(g => g.state === "pre");
   const board = el("#board");
@@ -3538,7 +3543,7 @@ function renderBoard() {
   if (grouped) {
     board.classList.remove("fill"); board.classList.add("sections"); board.style.cssText = "";
     board.innerHTML = confSections(liveGames.map(x => x.g)).map(([id, gs]) =>
-      `<section class="csec"><h3>${esc(confName(id))}<span>${gs.length} live</span></h3><div class="board-grid">${liveGames.filter(x => gs.includes(x.g)).map(card).join("")}</div></section>`).join("");
+      `<section class="csec"><h3>${esc(confName(id))}<span>${gs.some(g => g.live) ? `${gs.filter(g => g.live).length} live` : `${gs.length} up next`}</span></h3><div class="board-grid">${liveGames.filter(x => gs.includes(x.g)).map(card).join("")}</div></section>`).join("");
   } else {
     board.classList.remove("sections");
     board.innerHTML = liveGames.map(card).join("")
@@ -3549,6 +3554,9 @@ function renderBoard() {
   if (S.view === "game") { renderGCStrip(); if (GC.g) { const fresh = S.events.find(x => x.id === GC.g.id); if (fresh) GC.g = fresh; el("#gcPin").innerHTML = GC.g.state === "pre" ? "" : gcPinHTML(GC.g, GC.sum?.drives?.current); } }   // v70: the strip and the pinned score follow every board poll
 }
 
+// v94: a pregame game within 30 minutes of kickoff, or past it and not yet flipped live, belongs on the board
+function onDeck(g) { return g.state === "pre" && g.date - Date.now() <= 30 * 60e3 && Date.now() - g.date < 3 * 3600e3; }
+function kickLabel(g) { return g.date <= Date.now() ? "Kickoff" : fmtCT(g.date, { hour: "numeric", minute: "2-digit" }); }
 // v53: why a live game matters. Only called for live games, so the treatment disappears at the final whistle.
 function importance(g) {
   const why = []; let score = 0;
