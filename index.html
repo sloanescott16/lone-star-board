@@ -1958,6 +1958,22 @@
   #gcWatch { margin-left: auto; display: flex; }
   #gcWatch a.watch { font-size: 14px; padding: 7px 14px; }
   @media (max-width: 640px) { .g .foot a.watch, .bg .foot a.watch { font-size: 12px; } a.watch span { display: none; } }
+  /* v98: scoreboard tile foot is a fixed two-line grid. Line 1: status, red zone, reason tags across the full width (a tag that does not fit is
+     dropped whole, never cut). Line 2: down and distance on the left, Watch (or the plain network pill) pinned bottom right, same spot and size on every tile */
+  .bg .foot, .board.fill .bg .foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 10px; row-gap: 4px; align-items: center; overflow: visible; }
+  .board.fill .bg .foot { column-gap: 3cqw; row-gap: 1cqh; }
+  .bg .foot .f1 { grid-area: 1 / 1 / 2 / 3; display: flex; align-items: center; flex-wrap: wrap; gap: 3em 8px; height: 1.7em; overflow: hidden; min-width: 0; }
+  .board.fill .bg .foot .f1 { gap: 3em 2cqw; }
+  .bg .foot .f1 .why { display: contents; }
+  .bg .foot .f2 { grid-area: 2 / 1; display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; overflow: hidden; }
+  .bg .foot .f2 .dd, .bg .foot .f2 .spread { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .bg .foot > a.watch, .bg .foot > .net { grid-area: 2 / 2; align-self: center; justify-self: end; margin: 0; font-size: .92em; padding: .42em .8em .42em .7em; }
+  .bg .foot > .net { display: inline-flex; align-items: center; padding: .42em .8em; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line); font-family: var(--cond); font-weight: 800; line-height: 1; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .board.fill .bg .foot > a.watch, .board.fill .bg .foot > .net { font-size: clamp(10px, 4.6cqh, 22px); }
+  @container (max-width: 270px) { .board.fill .bg .foot > a.watch span { display: none; } }
+  /* v98: tile padding in cq units resolved against the whole board (a container cannot size its own padding), leaving a tall empty band on top; size it from the tile's width instead */
+  .board.fill .bg { padding: 2.6% 3.4% 2.4%; }
+  @media (max-width: 640px) { .bg .foot > a.watch { font-size: 12px; } }
   /* v89: fit every width. Home hero sizes from its own card (cqi), not the window (vw) */
   .hero{container-type:inline-size}
   .hero .big:empty{display:none}
@@ -3372,7 +3388,11 @@ function gameCard(g, big, ex) {
     return `<div class="row" ${big ? "" : `data-team="${esc(ab)}"`}>${mark(ab,"abbr")}${inner}<span class="sc ${trail?'trail':''} ${win?'win':''}">${up ? (big ? (ab===g.away ? esc(kickLabel(g)) : "") : "") : s}</span></div>`;
   };
   const why = big && ex.why && ex.why.length ? `<span class="why">${ex.why.map(w => `<span>${esc(w)}</span>`).join("")}</span>` : "";
-  const foot = `<div class="foot"><span class="st">${up ? (big ? (g.date <= Date.now() ? "Awaiting kickoff" : "Up next") : esc(g.status)) : esc(g.status)}</span>${why}${g.rz?'<span class="rz">Red zone</span>':''}${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${big && g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}${watchHTML(g) || (g.net ? `<span class="net">${esc(g.net)}</span>` : "")}</div>`;
+  const stH = `<span class="st">${up ? (big ? (g.date <= Date.now() ? "Awaiting kickoff" : "Up next") : esc(g.status)) : esc(g.status)}</span>`, rzH = g.rz ? '<span class="rz">Red zone</span>' : '';
+  const ddH = `${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${big && g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}`;
+  const wH = watchHTML(g) || (g.net ? `<span class="net">${esc(g.net)}</span>` : "");
+  // v98: scoreboard tiles keep status/tags on line 1, down and distance on line 2, and Watch in its own right-hand slot
+  const foot = big ? `<div class="foot"><span class="f1">${stH}${rzH}${why}</span><span class="f2">${ddH}</span>${wH}</div>` : `<div class="foot">${stH}${rzH}${ddH}${wH}</div>`;
   const lm = !big && g.odds ? `<div class="lm">${linesHTML(g, true)}</div>` : "";
   const mine = big && LG.fantasy ? myPlayersIn(g) : [], theirs = big && LG.fantasy ? myPlayersIn(g, "opp") : [];
   const chips = arr => arr.map(m => `<span class="mp" data-pid="${esc(m.pid)}" role="button" title="Points breakdown"><i style="background:${T(m.team)[2]}"></i>${esc(m.name)} <b>${m.pts.toFixed(1)}</b></span>`).join("");
