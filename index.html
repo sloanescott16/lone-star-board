@@ -2016,7 +2016,7 @@
   /* game cards: the team line shrinks with the card before a name has to trail off */
   .g{container-type:inline-size}
   body:not(.lg-cfb) .g .nm{font-size:min(19px,7cqi)}
-  body.lg-cfb .g .nm{font-size:min(16px,5.5cqi)}
+  body.lg-cfb .g .nm{font-size:min(16px,5.3cqi)}
   @media (min-width:861px){ .games{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))} }
   .g .foot{flex-wrap:wrap;row-gap:4px}
   .g .foot .net{white-space:nowrap}
@@ -2041,8 +2041,26 @@
   /* the rail table (NFC East / AP Top 25): records and today's result hold one line */
   #standings td:not(:first-child),#standings th{white-space:nowrap}
   /* hero line score: the plates' outer spacing sat 4px past the scroller and put a scrollbar under it; cells narrow with the card */
-  .linescore{padding-left:4px;padding-right:4px}
+  .linescore{padding-left:4px;padding-right:4px;padding-bottom:4px;overflow-y:hidden}
   .linescore th:not(:first-child),.linescore td:not(:first-child){width:min(66px,11cqi)}
+  /* Game Center score header: sized from the header's own width, capped at the old sizes, so both names read in full at half a monitor */
+  .gc-top{container-type:inline-size}
+  @media (min-width:861px){
+    .gc-top .gc-team .mark{width:min(60px,5.6cqi);height:min(60px,5.6cqi)}
+    body:not(.lg-cfb) .gc-top .gc-nm b{font-size:min(34px,3.1cqi)}
+    body.lg-cfb .gc-top .gc-nm b{font-size:min(28px,2.4cqi)}
+    body:not(.lg-cfb) .gc-top .gc-side .n{font-size:min(76px,7cqi)}
+    body.lg-cfb .gc-top .gc-side .n{font-size:min(68px,6.4cqi)}
+    .gc-top .gc-side{gap:min(14px,1.3cqi)}
+    .gc-top .gc-nm small{font-size:clamp(11px,1.3cqi,14px)}
+    body .gc-top .gc-st .q{font-size:min(24px,2.3cqi)}
+    body .gc-top .gc-st .dd{font-size:clamp(12px,1.5cqi,16px)}
+  }
+  .gc-ls td:first-child,.linescore td:first-child{white-space:nowrap}
+  /* Scoreboard tiles: the foot (clock, tags, down and distance, Watch) wraps to a second line instead of cutting the down and distance off */
+  .board.fill .bg .foot{flex-wrap:wrap;overflow:visible;row-gap:1.2cqh}
+  .board.fill .bg .foot .dd{overflow:visible;text-overflow:clip}
+  .board.fill .bg .foot .why{flex-wrap:wrap;overflow:visible}
   /* ==== SKIN:gameday end ==== */
   /* v94: pregame tiles on the board: kickoff time, no score slot (black slot is for scores only) */
   #board .bg.upcoming .sc { font-size: clamp(18px, min(13cqh, 7.5cqw), 54px); background: none; box-shadow: none; text-shadow: none; color: var(--muted); font-weight: 600; min-width: 0; padding: 0; white-space: nowrap; }
