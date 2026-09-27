@@ -2538,8 +2538,10 @@ const T = ab => (LG.key === "cfb" ? CT[ab] : TEAMS[toEspn(ab)]) || [ab, ab, "#33
 const dispName = ab => LG.key === "cfb" ? ((CT[ab] && CT[ab][0]) || ab) : T(ab)[1];
 const confName = id => CONF[id] || "Other";
 const bestRank = g => Math.min(g.homeRank || 99, g.awayRank || 99);
+const CTL = {};   // v106: full school name (location) for X searches, "Kansas State" not "Kansas St"
 function learnTeam(t) {
   if (LG.key !== "cfb" || !t || !t.abbreviation) return;
+  if (t.location) CTL[t.abbreviation] = t.location;
   const hex = c => c ? (String(c).startsWith("#") ? c : "#" + c) : "";
   const logo = t.logo || (Array.isArray(t.logos) && (t.logos.find(l => (l.rel||[]).includes("dark"))?.href || t.logos[0]?.href)) || "";
   const o = CT[t.abbreviation] || [];   // v57: a thin team object (summary header, schedule) keeps what the board already taught us
@@ -4775,11 +4777,17 @@ function tkNames(text) {
   }
   return out;
 }
-function tkXUrl(x, video) {
-  const what = { td: "touchdown", fg: "field goal", pts: "", take: /fumble/i.test(x.lbl) ? "fumble" : "interception", miss: /block/i.test(x.lbl) ? "blocked" : "missed field goal", stop: "fourth down stop", big: "" }[x.kind] || "";
+/* v106: X ANDs every word, so "Kansas St" + two surnames + "field goal" found nothing. Now one OR group:
+   the full school name or the players named in the play (skipping very common surnames), videos only,
+   since today. Top for the best clip, Latest for one that just posted. */
+const TK_COMMON = new Set("smith johnson williams brown jones garcia miller davis rodriguez martinez hernandez lopez gonzalez wilson anderson thomas taylor moore jackson martin lee perez thompson white harris sanchez clark ramirez lewis robinson walker young allen king wright scott torres nguyen hill flores green adams nelson baker hall rivera campbell mitchell carter roberts gomez phillips evans turner diaz parker cruz edwards collins reyes stewart morris morales murphy cook rogers gutierrez ortiz morgan cooper peterson bailey reed kelly howard ramos kim cox ward richardson watson brooks chavez wood james bennett gray mendoza ruiz hughes price alvarez castillo sanders patel myers long ross foster jimenez".split(" "));
+function tkXUrl(x, latest) {
   const day = fmtCT(x.t || Date.now(), { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/(\d+)\/(\d+)\/(\d+)/, "$3-$1-$2");
-  const q = [`"${dispName(x.team)}"`, ...tkNames(x.text), what, video ? "filter:videos" : "", `since:${day}`].filter(Boolean).join(" ");
-  return "https://x.com/search?src=typed_query&q=" + encodeURIComponent(q);
+  const school = CTL[x.team] || dispName(x.team).replace(/\bSt\.?$/, "State");
+  const names = tkNames(x.text).filter(n => n.length > 2 && !TK_COMMON.has(n.toLowerCase()));
+  const terms = [`"${school}"`, ...names];
+  const q = `${terms.length > 1 ? "(" + terms.join(" OR ") + ")" : terms[0]} filter:videos since:${day}`;
+  return "https://x.com/search?src=typed_query&q=" + encodeURIComponent(q) + (latest ? "&f=live" : "");
 }
 function openTkPlay(k) {
   const x = (S.satTick || []).find(i => i.k === k); if (!x) return;
@@ -4791,8 +4799,8 @@ function openTkPlay(k) {
       <div class="sub">${opp ? (x.team === x.sc.a ? "at " : "vs ") + (rk(opp) ? "#" + rk(opp) + " " : "") + esc(dispName(opp)) + " · " : ""}${x.t ? esc(fmtCT(x.t, { hour: "numeric", minute: "2-digit" })) : ""}${x.when ? " · " + esc(x.when) : ""}</div></div></div>
     <p class="tkp-text">${esc(x.text || "No play text from the feed for this one.")}</p>
     <div class="tkp-foot">
-      <a class="btn x" href="${esc(tkXUrl(x, true))}" target="_blank" rel="noopener noreferrer">&#9654; Video on X</a>
-      <a class="btn" href="${esc(tkXUrl(x, false))}" target="_blank" rel="noopener noreferrer">Posts on X</a>
+      <a class="btn x" href="${esc(tkXUrl(x, false))}" target="_blank" rel="noopener noreferrer" title="Top video posts about this team or these players today">&#9654; Video on X</a>
+      <a class="btn" href="${esc(tkXUrl(x, true))}" target="_blank" rel="noopener noreferrer" title="Newest video posts first, best right after the play">Latest clips</a>
       <span class="sp"></span>
       <button class="btn" type="button" data-tkgc="${esc(x.gid)}">Game center</button>
       <button class="btn" type="button" data-tkclose>Close</button>
