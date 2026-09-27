@@ -2968,6 +2968,7 @@ async function openPlayer(pid) {
   const m = el("#pmodal"); m.hidden = false;
   setMark(el("#pmMark"), p[2] || "FA");
   el("#pmTitle").textContent = p[0]; el("#pmSub").textContent = `${p[1]} · ${toEspn(p[2])}${g ? " · " + (g.state === "pre" ? "Kickoff " + fmtCT(g.date,{weekday:"short",hour:"numeric",minute:"2-digit"}) : `${g.away} ${g.as} · ${g.home} ${g.hs} · ${g.status}`) : " · Bye"}`;
+  if (fxHideBench(pid)) { el("#pmPts").textContent = "BN"; el("#pmX").href = "https://x.com/search?src=typed_query&q=" + encodeURIComponent(p[0]); el("#pmBody").innerHTML = `<div class="empty">On the bench this week. Bench points live on the Fantasy page.</div>`; return; }
   el("#pmPts").textContent = pts.toFixed(2);
   el("#pmX").href = "https://x.com/search?src=typed_query&q=" + encodeURIComponent(p[0]);
   el("#pmBody").innerHTML = `<div class="empty">Loading stats</div>`;
@@ -3465,6 +3466,12 @@ function renderDrive(g) {
     <ul class="plays">${plays.map((p,i)=>`<li class="${i===0?'hl':''}"><span>${esc(p.start?.shortDownDistanceText || p.start?.downDistanceText || "")}</span><span>${linkNames(esc(p.text))}</span></li>`).join("") || `<li><span></span><span>Drive starting</span></li>`}</ul>`;
 }
 
+// v108: bench points belong to the Fantasy page. A player sitting on his bench (or the opponent's) this week shows no fantasy numbers anywhere else.
+function fxBenched(pid) {
+  const sl = S.sleeper; if (!pid) return false;
+  return [sl.mine, sl.oppM].some(m => m && (m.players || []).includes(pid) && !(m.starters || []).includes(pid));
+}
+const fxHideBench = pid => S.view !== "fantasy" && fxBenched(pid);
 function myPlayersIn(g, side) {
   const sl = S.sleeper, m = side === "opp" ? sl.oppM : sl.mine; if (!m || !sl.players) return [];
   const pp = m.players_points || {};
@@ -6235,7 +6242,7 @@ function snPlRender() {
   // this game, when opened from a game center
   h += snPlInGame(id);
   // fantasy (NFL, Sleeper knows him)
-  if (LG.fantasy && pid) h += snFantasy(pid, name);
+  if (LG.fantasy && pid && !fxHideBench(pid)) h += snFantasy(pid, name);
   // season splits from ESPN
   if (ov === undefined) h += `<div class="tmc"><h3>Season</h3><div class="empty">Loading the season line</div></div>`;
   else if (ov?.st?.splits?.length && ov.st.labels?.length) {
