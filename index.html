@@ -2169,6 +2169,41 @@
   .tk.fav { background: linear-gradient(180deg, rgba(204,0,0,.22), rgba(204,0,0,.06)); }
   .tk.k-alert, .tk.k-upset { background: rgba(255,90,95,.07); }
   @media (max-width: 640px) { .tk .tx { max-width: 30ch; } body.lg-cfb .ticker .tag { min-width: 120px; } }
+
+  /* ================= v105: Saturday ticker, plays only, smooth reel, one-at-a-time on a phone ================= */
+  body.lg-cfb .ticker .reel { animation: none !important; transform: translate3d(0,0,0); }
+  body.lg-cfb .ticker .tag .tsc { font-size: 17px; letter-spacing: .06em; }
+  body.lg-cfb .tk { font-size: 16px; }
+  body.lg-cfb .tk .tx { max-width: 60ch; color: var(--ink); }
+  .tk[data-k] { cursor: pointer; }
+  .tk[data-k]:hover { background: rgba(255,255,255,.05); }
+  .tk .xv { font-family: var(--cond, sans-serif); font-size: 11px; font-weight: 800; letter-spacing: .1em; color: var(--muted); border: 1px solid var(--line-strong); border-radius: 4px; padding: 2px 5px; white-space: nowrap; }
+  .ticker.flip { height: 64px; }
+  .ticker.flip .tag { display: none; }
+  .ticker.flip .track { mask-image: none; -webkit-mask-image: none; padding: 0 12px; overflow: hidden; }
+  .ticker.flip .reel { display: block; width: 100%; transform: none !important; white-space: normal; }
+  .ticker.flip .tk { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: 3px 8px; padding: 0; border: 0; width: 100%; background: none; }
+  .ticker.flip .tk .who { grid-column: 3 / 5; grid-row: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 17px; }
+  .ticker.flip .tk .tx { grid-column: 1 / 4; grid-row: 2; max-width: none; min-width: 0; font-size: 13px; color: var(--ink-2); }
+  .ticker.flip .tk .ts { grid-column: 4; grid-row: 2; font-size: 11px; justify-self: end; }
+  .ticker.flip .tk .xv { display: none; }
+  .ticker.flip .tk.in { animation: tkin .35s ease both; }
+  @keyframes tkin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (max-width: 640px) { body.lg-cfb.v-scores { padding-bottom: 78px; } }
+  /* the play pop-up */
+  #tkmod .sheet { width: min(600px, 100%); }
+  .tkp-kd { border: 0 !important; padding: 0 !important; background: none !important; }
+  .tkp-foot a.btn { text-decoration: none; }
+  .tkp-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .tkp-head .mark { width: 44px; height: 44px; flex: none; }
+  .tkp-head .nm { font-family: var(--display); font-size: 22px; line-height: 1.1; }
+  .tkp-head .sub { font-size: 12px; color: var(--muted); letter-spacing: .06em; margin-top: 2px; }
+  .tkp-kd { display: inline-block; margin-bottom: 8px; }
+  .tkp-text { font-size: 16px; line-height: 1.45; color: var(--ink); margin: 0 0 16px; }
+  .tkp-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .tkp-foot .x { background: var(--fill); border-color: var(--fill); color: #fff; }
+  .tkp-foot .sp { flex: 1; }
+  .tkp-note { font-size: 12px; color: var(--muted); margin-top: 10px; }
 </style>
 </head>
 <body class="v-home">
@@ -2372,6 +2407,12 @@
     <div class="f-kicker">Final</div>
     <div id="fBody"></div>
     <div class="f-foot"><span class="f-note" id="fNote"></span><span><button class="btn" id="fRegroup" type="button" hidden>Regroup</button> <button class="btn" id="fClose" type="button">Close</button></span></div>
+  </div>
+</div>
+
+<div class="modal" id="tkmod" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Play">
+    <div id="tkpBody"></div>
   </div>
 </div>
 
@@ -4218,7 +4259,7 @@ function setLeague(k) {
   if (!LG.fantasy && location.hash === "#fantasy") location.hash = "#home";
   if (LG.key !== "cfb" && location.hash === "#ranks") location.hash = "#home";   // v75
   route();
-  { const r = el("#reel"); r.innerHTML = ""; r.dataset.k = ""; el("#tkTag").innerHTML = ""; }   // v100
+  { const r = el("#reel"); r.innerHTML = ""; r.dataset.k = ""; r.style.transform = ""; el("#tkTag").innerHTML = ""; TKR.key = ""; TKR.x = 0; el(".ticker").classList.remove("flip"); }   // v100, v105
   el("#board").innerHTML = `<div class="empty">Loading scores</div>`;
   el("#hero").innerHTML = `<div class="empty">Loading the ${esc(dispName(CFG.fav))} game</div>`;
   el("#slots").innerHTML = ""; el("#sched").innerHTML = `<div class="empty">Loading the schedule</div>`; el("#feed").innerHTML = `<li class="empty">Nothing yet</li>`; el("#standings").innerHTML = "";
@@ -4551,10 +4592,22 @@ function gcsPage(dir) {
     if (!d) return;
     const max = s.scrollWidth - s.clientWidth;
     if ((d < 0 && s.scrollLeft <= 0) || (d > 0 && s.scrollLeft >= max)) return;   // at the end: let the page scroll
-    e.preventDefault(); s.scrollLeft += d * (e.deltaMode === 1 ? 32 : 1);
+    e.preventDefault();
+    // v105: glide toward the target instead of jumping a notch at a time
+    gl.t = Math.max(0, Math.min(max, (gl.t ?? s.scrollLeft) + d * (e.deltaMode === 1 ? 40 : 1.2)));
+    if (!gl.raf) gl.raf = requestAnimationFrame(glide);
   }, { passive: false });
+  const gl = { t: null, raf: 0 };
+  function glide() {
+    if (gl.t == null) { gl.raf = 0; return; }
+    const cur = s.scrollLeft, nx = cur + (gl.t - cur) * 0.2;
+    if (Math.abs(gl.t - nx) < 0.6) { s.scrollLeft = gl.t; gl.t = null; gl.raf = 0; return; }
+    s.scrollLeft = nx; gl.raf = requestAnimationFrame(glide);
+  }
+  const stopGlide = () => { gl.t = null; if (gl.raf) cancelAnimationFrame(gl.raf); gl.raf = 0; };
+  el("#gcsL").addEventListener("pointerdown", stopGlide); el("#gcsR").addEventListener("pointerdown", stopGlide);
   let down = null, moved = false;
-  s.addEventListener("pointerdown", e => { if (e.pointerType !== "mouse" || e.button !== 0) return; down = { x: e.clientX, sl: s.scrollLeft, id: e.pointerId }; moved = false; });
+  s.addEventListener("pointerdown", e => { stopGlide(); if (e.pointerType !== "mouse" || e.button !== 0) return; down = { x: e.clientX, sl: s.scrollLeft, id: e.pointerId }; moved = false; });
   s.addEventListener("pointermove", e => {
     if (!down) return;
     const dx = e.clientX - down.x;
@@ -4649,38 +4702,105 @@ function tkLine(sc, g) {
   const aw = sc.as > sc.hs, hw = sc.hs > sc.as;
   return `<span class="sl">${esc(sc.a)} <b class="${aw ? "w" : ""}">${sc.as ?? ""}</b> · ${esc(sc.h)} <b class="${hw ? "w" : ""}">${sc.hs ?? ""}</b></span>`;
 }
+const TK_PLAYS = new Set(["td", "fg", "pts", "take", "miss", "stop", "big"]);   // v105: scoring plays and big plays only
 function tkItem(x) {
-  const g = S.events.find(e => e.id === x.gid), rk = ab => ab === x.sc?.a ? x.sc.ar : ab === x.sc?.h ? x.sc.hr : 0;
+  const rk = ab => ab === x.sc?.a ? x.sc.ar : ab === x.sc?.h ? x.sc.hr : 0;
   const fav = x.sc && (x.sc.a === CFG.fav || x.sc.h === CFG.fav);
-  const ts = x.t ? `<span class="ts">${fmtCT(x.t, { hour: "numeric", minute: "2-digit" })}${x.when ? " · " + esc(x.when) : ""}</span>` : (x.when ? `<span class="ts">${esc(x.when)}</span>` : "");
-  let what = "";
-  if (x.kind === "alert" && x.up) what = `<span class="tx">trails ${x.up.wr ? "#" + x.up.wr + " " : ""}${esc(dispName(x.up.wi))}</span>`;
-  else if (x.kind === "upset" && x.up) what = `<span class="tx">knocks off #${x.up.lr} ${esc(dispName(x.up.lo))}</span>`;
-  else if (x.kind === "final") { const lo = x.team === x.sc.a ? x.sc.h : x.sc.a; what = `<span class="tx">beat ${rk(lo) ? "#" + rk(lo) + " " : ""}${esc(dispName(lo))}</span>`; }
-  else if (x.kind === "live") what = "";
-  else what = x.text ? `<span class="tx" title="${esc(x.text)}">${esc(x.text)}</span>` : "";
-  const kd = x.kind === "td" || x.kind === "fg" || x.kind === "pts" ? `${esc(x.lbl)}${x.sub ? " · " + esc(x.sub) : ""}` : esc(x.lbl);
-  return `<span class="tk k-${x.kind}${fav ? " fav" : ""}" data-gid="${esc(x.gid)}" title="Open the game center"><span class="kd">${kd}</span>${ts}${mark(x.team, "mini")}<span class="who">${tkName(x.team, rk(x.team))}</span>${what}${tkLine(x.sc, g)}</span>`;
+  const ts = x.t ? `<span class="ts">${fmtCT(x.t, { hour: "numeric", minute: "2-digit" })}${x.when ? " · " + esc(x.when) : ""}</span>` : "";
+  const kd = `${esc(x.lbl)}${x.sub ? " · " + esc(x.sub) : ""}`;
+  const txt = x.text ? `<span class="tx">${esc(x.text)}</span>` : "";
+  return `<span class="tk k-${x.kind}${fav ? " fav" : ""}" data-k="${esc(x.k)}" title="Tap for the play and a video search on X"><span class="kd">${kd}</span>${mark(x.team, "mini")}<span class="who">${tkName(x.team, rk(x.team))}</span>${txt}${ts}<span class="xv">&#9654; X</span></span>`;
 }
 function renderSatTicker() {
   const reel = el("#reel"); if (!reel || LG.key !== "cfb") return;
-  const items = (S.satTick || []).slice(0, TK_SHOW);
-  // a quiet reel still shows something: the ranked and Big 12 games in progress
-  const fill = items.length >= 4 ? [] : S.events.filter(g => g.live && tkPri(g) > 0 && !items.some(x => x.gid === g.id))
-    .sort((a, b) => tkPri(b) - tkPri(a)).slice(0, 8 - items.length)
-    .map(g => ({ kind: "live", lbl: g.status === "Halftime" ? "Half" : ordinal(g.period) + " " + (g.clock || ""), gid: g.id, team: g.as >= g.hs ? g.away : g.home, sc: { a: g.away, h: g.home, as: g.as, hs: g.hs, ar: g.awayRank, hr: g.homeRank } }));
-  const all = [...items, ...fill];
-  const html = all.length ? all.map(tkItem).join("") : `<span class="tk"><span class="tx">${S.events.some(g => g.live) ? "Scores, upset alerts, finals and big plays land here as they happen" : "Nothing live right now. Scores, upsets, finals and big plays land here once games kick off"}</span></span>`;
-  if (reel.dataset.k !== html) { reel.innerHTML = html + html; reel.dataset.k = html; requestAnimationFrame(() => { reel.style.animationDuration = Math.max(30, (reel.scrollWidth / 2) / 45) + "s"; }); }
-  el(".ticker").setAttribute("aria-label", "Saturday updates: scores, upset alerts, finals and big plays");
-  const fg = S.favGame, tag = el("#tkTag");
-  let th;
-  if (fg && fg.state !== "pre") { const home = fg.home === CFG.fav, me = home ? fg.hs : fg.as, op = home ? fg.as : fg.hs, oab = home ? fg.away : fg.home;
-    th = `<span class="tn">${esc(dispName(CFG.fav))} ${fg.state === "post" ? "· Final" : "· " + esc(fg.status === "Halftime" ? "Half" : ordinal(fg.period) + " " + (fg.clock || ""))}</span><span class="tsc">${me} <span class="op">· ${esc(oab)} ${op}</span></span>`; }
-  else if (fg) th = `<span class="tn">${esc(dispName(CFG.fav))}</span><span class="tsc">${esc(fmtCT(fg.date, { hour: "numeric", minute: "2-digit" }))} <span class="op">· ${esc(fg.home === CFG.fav ? fg.away : fg.home)}</span></span>`;
-  else th = `<span class="tn">Saturday</span><span class="tsc">${S.events.filter(g => g.live).length} <span class="op">live</span></span>`;
-  if (tag.innerHTML !== th) tag.innerHTML = th;
+  const items = (S.satTick || []).filter(x => TK_PLAYS.has(x.kind)).slice(0, TK_SHOW);
+  TKR.list = items.length ? items.map(tkItem) : [`<span class="tk"><span class="tx">${S.events.some(g => g.live) ? "Scoring plays and big plays land here as they happen" : "Nothing live right now. Scoring plays and big plays land here once games kick off"}</span></span>`];
+  const key = TKR.list.join("") + (tkFlip() ? "|flip" : "");
+  el(".ticker").classList.toggle("flip", tkFlip());
+  if (TKR.key !== key) {
+    TKR.key = key;
+    if (tkFlip()) { TKR.i = Math.min(TKR.i, TKR.list.length - 1); reel.style.transform = ""; reel.innerHTML = TKR.list[Math.max(0, TKR.i)]; }
+    else {
+      const html = TKR.list.join("");
+      reel.innerHTML = html + html;
+      TKR.half = reel.scrollWidth / 2;
+      if (TKR.half > 0) TKR.x = TKR.x % TKR.half;   // keep the reel where it was; no jump when a play lands
+      reel.style.transform = `translate3d(${TKR.x.toFixed(2)}px,0,0)`;
+    }
+  }
+  el(".ticker").setAttribute("aria-label", "Saturday: scoring plays and big plays");
+  const th = `<span class="tn">Saturday</span><span class="tsc">Big plays</span>`;
+  const tag = el("#tkTag"); if (tag.innerHTML !== th) tag.innerHTML = th;
+  tkrStart();
 }
+/* v105: the Saturday reel is driven by requestAnimationFrame at a steady 45 px/s with a sub-pixel
+   translate3d, and keeps its offset when items change, so it never restarts or stutters on a poll.
+   On a phone it shows one play at a time instead, every 5 seconds, which is readable at a glance. */
+const TKR = { x: 0, last: 0, raf: 0, half: 0, paused: false, i: 0, flipT: 0, list: [], key: "" };
+const tkMQ = matchMedia("(max-width: 640px)"), tkRM = matchMedia("(prefers-reduced-motion: reduce)");
+const tkFlip = () => tkMQ.matches;
+try { tkMQ.addEventListener("change", () => { TKR.key = ""; TKR.x = 0; renderSatTicker(); }); } catch (_) {}
+function tkrStart() {
+  if (TKR.raf) return;
+  const tr = document.querySelector(".ticker .track");
+  if (tr && !tr.dataset.tkw) { tr.dataset.tkw = 1; tr.addEventListener("mouseenter", () => TKR.paused = true); tr.addEventListener("mouseleave", () => TKR.paused = false); }
+  const step = t => {
+    TKR.raf = requestAnimationFrame(step);
+    const dt = TKR.last ? Math.min(0.05, (t - TKR.last) / 1000) : 0; TKR.last = t;
+    if (LG.key !== "cfb" || !document.body.classList.contains("v-scores") || document.hidden) return;
+    const reel = el("#reel");
+    if (tkFlip()) {
+      if (TKR.list.length < 2) return;
+      if (!TKR.flipT) TKR.flipT = t;
+      if (t - TKR.flipT > 5000 && !TKR.paused) {
+        TKR.flipT = t; TKR.i = (TKR.i + 1) % TKR.list.length;
+        reel.innerHTML = TKR.list[TKR.i]; const n = reel.firstElementChild; if (n && !tkRM.matches) n.classList.add("in");
+      }
+      return;
+    }
+    if (TKR.paused || tkRM.matches || !(TKR.half > 0)) return;
+    TKR.x -= 45 * dt; if (TKR.x <= -TKR.half) TKR.x += TKR.half;
+    reel.style.transform = `translate3d(${TKR.x.toFixed(2)}px,0,0)`;
+  };
+  TKR.raf = requestAnimationFrame(step);
+}
+/* v105: tap a play: what happened, when, and a button that searches X for video of it
+   (top results, videos only, since today), plus the game center. */
+function tkNames(text) {
+  const out = [];
+  for (const m of String(text || "").matchAll(/\b([A-Z]\.\s?[A-Z][A-Za-z'\-]+)|\b([A-Z][a-z]+ [A-Z][A-Za-z'\-]{2,})(?= (?:\d+ Yd|pass|run|rush|kick|punt|FG|field goal))/g)) {
+    const last = (m[1] || m[2]).replace(/^[A-Z]\.\s?/, "").split(" ").pop();
+    if (last && !out.includes(last) && !/^(PENALTY|TD|FG|No|Shotgun|Huddle)$/i.test(last)) out.push(last);
+    if (out.length >= 2) break;
+  }
+  return out;
+}
+function tkXUrl(x, video) {
+  const what = { td: "touchdown", fg: "field goal", pts: "", take: /fumble/i.test(x.lbl) ? "fumble" : "interception", miss: /block/i.test(x.lbl) ? "blocked" : "missed field goal", stop: "fourth down stop", big: "" }[x.kind] || "";
+  const day = fmtCT(x.t || Date.now(), { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/(\d+)\/(\d+)\/(\d+)/, "$3-$1-$2");
+  const q = [`"${dispName(x.team)}"`, ...tkNames(x.text), what, video ? "filter:videos" : "", `since:${day}`].filter(Boolean).join(" ");
+  return "https://x.com/search?src=typed_query&q=" + encodeURIComponent(q);
+}
+function openTkPlay(k) {
+  const x = (S.satTick || []).find(i => i.k === k); if (!x) return;
+  const rk = ab => ab === x.sc?.a ? x.sc.ar : ab === x.sc?.h ? x.sc.hr : 0;
+  const opp = x.sc ? (x.team === x.sc.a ? x.sc.h : x.sc.a) : "";
+  el("#tkpBody").innerHTML = `
+    <span class="tk k-${x.kind} tkp-kd"><span class="kd">${esc(x.lbl)}${x.sub ? " · " + esc(x.sub) : ""}</span></span>
+    <div class="tkp-head">${mark(x.team)}<div><div class="nm">${rk(x.team) ? "#" + rk(x.team) + " " : ""}${esc(dispName(x.team))}</div>
+      <div class="sub">${opp ? (x.team === x.sc.a ? "at " : "vs ") + (rk(opp) ? "#" + rk(opp) + " " : "") + esc(dispName(opp)) + " · " : ""}${x.t ? esc(fmtCT(x.t, { hour: "numeric", minute: "2-digit" })) : ""}${x.when ? " · " + esc(x.when) : ""}</div></div></div>
+    <p class="tkp-text">${esc(x.text || "No play text from the feed for this one.")}</p>
+    <div class="tkp-foot">
+      <a class="btn x" href="${esc(tkXUrl(x, true))}" target="_blank" rel="noopener noreferrer">&#9654; Video on X</a>
+      <a class="btn" href="${esc(tkXUrl(x, false))}" target="_blank" rel="noopener noreferrer">Posts on X</a>
+      <span class="sp"></span>
+      <button class="btn" type="button" data-tkgc="${esc(x.gid)}">Game center</button>
+      <button class="btn" type="button" data-tkclose>Close</button>
+    </div>
+    <div class="tkp-note">Clips usually land on X a minute or two after the play.</div>`;
+  el("#tkmod").hidden = false;
+}
+function closeTkPlay() { el("#tkmod").hidden = true; }
 /* v78: game flow as a momentum wave, the same strip the other three sites got.
    Yards, sacks, turnovers and points push the line toward the team that earned them and fade out
    over about three minutes of game clock, so a drive reads as a swell rather than a step. */
@@ -5198,7 +5318,9 @@ document.addEventListener("click", e => {
   if (e.target.closest("#gcBack")) return closeGame();
   // v70: the live strip, the drive list and the Win / Cover switch on the game page
   const sb = e.target.closest("#gcStrip button[data-id]"); if (sb) return openGame(sb.dataset.id);
-  const tkg = e.target.closest(".tk[data-gid]"); if (tkg && tkg.dataset.gid) return openGame(tkg.dataset.gid);   // v100
+  if (e.target.closest("[data-tkclose]") || e.target === el("#tkmod")) return closeTkPlay();   // v105
+  const tkgc = e.target.closest("[data-tkgc]"); if (tkgc) { closeTkPlay(); return openGame(tkgc.dataset.tkgc); }
+  const tkp = e.target.closest(".ticker .tk[data-k]"); if (tkp) return openTkPlay(tkp.dataset.k);
   const dh = e.target.closest(".gc-dr > .dr-head"); if (dh) { const li = dh.parentElement, k = li.dataset.drive, on = li.classList.toggle("open"); dh.setAttribute("aria-expanded", on); if (li.classList.contains("cur")) { if (GC_PHONE.matches) GC.curOpenPh = on; else GC.curClosed = !on; } else on ? GC.open.add(k) : GC.open.delete(k); return; }
   const pb = e.target.closest("#gcProbSeg button[data-prob]"); if (pb) { if (pb.disabled) return; GC.prob = pb.dataset.prob; store.set("cc-prob", GC.prob); return renderGC(); }
   if (e.target.closest("#tmClose") || e.target === el("#tmodal")) return closeTeam();
@@ -5214,7 +5336,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("#heroGC, #hero .scoreblock") && S.featured) return openGame(S.featured.id);
   if (e.target.closest("#backFav")) { S.pickId = null; pickGame(S.favGame ? S.favGame.id : null); }
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!el("#tmodal").hidden) return closeTeam(); if (S.view === "game") return closeGame(); closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) pickGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#hero .team[data-team]")) openTeam(e.target.dataset.team); if (e.key === "Enter" && e.target.matches("#hero .scoreblock") && S.featured) openGame(S.featured.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#board .bg[data-id]")) openGame(e.target.dataset.id); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { if (!el("#tkmod").hidden) return closeTkPlay(); if (!el("#tmodal").hidden) return closeTeam(); if (S.view === "game") return closeGame(); closePlayer(); if (!el("#fmodal").hidden) closeFinal(); } if (e.key === "Enter" && e.target.matches("#slots .g[data-id]")) pickGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#hero .team[data-team]")) openTeam(e.target.dataset.team); if (e.key === "Enter" && e.target.matches("#hero .scoreblock") && S.featured) openGame(S.featured.id); if (e.key === "Enter" && e.target.matches("#sched .g[data-id]")) openGame(e.target.dataset.id); if (e.key === "Enter" && e.target.matches("#board .bg[data-id]")) openGame(e.target.dataset.id); });
 /* v46: full screen is desktop only. iOS and most touch browsers ignore the API,
    so the buttons are removed rather than left on screen doing nothing. */
 (function () {
