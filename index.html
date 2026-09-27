@@ -2648,6 +2648,7 @@ function normGame(ev) {
     as: state === "pre" ? undefined : +away.score, hs: state === "pre" ? undefined : +home.score,
     awayRec: rec(away), homeRec: rec(home),
     poss, rz, dd: sit.shortDownDistanceText || sit.downDistanceText || "", spot: (sit.downDistanceText||"").includes(" at ") && !(sit.shortDownDistanceText) ? "" : (sit.possessionText || ""), lastPlay: sit.lastPlay?.text || "",
+    hwp: sit.lastPlay?.probability?.homeWinPercentage != null ? +sit.lastPlay.probability.homeWinPercentage : null,   // v107: live win probability off the board, when ESPN carries it
     lp: sit.lastPlay ? { id: String(sit.lastPlay.id ?? ""), type: String(sit.lastPlay.type?.text || ""), text: String(sit.lastPlay.text || ""), yds: +sit.lastPlay.statYardage || 0, sv: +sit.lastPlay.scoreValue || 0, down: +sit.lastPlay.start?.down || 0, dist: +sit.lastPlay.start?.distance || 0 } : null,   // v100: Saturday ticker
     net, nets: [...(c.broadcasts || []).flatMap(b => b.names || []), ...(c.geoBroadcasts || []).map(b => b.media?.shortName)].filter(Boolean), odds, spread: odds ? [odds.details, odds.ou ? "O/U " + odds.ou : ""].filter(Boolean).join(" · ") : "",
     venue: c.venue?.fullName || "", period: st.period, clock: st.displayClock,
@@ -2683,10 +2684,32 @@ async function loadScoreboard() {
   const pick = S.pickId && S.events.find(g => g.id === S.pickId);
   S.favGame = S.events.find(g => g.home === CFG.fav || g.away === CFG.fav) || null;
   S.featured = pick || S.favGame || S.events.find(g => g.live) || S.events.find(g => g.state === "pre") || S.events[0];
+  await closeWP();   // v107
   deriveScoreFeed();
   if (LG.key === "cfb") deriveSatTicker();   // v100
   await backfillLines();
 }
+
+// v107: "Close finish" has to be close on win probability, not just on the scoreboard. A one-score 4th quarter
+// where the leader sits at 85%+ (Utah at Iowa State: the ball, then another score, never under 87%) is not close.
+// The board's lastPlay carries the number when ESPN has it; otherwise the summary is read, every 20 s per game.
+const WPC = {};
+const fourthOneScore = g => g.live && g.period === 4 && Math.abs((+g.hs || 0) - (+g.as || 0)) <= 8;
+async function closeWP() {
+  const need = (S.events || []).filter(g => fourthOneScore(g) && g.hwp == null && !(WPC[g.id] && Date.now() - WPC[g.id].t < 20e3));
+  if (!need.length) return;
+  const one = async g => {
+    try {
+      const wp = (await getJSON(api("summary?event=" + g.id)))?.winprobability;
+      const v = wp?.length ? +wp[wp.length - 1].homeWinPercentage : null;
+      WPC[g.id] = { t: Date.now(), v: isNaN(v) ? null : v };
+    } catch { WPC[g.id] = { t: Date.now(), v: WPC[g.id]?.v ?? null }; }
+  };
+  await Promise.race([Promise.all(need.slice(0, 8).map(one)), new Promise(r => setTimeout(r, 4000))]);
+}
+function homeWP(g) { return g.hwp != null ? g.hwp : (WPC[g.id]?.v ?? null); }
+// true while neither side is at 85% or better; with no number at all, the score alone decides, as before
+function tightNow(g) { const p = homeWP(g); return p == null || Math.max(p, 1 - p) < 0.85; }
 
 function deriveScoreFeed() {
   const feed = store.get(`lsb-${LG.key}-scorefeed-${S.week}`, []);
@@ -3469,7 +3492,7 @@ function cfbFun(g) {
       const cm = String(g.clock || "").match(/^(\d+):(\d+)/), left = cm ? +cm[1] + cm[2] / 60 : 0;
       const mins = g.period > 4 ? 60 : Math.max(0, (Math.min(g.period || 1, 4) - 1) * 15 + (15 - left));
       if (g.period > 4) tags.push(["close", "Overtime"]);
-      else if (m <= 8 && g.period >= 2) tags.push(["close", g.period >= 4 ? "Close finish" : "One-score game"]);
+      else if (m <= 8 && g.period >= 2 && (g.period < 4 || tightNow(g))) tags.push(["close", g.period >= 4 ? "Close finish" : "One-score game"]);   // v107: 4th needs the win probability too
       if (tot >= 56 || (mins >= 15 && tot / mins * 60 >= 66)) tags.push(["shoot", "Shootout"]);
     } else {
       if (g.period > 4 || m <= 3) tags.push(["close", g.period > 4 ? "Went to OT" : "Nail-biter"]);
@@ -3843,7 +3866,7 @@ function importance(g) {
     if (cfbFun(g)?.tags.some(t => t[0] === "shoot")) { why.push("Shootout"); score += 8; }   // v84
   }
   const m = Math.abs((g.hs || 0) - (g.as || 0));
-  if ((g.period >= 4) && m <= 8) { why.push(g.period > 4 ? "Overtime" : "Close finish"); score += 12; }
+  if ((g.period >= 4) && m <= 8 && (g.period > 4 || tightNow(g))) { why.push(g.period > 4 ? "Overtime" : "Close finish"); score += 12; }   // v107
   return { score, why };
 }
 
