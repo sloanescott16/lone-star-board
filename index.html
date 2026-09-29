@@ -4246,7 +4246,7 @@ function renderShowBar() {
    public watch listings; FOX/FS1/FS2/BTN go to that channel's live stream (which is the game while it's on);
    CBS goes to Paramount+ live TV. Networks he has no service for keep the plain label. */
 const W = { map: {}, at: 0, busy: false };
-const ESPN_FAM = /^(ESPN|ESPN2|ESPNU|ESPNEWS|ESPN\+|ESPN Unlimited|ABC|SEC Network|SECN|SECN\+|ACC Network|ACCN|ACCNX|LHN|Longhorn Network|ESPN Deportes|Disney\+|CW|The CW|CW Network)$/i;   // v93: CW Sports streams on the ESPN App with ESPN Unlimited (since Aug 4 2026)
+const ESPN_FAM = /^(ESPN|ESPN2|ESPNU|ESPNEWS|ESPN\+|ESPN Unlimited|ABC|NFL Net|NFL Network|NFLN|SEC Network|SECN|SECN\+|ACC Network|ACCN|ACCNX|LHN|Longhorn Network|ESPN Deportes|Disney\+|CW|The CW|CW Network)$/i;   // v93: CW Sports streams on the ESPN App with ESPN Unlimited (since Aug 4 2026)
 const WATCH_NETS = [
   [/^(FOX|FOX Sports)$/i, "FOX", g => foxOne(+g.date)],
   [/^FS1$/i, "FS1", "https://www.fox.com/live"],   // Fox One addresses FS1/FS2/BTN airings by program id, so these land on the live guide
@@ -4256,6 +4256,11 @@ const WATCH_NETS = [
   // v92: NBC and Peacock games stream on Peacock; its search page leads with today's live games
   [/^(NBC|Peacock|NBCSN)$/i, "Peacock", "https://www.peacocktv.com/watch/search"],
   // v92: TNT/TBS/truTV stream on HBO Max; its game ids aren't public, so search the home team (the live game is the top hit)
+  // v110: NFL. Prime Video (TNF) lands on Prime's NFL page, which leads with the live game; Netflix and YouTube games by search / NFL channel
+  [/^(Prime Video|Amazon Prime|Prime)$/i, "Prime", "https://www.amazon.com/tnf"],
+  [/^Netflix$/i, "Netflix", "https://www.netflix.com/search?q=NFL"],
+  [/^(YouTube|YouTube TV)$/i, "YouTube", "https://www.youtube.com/@NFL/live"],
+  [/^(NFL Net|NFL Network|NFLN)$/i, "NFL Net", "https://www.nfl.com/network/watch"],
   [/^(TNT|TBS|truTV|TNT Sports|HBO Max|Max)$/i, "TNT", g => "https://play.hbomax.com/search?q=" + encodeURIComponent(dispName(g.home === CFG.fav || g.away === CFG.fav ? CFG.fav : g.home))],
 ];
 /* v91: Fox One plays his local FOX (KDFW Dallas) program that starts at a given moment; a FOX game's program starts at its listed kickoff */
@@ -4268,10 +4273,22 @@ function watchLink(g) {
     const air = W.map[g.id];
     if (air) return { net: fam, url: "https://www.espn.com/watch/player/_/id/" + air };
     if (/^ESPN2?$/i.test(fam)) return { net: fam, url: "https://www.espn.com/watch/player/_/channel/" + fam.toLowerCase() };
+    if (/^NFL/i.test(fam)) return { net: "NFL Net", url: "https://www.nfl.com/network/watch" };   // v110: NFL+ Premium live NFL Network when ESPN has no airing listed
     return { net: fam, url: `https://www.espn.com/${LG.key === "cfb" ? "college-football" : "nfl"}/game/_/gameId/${g.id}` };
   }
+  // v110: Sunday regional windows. Fox One and Paramount+ only carry the Dallas feed, so a CBS/FOX game that shares its
+  // window with other games on the same network (and isn't the Cowboys) goes to NFL RedZone (NFL+ Premium) instead
+  const reg = nets.find(n => /^(FOX|FOX Sports|CBS)$/i.test(n));
+  if (reg && nflRegional(g, reg)) return { net: "RedZone", url: REDZONE };
   for (const n of nets) for (const [re, lab, url] of WATCH_NETS) if (re.test(n)) return { net: lab, url: typeof url === "function" ? url(g) : url };
   return null;
+}
+const REDZONE = "https://www.nfl.com/redzone/watch";
+const netKey = n => /^CBS$/i.test(n || "") ? "CBS" : /^FOX/i.test(n || "") ? "FOX" : "";
+function nflRegional(g, net) {
+  if (LG.key !== "nfl" || g.home === CFG.fav || g.away === CFG.fav) return false;
+  const k = netKey(net);
+  return (S.events || []).some(o => o.id !== g.id && Math.abs(o.date - g.date) < 20 * 60e3 && (o.nets && o.nets.length ? o.nets : [o.net]).some(n => netKey(n) === k));
 }
 function watchHTML(g, kind) {
   if (!watchable(g)) return "";
