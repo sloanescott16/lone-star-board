@@ -2190,6 +2190,8 @@
   .ticker.flip .tk.in { animation: tkin .35s ease both; }
   @keyframes tkin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @media (max-width: 640px) { body.lg-cfb.v-scores { padding-bottom: 78px; } }
+  /* v111: the desktop reel is two copies of the plays, each in a box a whole number of device pixels wide (width set in tkrBuild), so the loop point is exact */
+  .ticker .reel .tkc { display: flex; flex: none; }
   /* the play pop-up */
   #tkmod .sheet { width: min(600px, 100%); }
   .tkp-kd { border: 0 !important; padding: 0 !important; background: none !important; }
@@ -4372,7 +4374,7 @@ function setLeague(k) {
   if (!LG.fantasy && location.hash === "#fantasy") location.hash = "#home";
   if (LG.key !== "cfb" && location.hash === "#ranks") location.hash = "#home";   // v75
   route();
-  { const r = el("#reel"); r.innerHTML = ""; r.dataset.k = ""; r.style.transform = ""; el("#tkTag").innerHTML = ""; TKR.key = ""; TKR.x = 0; el(".ticker").classList.remove("flip"); }   // v100, v105
+  { const r = el("#reel"); tkrStop(); r.innerHTML = ""; r.dataset.k = ""; el("#tkTag").innerHTML = ""; TKR.key = ""; el(".ticker").classList.remove("flip"); }   // v100, v105; v111: tkrStop cancels the reel animation and clears the transform
   el("#board").innerHTML = `<div class="empty">Loading scores</div>`;
   el("#hero").innerHTML = `<div class="empty">Loading the ${esc(dispName(CFG.fav))} game</div>`;
   el("#slots").innerHTML = ""; el("#sched").innerHTML = `<div class="empty">Loading the schedule</div>`; el("#feed").innerHTML = `<li class="empty">Nothing yet</li>`; el("#standings").innerHTML = "";
@@ -4745,7 +4747,25 @@ function tkPri(g) {
   return (has(CFG.fav) ? 100 : 0) + (g.homeRank && g.awayRank ? 30 : (g.homeRank || g.awayRank) ? 15 : 0) + (g.homeConf === "4" || g.awayConf === "4" ? 10 : 0);
 }
 const tkOther = (g, ab) => ab === g.home ? g.away : ab === g.away ? g.home : null;
-const tkClean = s => String(s || "").replace(/^\(\s*\d{1,2}:\d{2}\s*\)\s*/, "").replace(/^(No Huddle-?\s*)?(Shotgun\s*)?/i, "").replace(/\s+/g, " ").trim();
+/* v111: stat-crew play text read like a ledger ("#3 J.Sagapolutele pass complete ... to #22 T.Purcell caught at CAL25,
+   for 91 yards to the UNLV00 TOUCHDOWN, clock 11:30, 1ST DOWN"). One tidy-up for the reel, the pop-up and the X search:
+   no jersey numbers, no tackler or holder credits, no catch spot or clock; yard markers split (IOWA21 -> IOWA 21) and
+   the goal-line one dropped; the shouting lowered. Run when drawing as well as when storing, because items already in
+   localStorage hold the old text, so it has to be safe to run twice. ESPN's older wording passes through. */
+function tkClean(s) {
+  const low = (re, w) => { s = s.replace(re, (m, pre) => pre ? pre + w : ", " + w); };   // lower a shout, with a comma before it unless a small word leads in
+  s = String(s || "").replace(/^\(\s*\d{1,2}:\d{2}\s*\)\s*/, "").replace(/^(No Huddle-?\s*)?(Shotgun\s*)?/i, "")
+    .replace(/\s*\([^()]*#\d[^()]*\)/g, "")                                       // credits: (#6 Z.Lutmer), (H: #42 D.Drennan, LS: #46 L.Raab)
+    .replace(/#\d+\s*/g, "").replace(/\b([A-Z])\.(?=[A-Za-z][A-Za-z'])/g, "$1. ")   // jersey numbers; J.Sayin -> J. Sayin
+    .replace(/,?\s*\bcaught at (?:the )?[A-Za-z&]+ ?\d{1,2}\b,?/gi, "").replace(/,?\s*\bclock \d{1,2}:\d{2}\b/gi, "")
+    .replace(/\s*(?:\b(?:to|at)\s+(?:the\s+)?)?\b[A-Za-z][A-Za-z&]*00\b/g, "")      // the goal line: "to the UNLV00"
+    .replace(/\b([A-Za-z][A-Za-z&]*[A-Za-z])(\d{1,2})\b(?=(\s+[A-Z]\.\s)?)/g, (m, t, n, who) => `${t} ${+n}${who ? "," : ""}`);   // IOWA21 -> IOWA 21, and a comma before a player who follows
+  low(/(\b(?:a|the|for|and)\s+)?,?\s*\bTOUCHDOWN\b/g, "touchdown"); low(/(\b(?:is|was|and)\s+)?,?\s*\bNO GOOD\b/g, "no good"); low(/(\b(?:is|was|and)\s+)?,?\s*\bGOOD\b/g, "good");
+  s = s.replace(/\b1ST DOWN\b/gi, "1st down").replace(/\bPENALTY\b/g, "penalty").replace(/\bNO PLAY\b/g, "no play")
+    .replace(/\btouchdown\b.*$/, m => m.replace(/,?\s*\b1st down\b/g, ""))          // a touchdown needs no "1st down"
+    .replace(/\s+/g, " ").replace(/ ,/g, ",").replace(/,(?:\s*,)+/g, ",").replace(/^[,\s]+|[,\s]+$/g, "");
+  return s.replace(/^(?:penalty|touchdown|no play|no good|good|1st down)\b/, m => m[0].toUpperCase() + m.slice(1));
+}
 function tkUpset(g) {   // who is ranked and behind a worse or unranked team, or null
   if (g.as == null || g.hs == null || g.as === g.hs) return null;
   const lo = g.as < g.hs ? g.away : g.home, wi = tkOther(g, lo);
@@ -4821,7 +4841,7 @@ function tkItem(x) {
   const fav = x.sc && (x.sc.a === CFG.fav || x.sc.h === CFG.fav);
   const ts = x.t ? `<span class="ts">${fmtCT(x.t, { hour: "numeric", minute: "2-digit" })}${x.when ? " · " + esc(x.when) : ""}</span>` : "";
   const kd = `${esc(x.lbl)}${x.sub ? " · " + esc(x.sub) : ""}`;
-  const txt = x.text ? `<span class="tx">${esc(x.text)}</span>` : "";
+  const tx = tkClean(x.text), txt = tx ? `<span class="tx">${esc(tx)}</span>` : "";   // v111: tidied on the way out too (older stored items)
   return `<span class="tk k-${x.kind}${fav ? " fav" : ""}" data-k="${esc(x.k)}" title="Tap for the play and a video search on X"><span class="kd">${kd}</span>${mark(x.team, "mini")}<span class="who">${tkName(x.team, rk(x.team))}</span>${txt}${ts}<span class="xv">&#9654; X</span></span>`;
 }
 function renderSatTicker() {
@@ -4832,13 +4852,11 @@ function renderSatTicker() {
   el(".ticker").classList.toggle("flip", tkFlip());
   if (TKR.key !== key) {
     TKR.key = key;
-    if (tkFlip()) { TKR.i = Math.min(TKR.i, TKR.list.length - 1); reel.style.transform = ""; reel.innerHTML = TKR.list[Math.max(0, TKR.i)]; }
+    if (tkFlip()) { tkrStop(); TKR.i = Math.min(TKR.i, TKR.list.length - 1); reel.innerHTML = TKR.list[Math.max(0, TKR.i)]; }
     else {
       const html = TKR.list.join("");
-      reel.innerHTML = html + html;
-      TKR.half = reel.scrollWidth / 2;
-      if (TKR.half > 0) TKR.x = TKR.x % TKR.half;   // keep the reel where it was; no jump when a play lands
-      reel.style.transform = `translate3d(${TKR.x.toFixed(2)}px,0,0)`;
+      reel.innerHTML = `<span class="tkc">${html}</span><span class="tkc">${html}</span>`;   // v111: two boxed copies
+      TKR.dirty = true;   // v111: the next frame rebuilds the animation from the same offset (tkrBuild); no jump when a play lands
     }
   }
   el(".ticker").setAttribute("aria-label", "Saturday: scoring plays and big plays");
@@ -4846,21 +4864,79 @@ function renderSatTicker() {
   const tag = el("#tkTag"); if (tag.innerHTML !== th) tag.innerHTML = th;
   tkrStart();
 }
-/* v105: the Saturday reel is driven by requestAnimationFrame at a steady 45 px/s with a sub-pixel
-   translate3d, and keeps its offset when items change, so it never restarts or stutters on a poll.
-   On a phone it shows one play at a time instead, every 5 seconds, which is readable at a glance. */
-const TKR = { x: 0, last: 0, raf: 0, half: 0, paused: false, i: 0, flipT: 0, list: [], key: "" };
+/* v105: the Saturday reel keeps its offset when items change, so it never restarts on a poll.
+   On a phone it shows one play at a time instead, every 5 seconds, which is readable at a glance.
+   v111: on a desktop the reel is one Web Animations API animation, so it runs on the compositor and the 5-second
+   poll cannot stall it, and its speed is locked to the display so every frame lands on a whole device pixel.
+   v105 moved it 0.75 px a frame from requestAnimationFrame; Chrome draws text sharp on a whole pixel and soft in
+   between, so the words pulsed fifteen times a second, which read as ticking. Now the reel moves n device pixels
+   every k frames (tkrPick: 1 and 1 at 60 Hz, so 60 px a second), each copy is a whole number of device pixels
+   wide, the phase is set from a requestAnimationFrame timestamp (tkrSeek) and checked every 2 seconds (tkrLock).
+   The loop below only looks after the animation; it writes no transform. */
+const TKR = { half: 0, paused: false, i: 0, flipT: 0, list: [], key: "", raf: 0, last: 0,
+  anim: null, dirty: false, fi: 1000 / 60, ok: false, m: [], n: 1, k: 1, N: 0, dpr: 0, chk: 0, t1: 0, bad: 0 };   // v111: fi = frame interval in ms (60 Hz assumed until measured), N = frames in one loop
 const tkMQ = matchMedia("(max-width: 640px)"), tkRM = matchMedia("(prefers-reduced-motion: reduce)");
 const tkFlip = () => tkMQ.matches;
-try { tkMQ.addEventListener("change", () => { TKR.key = ""; TKR.x = 0; renderSatTicker(); }); } catch (_) {}
+try { tkMQ.addEventListener("change", () => { TKR.key = ""; tkrStop(); renderSatTicker(); }); } catch (_) {}
+// v111: n device pixels every k frames, one of them 1, at least 45 steps a second, nearest to 55 CSS px a second (ties go to k = 1)
+function tkrPick(hz, dpr) {
+  let b = null; const tryIt = (n, k) => { const v = n * hz / (k * dpr), d = Math.abs(v - 55); if (!b || d < b.d - 1e-9) b = { n, k, v, d }; };
+  const n0 = Math.max(1, Math.floor(55 * dpr / hz)); tryIt(n0, 1); tryIt(n0 + 1, 1);
+  for (let k = 2; k <= Math.floor(hz / 45); k++) tryIt(1, k);
+  return b;
+}
+// v111: the frame interval, averaged over a clean run of 60 frames; a run with any gap more than 30% off the median is thrown away
+function tkrMeasure(t) {
+  const m = TKR.m; m.push(t); if (m.length < 61) return 0;
+  const g = m.slice(1).map((v, i) => v - m[i]), med = [...g].sort((a, b) => a - b)[30];
+  TKR.m = [];
+  return med > 2 && med < 100 && g.every(v => Math.abs(v - med) <= 0.3 * med) ? (m[60] - m[0]) / 60 : 0;
+}
+const tkrX = () => TKR.anim ? (TKR.anim.effect.getComputedTiming().progress || 0) * TKR.half : 0;   // v111: how far the reel has run, CSS px
+const tkrF = () => Math.round(TKR.anim.currentTime / TKR.fi - (TKR.k > 1 ? 0.5 : 0));   // v111: the same in whole frames
+// v111: set the phase from a frame's timestamp: that frame shows frame F of the loop, so every later frame lands on a whole device pixel.
+// Inside requestAnimationFrame the timeline's clock is that same timestamp; reading it there keeps this exact in any browser.
+function tkrSeek(t, F) { TKR.anim.startTime = (document.timeline.currentTime ?? t) - (F % TKR.N + (TKR.k > 1 ? 0.5 : 0)) * TKR.fi; TKR.chk = t; }
+// v111: called at a frame's timestamp: box the two copies to whole device pixels, (re)make the animation, carry on from the same offset
+function tkrBuild(t, reel) {
+  const dpr = devicePixelRatio || 1, { n, k } = tkrPick(1000 / TKR.fi, dpr), c = reel.children, x = tkrX();
+  if (c.length !== 2) return;
+  if (TKR.anim) TKR.anim.cancel();
+  c[0].style.width = c[1].style.width = "";
+  const tot = Math.ceil(c[0].getBoundingClientRect().width * dpr / n - 0.001) * n;   // one copy in device pixels, rounded up to a whole number of steps
+  if (!(tot > 0)) { TKR.anim = null; return; }
+  const half = tot / dpr; c[0].style.width = c[1].style.width = half + "px";
+  Object.assign(TKR, { half, n, k, N: tot / n * k, dpr, dirty: false, bad: 0, t1: TKR.t1 || t });
+  // k > 1 (a fast display): steps, so the frames in between hold a whole pixel instead of landing on a fraction
+  TKR.anim = reel.animate([{ transform: "translate3d(0,0,0)" }, { transform: `translate3d(${-half}px,0,0)` }], { duration: TKR.N * TKR.fi, iterations: Infinity, easing: k > 1 ? `steps(${tot})` : "linear" });
+  tkrSeek(t, Math.round(x * dpr / n) * k);
+  if (TKR.paused) tkrPause(true);
+}
+function tkrPause(on) {   // v111: hovering holds the reel on a whole pixel; the loop starts it again from a frame's timestamp
+  TKR.paused = on; const a = TKR.anim; if (!on || !a || a.playState === "paused") return;
+  const F = tkrF(); a.pause(); a.currentTime = (F % TKR.N + (TKR.k > 1 ? 0.5 : 0)) * TKR.fi;
+}
+function tkrStop() { if (TKR.anim) TKR.anim.cancel(); TKR.anim = null; TKR.dirty = false; const r = el("#reel"); if (r) r.style.transform = ""; }   // v111: league switch, phone mode, reduced motion
+// v111: phase lock, every 2 seconds at a frame's timestamp. Off by more than 0.02 device px: set the phase again, and once 600
+// frames have been counted use that long run for a finer frame interval than the first 60 gave. Off by more than 0.1 three
+// checks running: the display changed (another monitor), so measure again and rebuild.
+function tkrLock(t) {
+  const a = TKR.anim, f = a.currentTime / TKR.fi - (TKR.k > 1 ? 0.5 : 0), d = f - Math.round(f), e = Math.abs(d) * TKR.n / TKR.k;
+  TKR.chk = t;
+  if (e <= 0.1) TKR.bad = 0; else if (++TKR.bad >= 3) { TKR.bad = 0; TKR.ok = false; TKR.m = []; return; }
+  if (e <= 0.02) return;
+  const J = Math.round((t - TKR.t1) / TKR.fi);
+  if (J >= 600) { TKR.fi = (t - TKR.t1) / J; a.effect.updateTiming({ duration: TKR.N * TKR.fi }); }
+  tkrSeek(t, Math.round(f));
+}
 function tkrStart() {
   if (TKR.raf) return;
   const tr = document.querySelector(".ticker .track");
-  if (tr && !tr.dataset.tkw) { tr.dataset.tkw = 1; tr.addEventListener("mouseenter", () => TKR.paused = true); tr.addEventListener("mouseleave", () => TKR.paused = false); }
+  if (tr && !tr.dataset.tkw) { tr.dataset.tkw = 1; tr.addEventListener("mouseenter", () => tkrPause(true)); tr.addEventListener("mouseleave", () => tkrPause(false)); }
   const step = t => {
     TKR.raf = requestAnimationFrame(step);
-    const dt = TKR.last ? Math.min(0.05, (t - TKR.last) / 1000) : 0; TKR.last = t;
-    if (LG.key !== "cfb" || !document.body.classList.contains("v-scores") || document.hidden) return;
+    const gap = t - TKR.last; TKR.last = t;
+    if (LG.key !== "cfb" || !document.body.classList.contains("v-scores") || document.hidden) { TKR.m.length = 0; return; }   // v111: never measure while the ticker is out of sight
     const reel = el("#reel");
     if (tkFlip()) {
       if (TKR.list.length < 2) return;
@@ -4871,9 +4947,15 @@ function tkrStart() {
       }
       return;
     }
-    if (TKR.paused || tkRM.matches || !(TKR.half > 0)) return;
-    TKR.x -= 45 * dt; if (TKR.x <= -TKR.half) TKR.x += TKR.half;
-    reel.style.transform = `translate3d(${TKR.x.toFixed(2)}px,0,0)`;
+    // v111: the desktop reel
+    if (tkRM.matches) { if (TKR.anim) { tkrStop(); TKR.dirty = true; } return; }   // reduced motion: no animation
+    if (TKR.anim && (devicePixelRatio || 1) !== TKR.dpr) { TKR.dirty = true; TKR.ok = false; TKR.m = []; }   // zoomed, or on another screen: box and measure again
+    if (gap > 1000) { TKR.t1 = t; TKR.chk = t - 1500; }   // back from a hidden tab: count frames afresh and check the phase shortly
+    if (!TKR.ok) { const fi = tkrMeasure(t); if (fi) { TKR.fi = fi; TKR.ok = TKR.dirty = true; TKR.t1 = t; } }
+    if (TKR.dirty) return tkrBuild(t, reel);
+    const a = TKR.anim; if (!a || TKR.paused) return;
+    if (a.playState === "paused") return tkrSeek(t, tkrF());   // the mouse left: carry on from the held pixel
+    if (t - TKR.chk > 2000) tkrLock(t);
   };
   TKR.raf = requestAnimationFrame(step);
 }
@@ -4895,7 +4977,7 @@ const TK_COMMON = new Set("smith johnson williams brown jones garcia miller davi
 function tkXUrl(x, latest) {
   const day = fmtCT(x.t || Date.now(), { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/(\d+)\/(\d+)\/(\d+)/, "$3-$1-$2");
   const school = CTL[x.team] || dispName(x.team).replace(/\bSt\.?$/, "State");
-  const names = tkNames(x.text).filter(n => n.length > 2 && !TK_COMMON.has(n.toLowerCase()));
+  const names = tkNames(tkClean(x.text)).filter(n => n.length > 2 && !TK_COMMON.has(n.toLowerCase()));   // v111: from the tidy text, so tacklers and holders are not searched
   const terms = [`"${school}"`, ...names];
   const q = `${terms.length > 1 ? "(" + terms.join(" OR ") + ")" : terms[0]} filter:videos since:${day}`;
   return "https://x.com/search?src=typed_query&q=" + encodeURIComponent(q) + (latest ? "&f=live" : "");
@@ -4908,7 +4990,7 @@ function openTkPlay(k) {
     <span class="tk k-${x.kind} tkp-kd"><span class="kd">${esc(x.lbl)}${x.sub ? " · " + esc(x.sub) : ""}</span></span>
     <div class="tkp-head">${mark(x.team)}<div><div class="nm">${rk(x.team) ? "#" + rk(x.team) + " " : ""}${esc(dispName(x.team))}</div>
       <div class="sub">${opp ? (x.team === x.sc.a ? "at " : "vs ") + (rk(opp) ? "#" + rk(opp) + " " : "") + esc(dispName(opp)) + " · " : ""}${x.t ? esc(fmtCT(x.t, { hour: "numeric", minute: "2-digit" })) : ""}${x.when ? " · " + esc(x.when) : ""}</div></div></div>
-    <p class="tkp-text">${esc(x.text || "No play text from the feed for this one.")}</p>
+    <p class="tkp-text">${esc(tkClean(x.text) || "No play text from the feed for this one.")}</p>
     <div class="tkp-foot">
       <a class="btn x" href="${esc(tkXUrl(x, false))}" target="_blank" rel="noopener noreferrer" title="Top video posts about this team or these players today">&#9654; Video on X</a>
       <a class="btn" href="${esc(tkXUrl(x, true))}" target="_blank" rel="noopener noreferrer" title="Newest video posts first, best right after the play">Latest clips</a>
