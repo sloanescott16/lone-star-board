@@ -3682,8 +3682,9 @@ function cfbSpread(o) {
 }
 /* v114: UPSET on a final when the moneyline underdog won. Rules:
    - only a finished game, and only from the moneyline: both prices must be known (g.odds.mlA, g.odds.mlH);
-   - the underdog is the side priced plus money (+100 or longer) against a favourite priced minus. Two minus prices
-     (-110/-110), two plus prices, or equal prices are a pick'em: no underdog, no tag;
+   - UPSET only when the winner was priced plus money above +100 and the loser minus money below -100 (+120 beat -142).
+     Even money (EVEN, EV, PK, +100, -100) on either side means no clear underdog: no tag, however it is spelled
+     (EVEN vs -120 and +100 vs -120 both give none). Two minus prices (-110/-110) or two plus prices: no tag;
    - no moneyline, no tag. The spread is never used to guess: the tag means what he asked for, the moneyline dog won,
      and a spread alone cannot say that for a pick'em or near pick'em;
    - a tie (no winner) gets no tag.
@@ -3695,7 +3696,7 @@ function upsetOf(g) {
   if (!g || g.state !== "post") return null;
   const a = g.odds?.mlA, h = g.odds?.mlH;
   if (a == null || h == null || isNaN(a) || isNaN(h)) return null;
-  const dog = a >= 100 && h < 0 ? "a" : h >= 100 && a < 0 ? "h" : null;
+  const dog = a > 100 && h < -100 ? "a" : h > 100 && a < -100 ? "h" : null;   // even money (+100, -100, EVEN) is no dog
   if (!dog) return null;
   const as = +g.as, hs = +g.hs; if (isNaN(as) || isNaN(hs) || as === hs) return null;
   const won = as > hs ? "a" : "h";
