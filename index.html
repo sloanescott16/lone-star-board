@@ -1460,6 +1460,7 @@
   .fun span { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
   .fun .close { color: var(--warn); background: rgba(242,184,75,.14); }
   .fun .shoot { color: #ff8a3d; background: rgba(255,138,61,.15); }
+  .fun .upset { color: #4fd8ec; background: rgba(79,216,236,.15); }   /* v114: the moneyline underdog won */
   /* ==== SKIN:gameday start ==== */
   /* Command Center, round 3: game day, drawn like a broadcast package. Same product family as
      Pennant Chase: bold chrome on Home and the Scoreboard (board panels, lamp glow, big section
@@ -2877,7 +2878,7 @@ async function loadSummary() {
   const g = S.featured;
   if (!g) { S.summary = null; return; }
   if (g.state === "pre") {   // v60: pregame reads the preview (predictor, last five, injuries, leaders), every 5 min
-    loadTape(g).then(() => { if (S.featured === g) renderPre(g); });
+    loadTape(g).then(() => { if (S.featured === g) holdScroll(() => renderPre(g)); });   // v114: keeps his place
     if (S.preSum && S.preSum.id === g.id && Date.now() - S.preSum.t < 300e3) { S.summary = S.preSum.d; return; }
     S.summary = null;
     const d = await getJSON(api("summary?event=" + g.id));
@@ -3432,7 +3433,7 @@ async function loadOpenLine() {
 // games that were never seen pregame (opened the board after kickoff) have no frozen line; pull it once from the summary
 async function backfillLines() {
   S.lineTried = S.lineTried || {};
-  const need = S.events.filter(g => g.state !== "pre" && (!g.odds || !g.odds.details) && !S.lineTried[g.id]);
+  const need = S.events.filter(g => g.state !== "pre" && (!g.odds || !g.odds.details || (g.state === "post" && (g.odds.mlA == null || g.odds.mlH == null))) && !S.lineTried[g.id]);   // v114: a final with no moneyline gets one try too, for the UPSET tag
   await Promise.all(need.map(async g => {
     S.lineTried[g.id] = true;
     try { const sum = await getJSON(api("summary?event=" + g.id)); if (sum?.pickcenter?.length) mergeLine(g, bestPick(sum.pickcenter)); } catch {}
@@ -3679,6 +3680,27 @@ function cfbSpread(o) {
   if (/\b(even|pk|pick)\b/i.test(o.details || "")) return 0;
   const m = String(o.details || "").match(/-\s*(\d+(?:\.\d+)?)/); return m ? +m[1] : null;
 }
+/* v114: UPSET on a final when the moneyline underdog won. Rules:
+   - only a finished game, and only from the moneyline: both prices must be known (g.odds.mlA, g.odds.mlH);
+   - the underdog is the side priced plus money (+100 or longer) against a favourite priced minus. Two minus prices
+     (-110/-110), two plus prices, or equal prices are a pick'em: no underdog, no tag;
+   - no moneyline, no tag. The spread is never used to guess: the tag means what he asked for, the moneyline dog won,
+     and a spread alone cannot say that for a pick'em or near pick'em;
+   - a tie (no winner) gets no tag.
+   Where the line comes from: ESPN's scoreboard drops the odds once a game kicks off (checked on ESPN's 2026-10-03 board:
+   19 of 19 games not yet started carried odds, 0 of 35 live or final games did). normGame keeps the last pregame line it
+   saw (localStorage lsb-line-<id>), and backfillLines reads the closing line from the game's summary (pickcenter, which
+   ESPN keeps on finished games) when the board never saw the game pregame, or saw it without a moneyline. */
+function upsetOf(g) {
+  if (!g || g.state !== "post") return null;
+  const a = g.odds?.mlA, h = g.odds?.mlH;
+  if (a == null || h == null || isNaN(a) || isNaN(h)) return null;
+  const dog = a >= 100 && h < 0 ? "a" : h >= 100 && a < 0 ? "h" : null;
+  if (!dog) return null;
+  const as = +g.as, hs = +g.hs; if (isNaN(as) || isNaN(hs) || as === hs) return null;
+  const won = as > hs ? "a" : "h";
+  return won === dog ? { team: dog === "a" ? g.away : g.home, ml: dog === "a" ? a : h } : null;
+}
 function cfbFun(g) {
   if (LG.key !== "cfb" || !g) return null;
   const clash = !!(g.homeRank && g.awayRank), tags = [];
@@ -3695,6 +3717,7 @@ function cfbFun(g) {
       else if (m <= 8 && g.period >= 2 && (g.period < 4 || tightNow(g))) tags.push(["close", g.period >= 4 ? "Close finish" : "One-score game"]);   // v107: 4th needs the win probability too
       if (tot >= 56 || (mins >= 15 && tot / mins * 60 >= 66)) tags.push(["shoot", "Shootout"]);
     } else {
+      if (upsetOf(g)) tags.push(["upset", "Upset"]);   // v114
       if (g.period > 4 || m <= 3) tags.push(["close", g.period > 4 ? "Went to OT" : "Nail-biter"]);
       if (tot >= 66) tags.push(["shoot", "Shootout"]);
     }
@@ -4284,7 +4307,56 @@ window.addEventListener("resize", fitBoard);
 /* =====================================================================
    LOOPS
    ===================================================================== */
-function renderAll() {
+/* v114: the page stays where he leaves it. Every refresh redraws the hero and the Current drive panel, which sit above the
+   game cards on a phone; the drive's play list grows by a play at a time and empties when a new drive starts, so the cards
+   below moved by 40 to 380 px a refresh (measured at 390x844). Chrome hides that with scroll anchoring; iOS Safari has none,
+   so on his iPhone the page jumped. holdScroll() is the page's own anchoring: before a redraw it notes the element at the
+   top edge of the screen (a game card by its data-id, else the nearest block with an id), and straight after it puts that
+   element back on the same pixel with one scroll correction, in the same task, so no frame is ever painted out of place.
+   A card that moves in the order is followed, so the game under his thumb stays under his thumb. Refreshes also wait
+   (up to 3 s) while a finger is on the glass or the page is still gliding, so the correction never fights a scroll. */
+const HOLD = { touch: 0, scrollT: 0 };
+addEventListener("touchstart", e => { HOLD.touch = e.touches ? e.touches.length : 1; }, { passive: true, capture: true });   // counted afresh each time, so a lost touchend (its card redrawn) cannot leave it stuck; scrollIdle gives up after 3 s anyway
+addEventListener("touchend", e => { HOLD.touch = e.touches ? e.touches.length : 0; HOLD.scrollT = performance.now(); }, { passive: true, capture: true });
+addEventListener("touchcancel", e => { HOLD.touch = e.touches ? e.touches.length : 0; }, { passive: true, capture: true });
+addEventListener("scroll", () => { HOLD.scrollT = performance.now(); }, { passive: true });
+function scrollIdle(max = 3000) {
+  const t0 = performance.now();
+  const busy = () => HOLD.touch > 0 || performance.now() - HOLD.scrollT < 250;
+  if (!busy()) return Promise.resolve();
+  return new Promise(res => { const f = () => (!busy() || performance.now() - t0 >= max) ? res() : setTimeout(f, 80); setTimeout(f, 80); });
+}
+function holdKey(e) {
+  if (e.dataset.id) { const box = e.parentElement?.closest("[id]"); return box ? `#${box.id} [data-id="${e.dataset.id}"]` : null; }
+  if (e.dataset.tw) return `[data-tw="${e.dataset.tw}"]`;
+  return e.id ? "#" + e.id : null;
+}
+function holdAnchor() {
+  if (scrollY < 1) return null;   // at the very top there is nothing above to move
+  const view = document.querySelector(".view.on"); if (!view) return null;
+  const H = innerHeight; let best = null, bestTop = -Infinity, first = null, firstTop = Infinity;
+  for (const e of view.querySelectorAll("[data-id], [data-tw], [id]")) {
+    const r = e.getBoundingClientRect(); if (!r.height || r.bottom <= 0 || r.top >= H) continue;
+    if (r.top <= 0) { if (r.top > bestTop) { best = e; bestTop = r.top; } }   // straddles the top edge: the innermost wins
+    else if (r.top < firstTop) { first = e; firstTop = r.top; }
+  }
+  const pick = [best, first].filter(Boolean).map(e => ({ k: holdKey(e), top: e.getBoundingClientRect().top })).filter(x => x.k);
+  return pick.length ? pick : null;
+}
+function holdScroll(fn) {
+  const a = holdAnchor();
+  try { return fn(); }
+  finally {
+    if (a) for (const x of a) {
+      const e = document.querySelector(x.k); if (!e || !e.getBoundingClientRect().height) continue;
+      const d = e.getBoundingClientRect().top - x.top;
+      if (Math.abs(d) >= 0.5) window.scrollTo(0, scrollY + d);
+      break;
+    }
+  }
+}
+function renderAll() { holdScroll(renderAllNow); }
+function renderAllNow() {
   renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderPre(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderSchedule(); renderRegroup();
   if (LG.key === "cfb") renderSatTicker();   // v100
   if (S.view === "season") renderSeason();
@@ -4300,8 +4372,9 @@ async function espnLoop() {
     if (LG.key === "nfl") await loadSeeds();
     try { await loadSummary(); } catch (e) { console.warn("summary", e); }
     try { await loadOpenLine(); } catch (e) { console.warn("open line", e); }
+    await scrollIdle();   // v114: never redraw under a moving finger or a glide
     renderAll(); S.lastOk = Date.now(); setErr(false); pumpFinals(); snAutoRoute();
-    if (favLoss()) { await loadNextFav(); renderRegroup(); }
+    if (favLoss()) { await loadNextFav(); holdScroll(renderRegroup); }
   } catch (e) { console.warn("scoreboard", e); setErr(true); }
   const anyLive = S.events.some(g => g.live);
   espnTimer = setTimeout(espnLoop, anyLive ? CFG.pollLive : CFG.pollIdle);
@@ -4312,8 +4385,8 @@ async function sleeperLoop() {
     await loadSleeperStatic();
     if (!S.sleeper.players) await loadPlayers();
     await loadMatchup();
-    loadProjections().then(renderFantasy);
-    renderFantasy(); setErr(false);
+    loadProjections().then(() => holdScroll(renderFantasy));
+    holdScroll(renderFantasy); setErr(false);   // v114: keeps his place
     (S.sleeper.fresh || []).forEach(celebrate); S.sleeper.fresh = [];
   } catch (e) { console.warn("sleeper", e); el("#fxHead").innerHTML = `<div class="empty">Couldn't reach Sleeper (${esc(e.message)}). Retrying.</div>`; }
   slTimer = setTimeout(sleeperLoop, CFG.pollSleeper);
@@ -4365,9 +4438,11 @@ function renderShowBar() {
   const sig = on.map(s => s.key).join(",");
   if (bar.dataset.sig === sig) return;
   bar.dataset.sig = sig;
+  holdScroll(() => {   // v114: the On air bar sits at the top of Home; showing, hiding or changing it must not move the page
   bar.hidden = !on.length;
   bar.innerHTML = on.length ? `<span class="sb-k"><i></i>On air</span>` + on.map(s =>
     `<a class="sb-s" data-show="${s.key}" href="${s.url}" target="_blank" rel="noopener"><b>${s.name}</b><small>${s.net}</small><span class="sb-go">Watch \u203a</span></a>`).join("") : "";
+  });
 }
 /* v90/v91: Watch button on every game. From 30 minutes before kickoff until the final, the network label on a
    game becomes a Watch link that opens the game on a service he pays for, in a new tab. ESPN-family games
