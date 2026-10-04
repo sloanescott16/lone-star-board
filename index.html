@@ -2621,6 +2621,134 @@ async function getJSON(url) {
 }
 
 /* =====================================================================
+   v113: On the field follows the latest play.
+   The board feed (competitions[0].situation) and the summary feed (drives, plays) run on different clocks and both can be
+   behind the other, and ESPN files a return score under the drive of the team that LOST the ball (a kickoff return
+   touchdown sits in the kicking team's drive: "0 plays, -15 yards"). So the Game Center no longer takes down and distance,
+   spot or possession from whichever feed it read last. ofGame() finds the newest play across both feeds (by position in the summary, not by id: ESPN ids do not climb),
+   and then:
+     - a scoring play shows what comes next (extra point coming, or the kickoff), never a down and distance;
+       a score as the 2nd or 4th quarter runs out shows the end of the half (or of regulation) instead of a kickoff;
+     - otherwise, when the summary's play is newer than the board's, the down, spot and team come from where that play ended;
+     - the team with the ball is the team the latest play says, not the owner of the current drive.
+   ===================================================================== */
+const OF = { who: {}, flat: new WeakMap() };   // who: game id -> the team that scored last, so a point-after play knows whose kickoff is next
+const ofId = v => { const n = Number(v); return isFinite(n) && n > 0 ? n : 0; };   // the board numbers some point-after records negative: those carry no order
+const ofScoreType = t => /touchdown|field goal good|safety/i.test(t || "");
+const ofPatType = t => /extra point|two.?point|conversion|\bpat\b/i.test(t || "");
+const ofPatText = x => /kick attempt|\bKICK\)|extra point|two.?point|conversion|\bPAT\b/i.test(x || "");
+const OF_QUIET = /timeout|end (of )?(period|quarter)|end of play/i;
+const OF_END = /end (of )?(period|quarter|half)/i;   // v113: ESPN's record for the end of a quarter or half (CFB "End Period", NFL "End of Half")
+const ofRz = (poss, spot, dd) => { const m = String(spot || "").match(/^([A-Z]{2,4})\s+(\d+)$/); return !!(m && poss && m[1] !== poss && +m[2] <= 20 && dd); };
+function ofFlat(sum) {   // every play of the game in order, each with the drive it sits in
+  if (!sum || !sum.drives) return [];
+  let r = OF.flat.get(sum); if (r) return r;
+  r = []; const seen = new Set(), idx = new Map();
+  for (const d of [...(sum.drives.previous || []), ...(sum.drives.current ? [sum.drives.current] : [])])
+    for (const p of d.plays || []) { if (p.id != null && seen.has(String(p.id))) continue; seen.add(String(p.id)); idx.set(String(p.id), r.length); r.push({ p, d }); }
+  r.idx = idx; OF.flat.set(sum, r); return r;
+}
+function ofPlayOf(p, src) {   // a summary play, in the one shape ofGame reads
+  const t = String(p.type?.text || "");
+  return { src, id: p.id, n: ofId(p.id), type: t, text: String(p.text || ""), sv: +p.scoreValue || 0, aw: p.awayScore, hs: p.homeScore,
+    score: p.scoringPlay === true || ofScoreType(t), end: p.end || null, start: p.start || null, endTeam: p.end?.team?.id, tm: p.team?.id };
+}
+function ofBoardPlay(lp, g) {   // the board's last play, in the same shape
+  if (!lp) return null;
+  return { src: "board", id: lp.id, n: ofId(lp.id), type: lp.type, text: lp.text, sv: lp.sv, aw: g.as, hs: g.hs, score: lp.sv > 0 || ofScoreType(lp.type), end: null, start: null, endTeam: lp.etm, tm: lp.tm };
+}
+function ofScorer(g, L, prev) {   // which team scored: the score that changed, else the side the play ended on
+  const ab = id => { id = String(id ?? ""); return !id ? null : id === String(g.homeId) ? g.home : id === String(g.awayId) ? g.away : null; };
+  if (L.aw != null && L.hs != null) {
+    const dA = (+L.aw || 0) - (+(prev && prev.aw) || 0), dH = (+L.hs || 0) - (+(prev && prev.hs) || 0);
+    if (dA > 0 && dH <= 0) return g.away; if (dH > 0 && dA <= 0) return g.home;
+  }
+  return ab(L.endTeam) || ab(L.tm) || null;
+}
+function ofGame(g0, sum) {
+  if (!g0 || !g0.live) return g0;
+  const g = Object.assign({}, g0, g0.raw || {}); g.of = null;   // always start from what the board said
+  const flat = ofFlat(sum);
+  const iB = flat.length - 1, eB = flat[iB] || null;   // ESPN play ids do NOT climb (a play filed later can carry a smaller id), so the newest play is the last one in the feed's own order
+  const Lb = eB ? ofPlayOf(eB.p, "sum") : null, La = ofBoardPlay(g.lp, g);
+  let L = null, fresh = false, patSeen = false, prev = null;
+  if (La && Lb) {
+    if (La.n && Lb.n) {
+      const j = flat.idx.has(String(La.id)) ? flat.idx.get(String(La.id)) : -1;   // where the board's play sits in the summary, if it is there at all
+      if (j < 0) { L = La; prev = Lb; }   // the summary has not got the board's play yet: the board is ahead
+      else { L = Lb; fresh = j < iB; prev = flat[iB - 1] ? ofPlayOf(flat[iB - 1].p, "sum") : null; } }
+    else { L = Lb; fresh = true; patSeen = ofPatType(La.type) && Lb.score && !ofPatType(Lb.type); prev = flat[iB - 1] ? ofPlayOf(flat[iB - 1].p, "sum") : null; }   // the board's record has no usable order
+  } else if (Lb) { L = Lb; fresh = true; prev = flat[iB - 1] ? ofPlayOf(flat[iB - 1].p, "sum") : null; }
+  else if (La) L = La;
+  if (!L) return g0;
+  let periodEnd = false;
+  if (L.src === "sum" && OF_END.test(L.type) && prev && (prev.score || ofPatType(prev.type))) {   // the period ended on a score: the score is the news, not ESPN's end record (which can carry a made-up down)
+    const k = flat.idx.get(String(prev.id)) ?? -1; L = prev; periodEnd = true; prev = k > 0 ? ofPlayOf(flat[k - 1].p, "sum") : null; }
+  const nm = ab => ab ? dispName(ab) : "", other = ab => ab === g.home ? g.away : ab === g.away ? g.home : null;
+  const text = L.text;
+  if (g.status === "Halftime") {   // the half: no ball, no down
+    g.dd = ""; g.spot = ""; g.rz = false; g.poss = null; g.of = { kind: "half", team: null, label: "Halftime" };
+  } else if (L.score || ofPatType(L.type)) {
+    const t = L.type, pat = ofPatType(t);
+    const safety = /safety/i.test(t), fg = /field goal/i.test(t) && !/touchdown/i.test(t);
+    const td = !pat && !safety && !fg && (/touchdown/i.test(t) || L.sv >= 6 || (L.score && /touchdown|\bfor a TD\b/i.test(text.replace(/nullified/i, "")) ));
+    let sc = ofScorer(g, L, prev);
+    if (!sc && pat) sc = OF.who[g.id] || null;   // a point-after record that names no side: the team that just scored
+    if (sc && !pat) OF.who[g.id] = sc;
+    const ot = (g.period || 0) > 4;
+    const patDone = pat || patSeen || ofPatText(text) || (!td);   // a field goal or a safety has no point after
+    const halfEnd = (g.period === 2 || g.period === 4) && (periodEnd || /^0?0:00$/.test(String(g.clock || "")) || /\bclock 00:00\b/i.test(text));   // scored as the 2nd or 4th quarter ran out: no kickoff follows
+    let kind, who, label, dd;
+    if (td && !patDone) { kind = "pat"; who = sc; label = sc ? `Touchdown ${nm(sc)}, extra point coming` : "Touchdown, extra point coming"; dd = "Extra point"; }   // still tried when time has run out
+    else if (halfEnd) { const s = (safety ? "Safety" : fg ? "Field goal" : "Touchdown") + (sc ? " " + nm(sc) : ""); kind = "end"; who = null; dd = ""; label = `${s}, end of ${g.period === 2 ? "the half" : "regulation"}`; }
+    else if (ot) { kind = "ot"; who = null; label = sc ? `${nm(sc)} scored, ${nm(other(sc))} up next` : "Scored, other side up next"; dd = ""; }
+    else { kind = "ko"; who = safety ? other(sc) : sc; dd = safety ? "Free kick" : "Kickoff";
+      label = !who ? "Kickoff coming" : safety ? `Safety, ${nm(who)} kicking off (free kick)` : fg ? `Field goal, ${nm(who)} kicking off` : `Kickoff, ${nm(who)} kicking off`; }
+    g.dd = dd; g.spot = ""; g.rz = false; g.poss = who || null; g.lastPlay = text || g.lastPlay;
+    g.of = { kind, team: who || null, label, safety };
+  } else if ((fresh || OF_QUIET.test(L.type)) && L.end) {   // the summary's play is newer than the board's: where that play ended is the truth
+    const e = L.end, st = L.start || {}, ab = id => { id = String(id ?? ""); return id === String(g.homeId) ? g.home : id === String(g.awayId) ? g.away : null; };
+    const quiet = OF_QUIET.test(L.type), pe = prev && prev.end || {};   // these change nothing on the field: where the play before them ended still stands (ESPN's own start text on a timeout can be a down behind)
+    const src = quiet && (pe.shortDownDistanceText || pe.downDistanceText) ? pe : e.shortDownDistanceText || e.downDistanceText ? e : quiet && (st.shortDownDistanceText || st.downDistanceText) ? st : null;
+    if (src) {
+      const short = src.shortDownDistanceText || "", long = src.downDistanceText || "";
+      g.dd = short || long; g.spot = long.includes(" at ") && !short ? "" : (src.possessionText || "");
+      g.poss = ab(e.team?.id) || ab(st.team?.id) || g.poss; g.rz = ofRz(g.poss, g.spot, g.dd);
+    }
+    g.lastPlay = text || g.lastPlay;
+  }
+  return g;
+}
+function ofYards(p) {   // yards of a return, read off the play text, else the stat
+  const m = String(p.text || "").match(/\breturn(?:ed|s)?\s+(?:for\s+)?(\d+)\s+yards?/i);
+  return m ? +m[1] : Math.abs(+p.statYardage || 0);
+}
+/* v113: a drive with no offensive plays, or one that ended in a score for the OTHER side (kickoff, punt, interception,
+   fumble and blocked-kick returns, safeties), is described by what happened. ESPN's own count and yards for these are the
+   punting or kicking team's ("0 plays, -15 yards, 0:00 from MIZ 0", "4 plays, -81 yards"). */
+function ofDriveNote(d, g, isCur) {
+  const plays = d.plays || [], flat = ofFlat(GC.sum), n = d.offensivePlays ?? plays.length, dT = d.team?.abbreviation || "";
+  const sp = plays.slice().reverse().find(p => p.scoringPlay === true || ofScoreType(p.type?.text));
+  const t = String(sp?.type?.text || "");
+  let sc = null;
+  if (sp && !ofPatType(t)) {
+    const i = (flat.idx && flat.idx.get(String(sp.id))) ?? -1, pp = i > 0 ? flat[i - 1].p : plays[plays.indexOf(sp) - 1];
+    sc = ofScorer(g, ofPlayOf(sp, "sum"), pp ? ofPlayOf(pp, "sum") : null);
+  }
+  if (sp && !ofPatType(t) && (/kickoff|punt|interception|fumble|blocked|safety|return/i.test(t) || n === 0 || (sc && dT && sc !== dT))) {
+    const what = /blocked/i.test(t) ? `Blocked ${/punt/i.test(t) ? "punt" : /field goal|\bfg\b/i.test(t) ? "field goal" : "kick"} returned for a touchdown`   // before "punt": a blocked punt is not a punt return
+      : /kickoff/i.test(t) ? "Kickoff return touchdown" : /punt/i.test(t) ? "Punt return touchdown" : /interception/i.test(t) ? "Interception return touchdown"
+      : /fumble/i.test(t) ? "Fumble return touchdown" : /safety/i.test(t) ? "Safety" : sc && dT && sc !== dT ? "Defensive touchdown" : "Touchdown";
+    const y = what === "Safety" ? 0 : ofYards(sp);
+    return { ab: sc || dT, head: d.displayResult || d.shortDisplayResult || (what === "Safety" ? "Safety" : "Touchdown"), desc: y ? `${what}, ${y} yard${y === 1 ? "" : "s"}` : what, special: true };
+  }
+  if (n === 0) {
+    const last = plays[plays.length - 1], lt = String(last?.type?.text || "");
+    return { ab: dT, head: null, desc: lt ? `${lt}, no offensive plays${isCur ? " yet" : ""}` : "No offensive plays yet", special: false };
+  }
+  return null;
+}
+/* =====================================================================
    ESPN: scoreboard → normalised games
    ===================================================================== */
 function normGame(ev) {
@@ -2654,7 +2782,7 @@ function normGame(ev) {
   else if (state === "post") status = type.shortDetail; // Final / Final/OT
   else status = `${ordinal(st.period)} · ${st.displayClock}`;
   if (state === "in" && type.description === "Halftime") status = "Halftime";
-  return {
+  const out = {   // v113: built into out so ofGame can lay the latest play over it
     id: ev.id, date: new Date(ev.date), state, status, live: state === "in",
     away: away.team.abbreviation, home: home.team.abbreviation,
     awayId: away.id, homeId: home.id,
@@ -2664,11 +2792,13 @@ function normGame(ev) {
     awayRec: rec(away), homeRec: rec(home),
     poss, rz, dd: sit.shortDownDistanceText || sit.downDistanceText || "", spot: (sit.downDistanceText||"").includes(" at ") && !(sit.shortDownDistanceText) ? "" : (sit.possessionText || ""), lastPlay: sit.lastPlay?.text || "",
     hwp: sit.lastPlay?.probability?.homeWinPercentage != null ? +sit.lastPlay.probability.homeWinPercentage : null,   // v107: live win probability off the board, when ESPN carries it
-    lp: sit.lastPlay ? { id: String(sit.lastPlay.id ?? ""), type: String(sit.lastPlay.type?.text || ""), text: String(sit.lastPlay.text || ""), yds: +sit.lastPlay.statYardage || 0, sv: +sit.lastPlay.scoreValue || 0, down: +sit.lastPlay.start?.down || 0, dist: +sit.lastPlay.start?.distance || 0 } : null,   // v100: Saturday ticker
+    lp: sit.lastPlay ? { id: String(sit.lastPlay.id ?? ""), type: String(sit.lastPlay.type?.text || ""), text: String(sit.lastPlay.text || ""), yds: +sit.lastPlay.statYardage || 0, sv: +sit.lastPlay.scoreValue || 0, down: +sit.lastPlay.start?.down || 0, dist: +sit.lastPlay.start?.distance || 0, tm: String(sit.lastPlay.team?.id ?? ""), etm: String(sit.lastPlay.end?.team?.id ?? "") } : null,   // v100: Saturday ticker
     net, nets: [...(c.broadcasts || []).flatMap(b => b.names || []), ...(c.geoBroadcasts || []).map(b => b.media?.shortName)].filter(Boolean), odds, spread: odds ? [odds.details, odds.ou ? "O/U " + odds.ou : ""].filter(Boolean).join(" · ") : "",
     venue: c.venue?.fullName || "", period: st.period, clock: st.displayClock,
     away_lines: (away.linescores||[]).map(l => l.value ?? l.displayValue), home_lines: (home.linescores||[]).map(l => l.value ?? l.displayValue),
   };
+  out.raw = { poss: out.poss, dd: out.dd, spot: out.spot, rz: out.rz, lastPlay: out.lastPlay };   // v113: what the board said, kept so the Game Center can lay the summary's newer play over it
+  return ofGame(out, null);
 }
 const ordinal = n => ({1:"1st",2:"2nd",3:"3rd",4:"4th"}[n] || (n > 4 ? "OT" : ""));
 
@@ -3510,8 +3640,8 @@ function renderWP(g) {
 function renderDrive(g) {
   const cur = S.summary?.drives?.current;
   if (!g || !cur || g.state !== "in") { el("#driveWho").textContent = ""; el("#drive").innerHTML = `<div class="empty">${g?.state === "post" ? "Game over" : "No drive in progress"}</div>`; return; }
-  const team = cur.team?.abbreviation || g.poss || "";
-  el("#driveWho").textContent = `${dispName(team)} ball`;
+  const team = g.poss || cur.team?.abbreviation || "";   // v113: possession first
+  el("#driveWho").textContent = g.of ? g.of.label : `${dispName(team)} ball`;
   const plays = (cur.plays || []).slice(-4).reverse();
   const startYl = cur.start?.yardLine ?? 0, endYl = cur.end?.yardLine ?? (plays[0]?.end?.yardLine ?? startYl);
   // ESPN yardLine: 0-100 from the home team's goal? Use offensive direction: away drives left→right on our field
@@ -4580,8 +4710,16 @@ function fieldSpot(txt, g) {   // "DET 40" -> yards from the away team's own goa
 }
 // v70: the ball, the drive start and the first-down spot in one place, for the field graphic and the thin drive bar
 function driveGeom(g, cur) {
-  const poss = cur?.team?.abbreviation || g.poss;
+  if (g.of) {   // v113: after a score the ball is at the point-after spot or the kickoff tee, never at the old down
+    const team = g.of.team, k = g.of.kind; if (!team || (team !== g.away && team !== g.home) || (k !== "pat" && k !== "ko")) return null;
+    const dir = team === g.away ? 1 : -1, cfb = LG.key === "cfb";
+    const n = k === "pat" ? (cfb ? 3 : 15) : g.of.safety ? (cfb ? 25 : 20) : 35;   // yards from a goal line: the point after is kicked at the far end, the kickoff from the kicker's own end
+    const ball = k === "pat" ? (dir === 1 ? 100 - n : n) : (dir === 1 ? n : 100 - n);
+    return { poss: team, dir, ball, start: ball, gain: null, of: g.of };
+  }
+  const poss = g.poss || cur?.team?.abbreviation;   // v113: possession first; ESPN files a return score under the drive of the team that lost the ball
   if (!poss || (poss !== g.away && poss !== g.home)) return null;
+  if (cur && cur.team?.abbreviation !== poss) cur = null;   // v113: that drive belongs to the other side, so its start spot means nothing here
   const dir = poss === g.away ? 1 : -1;   // the away team drives left to right
   const un = yl => yl == null ? null : (dir === 1 ? yl : 100 - yl), cl = v => Math.max(0, Math.min(100, v));
   let ball = fieldSpot(g.spot, g);
@@ -4599,9 +4737,12 @@ function gcSit(g, hp) {
   const poss = g.poss;
   const pw = hp == null || !poss ? null : Math.round(poss === g.home ? hp : 100 - hp);
   const bits = [];
+  if (g.of) bits.push(`<span class="who">${poss ? mark(poss, "mini") : ""}<b>${esc(g.of.label)}</b></span>`);   // v113: what comes next, not a down and distance
+  else {
   if (poss) bits.push(`<span class="who">${mark(poss, "mini")}<b>${esc(dispName(poss))} ball</b></span>`);
   if (g.dd) bits.push(`<span class="dd"><b>${esc(g.dd)}</b>${g.spot ? " at " + esc(g.spot) : ""}</span>`);
   if (g.rz) bits.push(`<span class="rz">Red zone</span>`);
+  }
   if (pw != null) bits.push(`<span class="pw" style="color:${chartColor(poss)}">Win ${pw}%</span>`);
   return bits.length ? `<div class="gc-sit">${bits.join("")}</div>` : "";
 }
@@ -4629,11 +4770,11 @@ function gcField(g, cur) {
   const arrow = `<path d="M${(bx + dir * 19).toFixed(1)},${my} l${-dir * 8},-5.5 v11 Z" fill="${pc}" fill-opacity=".9"/>`;
   const marker = `<line x1="${bx.toFixed(1)}" x2="${bx.toFixed(1)}" y1="${top}" y2="${bot}" stroke="#fff" stroke-opacity=".9" stroke-width="2"/>`
     + `<circle cx="${bx.toFixed(1)}" cy="${my}" r="6.5" fill="${pc}" stroke="#0c1119" stroke-width="2"/>${arrow}`;
-  return `<svg class="gc-fld" viewBox="0 0 ${W} ${H}" role="img" aria-label="Field position: ${esc(poss)} ball at ${esc(g.spot || "")}">
+  return `<svg class="gc-fld" viewBox="0 0 ${W} ${H}" role="img" aria-label="${d.of ? esc(g.of.label) : `Field position: ${esc(poss)} ball at ${esc(g.spot || "")}`}">
     <rect x="${EZ}" y="${top}" width="${F}" height="${bot - top}" fill="#122029"/>${rz}${grid}${nums}
     <line x1="${X(50).toFixed(1)}" x2="${X(50).toFixed(1)}" y1="${top}" y2="${bot}" stroke="rgba(255,255,255,.22)"/>
     ${prog}${ez(g.away, true)}${ez(g.home, false)}${stick}${marker}
-    <text x="${X(50).toFixed(1)}" y="${H - 3}" text-anchor="middle" font-size="9" fill="${gt}">${esc(dispName(poss))} driving ${dir === 1 ? "&#8594;" : "&#8592;"}</text></svg>`;
+    <text x="${X(50).toFixed(1)}" y="${H - 3}" text-anchor="middle" font-size="9" fill="${gt}">${esc(dispName(poss))} ${d.of ? (d.of.kind === "pat" ? "extra point" : d.of.safety ? "free kick" : "kicking off") : "driving"} ${dir === 1 ? "&#8594;" : "&#8592;"}</text></svg>`;
 }
 // v70: the thin drive bar under the pinned score, ESPN style: endzones, the drive so far, the first-down stick and the ball
 function gcDriveBar(g, cur) {
@@ -5122,18 +5263,19 @@ function playRow(p, g, hl) {
   return `<li class="${hl ? "hl" : ""} ${big ? "big" : ""}"><span class="pl-dd">${esc(dd)}<small>${esc(clk)}</small></span><span class="pl-tx">${tag ? `<b class="pl-tag ${big ? "big" : ""}">${tag}</b> ` : ""}${linkNames(esc(p.text || ""))}${sc}</span>${showY ? `<em class="${y > 0 ? "pos" : y < 0 ? "neg" : ""}">${y > 0 ? "+" : ""}${y}</em>` : "<em></em>"}</li>`;
 }
 function driveRow(d, key, isCur, g) {
-  const ab = d.team?.abbreviation || "", plays = d.plays || [], lastP = plays[plays.length - 1];
-  const res = d.displayResult || d.shortDisplayResult || d.result || (isCur ? "In progress" : "Drive");
+  const nt = ofDriveNote(d, g, isCur);   // v113: zero-play drives and return scores say what happened
+  const ab = nt?.ab || d.team?.abbreviation || "", plays = d.plays || [], lastP = plays[plays.length - 1];
+  const res = nt?.head || d.displayResult || d.shortDisplayResult || d.result || (isCur ? "In progress" : "Drive");
   const isScore = !!d.isScore || /touchdown|field goal good|^td$|^fg$/i.test(res);
   const to = /interception|fumble|downs|turnover|missed|blocked/i.test(res);
   const n = d.offensivePlays ?? plays.length, yds = d.yards ?? 0, te = d.timeElapsed?.displayValue || "";
-  const desc = d.description || `${n} play${n === 1 ? "" : "s"}, ${yds} yard${yds === 1 ? "" : "s"}${te ? ", " + te : ""}`;
+  const desc = nt ? nt.desc : d.description || `${n} play${n === 1 ? "" : "s"}, ${yds} yard${yds === 1 ? "" : "s"}${te ? ", " + te : ""}`;
   const when = d.start?.period?.number ? `${ordinal(d.start.period.number)} ${d.start.clock?.displayValue || ""}`.trim() : "";
-  const from = d.start?.text || "", end = d.end?.text || "";
+  const from = nt ? "" : d.start?.text || "", end = nt ? "" : d.end?.text || "";
   const sc = lastP && lastP.awayScore != null ? `${lastP.awayScore}-${lastP.homeScore}` : "";
   const open = isCur ? (GC_PHONE.matches ? GC.curOpenPh : !GC.curClosed) : GC.open.has(key);   // v104: on a phone the live drive starts folded
   return `<li class="gc-dr ${open ? "open" : ""} ${isCur ? "cur" : ""} ${isScore ? "score" : ""} ${to ? "to" : ""}" data-drive="${esc(key)}">
-    <button type="button" class="dr-head" aria-expanded="${open}">${mark(ab, "mini")}<span class="dr-main"><b>${esc(isCur && !/progress/i.test(res) ? res + " · live" : res)}</b><span>${esc(desc)}${from ? " · from " + esc(from) : ""}</span></span><span class="dr-side"><span>${esc(when)}</span>${end && !isCur ? `<span>to ${esc(end)}</span>` : ""}</span><span class="dr-sc">${esc(sc)}</span><span class="dr-caret"></span></button>
+    <button type="button" class="dr-head" aria-expanded="${open}">${mark(ab, "mini")}<span class="dr-main"><b>${esc(isCur && !/progress/i.test(res) && !isScore ? res + " · live" : res)}</b><span>${esc(desc)}${from ? " · from " + esc(from) : ""}</span></span><span class="dr-side"><span>${esc(when)}</span>${end && !isCur ? `<span>to ${esc(end)}</span>` : ""}</span><span class="dr-sc">${esc(sc)}</span><span class="dr-caret"></span></button>
     <ul class="dr-plays">${plays.slice().reverse().map((p, i) => playRow(p, g, isCur && i === 0)).join("") || `<li class="empty">Drive starting</li>`}</ul></li>`;
 }
 function gcDrives(sum, g, live, noCur) {   // v104: noCur leaves the live drive out (a phone shows it under the field)
@@ -5149,7 +5291,7 @@ const GC_PHONE = matchMedia("(max-width: 860px)");   // v102: same breakpoint as
 GC_PHONE.addEventListener?.("change", () => { if (S.view === "game" && GC.g) renderGC(); });
 const GCBACK = { home: "Home", scores: "Scoreboard", schedule: "Schedule", season: "Season", fantasy: "Fantasy" };
 function renderGC() {
-  const g = GC.g, sum = GC.sum, box = el("#gcBody");
+  const g = ofGame(GC.g, GC.sum), sum = GC.sum, box = el("#gcBody");
   el("#gcBack").innerHTML = "&#8249; Back to " + esc(GCBACK[gcFrom()] || "Home");
   if (!g) { el("#gcKick").textContent = "Game center"; el("#gcMeta").textContent = ""; el("#gcPin").innerHTML = ""; renderGCStrip(); gcPinCheck(); box.innerHTML = `<div class="empty">${GC.err ? "Couldn't load this game. Trying again shortly" : "Loading the game"}</div>`; return; }
   const pre = g.state === "pre", fin = g.state === "post", live = g.live;
