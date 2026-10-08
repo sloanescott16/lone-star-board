@@ -1461,6 +1461,11 @@
   .fun .close { color: var(--warn); background: rgba(242,184,75,.14); }
   .fun .shoot { color: #ff8a3d; background: rgba(255,138,61,.15); }
   .fun .upset { color: #4fd8ec; background: rgba(79,216,236,.15); }   /* v114: the moneyline underdog won */
+  /* v115: the rivalry badge, one violet pill: first in a card's tag row, beside the status on a Scoreboard tile, by the venue on the hero, in the Game Center bar */
+  .fun .rival { color: #c4a8ff; background: rgba(160,120,255,.17); white-space: normal; }
+  .rivb { display: inline-block; font-family: var(--cond); font-size: 12.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; line-height: 1.3;
+    color: #c4a8ff; background: rgba(160,120,255,.17); border-radius: 3px; padding: 2px 8px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+  .board.fill .bg .rivb { font-size: clamp(10px, 4cqh, 20px); padding: .4cqh 1.6cqw; }
   /* ==== SKIN:gameday start ==== */
   /* Command Center, round 3: game day, drawn like a broadcast package. Same product family as
      Pennant Chase: bold chrome on Home and the Scoreboard (board panels, lamp glow, big section
@@ -2011,10 +2016,10 @@
     #board .bg .foot { padding-top: 7px; row-gap: 0; grid-template-rows: auto auto; }
     #board .bg .foot .f1 .st { display: none; }
     #board .bg .foot .f1 { grid-area: 1 / 1; height: auto; max-height: 1.7em; margin-bottom: 5px; }
-    #board .bg .foot .f1:not(:has(.rz, .why span)) { display: none; }
+    #board .bg .foot .f1:not(:has(.rz, .why span, .rivb)) { display: none; }   /* v115: a rivalry keeps the line */
     #board .bg .foot .f2 { grid-area: 2 / 1; }
     #board .bg .foot > a.watch, #board .bg .foot > .net { grid-area: 1 / 2 / 3 / 3; align-self: end; }
-    #board .bg .foot:not(:has(.f1 .rz, .f1 .why span)) > :is(a.watch, .net) { grid-area: 2 / 2; align-self: center; }
+    #board .bg .foot:not(:has(.f1 .rz, .f1 .why span, .f1 .rivb)) > :is(a.watch, .net) { grid-area: 2 / 2; align-self: center; }
   }
   @media (max-width: 389px) {
     #board .bg { column-gap: 5px; padding: 10px; }
@@ -2406,6 +2411,7 @@
           <button class="btn back" id="gcBack" type="button">&#8249; Back</button>
           <span class="gc-kick" id="gcKick">Game center</span>
           <span class="gc-meta" id="gcMeta"></span>
+          <span id="gcRiv"></span>
           <span id="gcWatch"></span>
         </div>
         <div class="gc-pin" id="gcPin"></div>
@@ -2787,6 +2793,7 @@ function normGame(ev) {
     id: ev.id, date: new Date(ev.date), state, status, live: state === "in",
     away: away.team.abbreviation, home: home.team.abbreviation,
     awayId: away.id, homeId: home.id,
+    awayTid: String(away.team.id ?? away.id ?? ""), homeTid: String(home.team.id ?? home.id ?? ""),   // v115: team ids, for the rivalry badge
     awayRank: rankOf(away), homeRank: rankOf(home),
     awayConf: String(away.team.conferenceId ?? ""), homeConf: String(home.team.conferenceId ?? ""),
     as: state === "pre" ? undefined : +away.score, hs: state === "pre" ? undefined : +home.score,
@@ -3526,7 +3533,7 @@ function renderHero(g) {
   el("#hero").innerHTML = `
     <div class="hero-head">
       <span class="label">${g.home===CFG.fav||g.away===CFG.fav ? dispName(CFG.fav) + " game" : "Featured game"}</span>
-      <span class="venue">${esc(g.venue)}</span>
+      ${rivalHTML(g)}<span class="venue">${esc(g.venue)}</span>
       <span class="acts">${S.pickId && S.favGame && S.favGame.id !== g.id ? `<button class="btn" id="backFav" type="button">Back to ${esc(dispName(CFG.fav))}</button>` : ""}
       <button class="btn" id="heroGC" type="button">${pre ? "Preview" : g.state === "post" ? "Game breakdown" : "Game center"}</button>
       ${watchHTML(g, "chip") || (g.net ? `<span class="chip net">${esc(g.net)}</span>` : "")}</span>
@@ -3702,9 +3709,34 @@ function upsetOf(g) {
   const won = as > hs ? "a" : "h";
   return won === dog ? { team: dog === "a" ? g.away : g.home, ml: dog === "a" ? a : h } : null;
 }
+/* v115: rivalry games carry a badge with the rivalry's name. Matched on ESPN's team ids (the same in every feed),
+   so the pair works in either order, home, away or at a neutral site, and shows on its own whenever the two meet.
+   Named trophy games and the classic rivalries, dormant ones included; [name, team id, team id]. */
+const RIVALS = [
+  ["Red River Rivalry",251,201], ["Iron Bowl",333,2], ["The Game",130,194], ["Egg Bowl",145,344], ["Lone Star Showdown",251,245], ["Bedlam",201,197],
+  ["Apple Cup",264,265], ["Holy War",252,254], ["Holy War",103,87], ["Civil War",2483,204], ["Big Game",25,24], ["Paul Bunyan's Axe",275,135],
+  ["Old Oaken Bucket",84,2509], ["Little Brown Jug",130,135], ["Backyard Brawl",221,277], ["Clean, Old-Fashioned Hate",61,59],
+  ["Palmetto Bowl",228,2579], ["Sunshine Showdown",57,52], ["Army-Navy Game",349,2426], ["Commander-in-Chief's Trophy",2005,349],
+  ["Commander-in-Chief's Trophy",2005,2426], ["Cocktail Party",57,61], ["Third Saturday in October",333,2633], ["Deep South's Oldest Rivalry",2,61],
+  ["Magnolia Bowl",99,145], ["Battle for the Golden Boot",8,99], ["Southwest Classic",8,245], ["Battle Line Rivalry",8,142],
+  ["Governor's Cup",96,97], ["Commonwealth Cup",259,258], ["South's Oldest Rivalry",153,258], ["Victory Bell",150,153], ["Victory Bell",30,26],
+  ["Jeweled Shillelagh",30,87], ["Territorial Cup",12,9], ["Floyd of Rosedale",2294,135], ["Cy-Hawk Trophy",2294,66], ["Heroes Game",2294,158],
+  ["Paul Bunyan Trophy",130,127], ["Land Grant Trophy",213,127], ["Sunflower Showdown",2305,2306], ["Border War",2305,142], ["Farmageddon",66,2306],
+  ["Chancellor's Spurs",251,2641], ["Battle for the Iron Skillet",2567,2628], ["Bayou Bucket",248,242], ["Rocky Mountain Showdown",38,36],
+  ["Battle for the Fremont Cannon",2440,2439], ["Battle of I-75",2649,189], ["Shula Bowl",2226,2229], ["Bayou Classic",2755,2582],
+  ["The Game",108,43], ["The Rivalry",322,2329]
+];
+const RIVAL = {}; for (const [n, a, b] of RIVALS) RIVAL[a < b ? a + "|" + b : b + "|" + a] = n;
+function rivalryOf(a, b) {   // two ESPN team ids, either order: the rivalry's name, or ""
+  a = +a; b = +b; if (!a || !b || a === b) return "";
+  return RIVAL[a < b ? a + "|" + b : b + "|" + a] || "";
+}
+const rivalOf = g => LG.key === "cfb" && g ? rivalryOf(g.awayTid ?? g.awayId, g.homeTid ?? g.homeId) : "";
+const rivalHTML = (g, cls) => { const r = rivalOf(g); return r ? `<span class="${cls || "rivb"}" title="Rivalry game">${esc(r)}</span>` : ""; };
 function cfbFun(g) {
   if (LG.key !== "cfb" || !g) return null;
   const clash = !!(g.homeRank && g.awayRank), tags = [];
+  const rv = rivalOf(g); if (rv) tags.push(["rival", rv]);   // v115: the rivalry leads the tag row, pregame, live and final
   if (g.state === "pre") {
     const sp = cfbSpread(g.odds), ou = g.odds?.ou;
     if (sp != null && sp <= 3.5) tags.push(["close", sp <= 1.5 ? "Coin flip" : "Tight line"]);
@@ -3773,7 +3805,8 @@ function gameCard(g, big, ex) {
   const ddH = `${big && g.live && g.dd ? `<span class="dd">${esc(g.dd)}${g.spot ? " at " + esc(g.spot) : ""}</span>` : ""}${big && g.spread && up ? `<span class="spread">${esc(g.spread)}</span>` : ""}`;
   const wH = watchHTML(g) || (g.net ? `<span class="net">${esc(g.net)}</span>` : "");
   // v98: scoreboard tiles keep status/tags on line 1, down and distance on line 2, and Watch in its own right-hand slot
-  const foot = big ? `<div class="foot"><span class="f1">${stH}${rzH}${why}</span><span class="f2">${ddH}</span>${wH}</div>` : `<div class="foot">${stH}${rzH}${ddH}${wH}</div>`;
+  const rvH = big ? rivalHTML(g) : "";   // v115: the rivalry badge on the Scoreboard tiles (the small cards carry it in their tag row)
+  const foot = big ? `<div class="foot"><span class="f1">${stH}${rzH}${rvH}${why}</span><span class="f2">${ddH}</span>${wH}</div>` : `<div class="foot">${stH}${rzH}${ddH}${wH}</div>`;
   // v99: phone scoreboard shows logos only in one broadcast row; the clock sits between the two scores (hidden on wider screens)
   const midH = big ? `<span class="mid">${(up ? [kickLabel(g)] : String(g.status || "").split(/\s*·\s*/)).map(p => `<b>${esc(p)}</b>`).join("")}</span>` : "";
   const lm = !big && g.odds ? `<div class="lm">${linesHTML(g, true)}</div>` : "";
@@ -5369,9 +5402,10 @@ const GCBACK = { home: "Home", scores: "Scoreboard", schedule: "Schedule", seaso
 function renderGC() {
   const g = ofGame(GC.g, GC.sum), sum = GC.sum, box = el("#gcBody");
   el("#gcBack").innerHTML = "&#8249; Back to " + esc(GCBACK[gcFrom()] || "Home");
-  if (!g) { el("#gcKick").textContent = "Game center"; el("#gcMeta").textContent = ""; el("#gcPin").innerHTML = ""; renderGCStrip(); gcPinCheck(); box.innerHTML = `<div class="empty">${GC.err ? "Couldn't load this game. Trying again shortly" : "Loading the game"}</div>`; return; }
+  if (!g) { el("#gcKick").textContent = "Game center"; el("#gcMeta").textContent = ""; el("#gcRiv").innerHTML = ""; el("#gcPin").innerHTML = ""; renderGCStrip(); gcPinCheck(); box.innerHTML = `<div class="empty">${GC.err ? "Couldn't load this game. Trying again shortly" : "Loading the game"}</div>`; return; }
   const pre = g.state === "pre", fin = g.state === "post", live = g.live;
   el("#gcWatch").innerHTML = watchHTML(g, "gcw");   // v90
+  el("#gcRiv").innerHTML = rivalHTML(g);   // v115
   const kick = el("#gcKick"); kick.textContent = live ? "Game center" : fin ? "Game breakdown" : "Preview"; kick.classList.toggle("live", live);
   el("#gcMeta").textContent = [fmtCT(g.date, { weekday: "short", month: "short", day: "numeric", ...(pre ? { hour: "numeric", minute: "2-digit" } : {}) }) + (pre ? " CT" : ""), g.venue, g.net].filter(Boolean).join(" · ");
   const { hc, ac } = matchupColors(g.home, g.away);
