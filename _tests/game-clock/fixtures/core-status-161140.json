@@ -1,0 +1,1 @@
+{"$ref":"http://sports.core.api.espn.com/v2/sports/football/leagues/college-football/events/401856717/competitions/401856717/status?lang=en&region=us","clock":223.0,"displayClock":"3:43","period":2,"type":{"id":"2","name":"STATUS_IN_PROGRESS","state":"in","completed":false,"description":"In Progress","detail":"3:43 - 2nd Quarter","shortDetail":"3:43 - 2nd"}}
