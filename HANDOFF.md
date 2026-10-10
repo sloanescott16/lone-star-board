@@ -38,3 +38,19 @@ The page showed those values as they came.
 - The win probability chart and its tooltip still place plays by ESPN's raw clock.
 - This repo has no other checks; the page loaded with no page errors at 390 and 1440, live and on the saved feeds.
 - Not pushed, not merged.
+
+## Round 2 (checker's findings)
+- Header never ahead of real time: up to the last snap as the plays say, then no more than the real time since that snap,
+  and never more than the real time since the last real ESPN clock (CK.nowMs lets tests set "now"). With no play
+  timestamps the header goes at most one typical play (36 s) past the real clock, and the plays keep ESPN's value.
+- Overtime (period 5 and on): no estimate anywhere; ESPN's value or none.
+- Clocks never go up within a quarter: a real clock higher than the one before is a correction; the plays before it in
+  that quarter are lifted to it and marked "~", and estimates go on from it.
+- Text clock vs ESPN's field: the text clock is shown, marked "~" (the field is the stale value this job is about; the
+  text is the scorer's own note, but it is not ESPN's field, hence the mark).
+- Legend "~ estimated" under the header clock and above the drive list when any clock shown is worked out; the pinned bar
+  carries it as a tooltip.
+- Tests: _tests/game-clock/round2.test.js (the checker's cases). The checker's fx.js still prints BACKWARDS for
+  401856717328 in the 1624 and 1625 snapshots: its loop counts the live drive twice (ESPN lists it in previous and
+  current); the page drops the copy, and the new test that does the same finds no clock going up.
+- Feed capture loop stopped at 16:26; its last snapshots are committed.

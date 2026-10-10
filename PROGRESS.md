@@ -3,6 +3,7 @@
 Branch game-clock, worktree builds/press-box/lsb-clock, from origin/main fc89a6e.
 The Game Center lives in this repo (lone-star-board), not in the Press Box hub; hub-clock was made first and left unused.
 
+- Round 2 done (16:30): checker findings 1 to 6 fixed, round2.test.js, browser rerun moment and live (halftime), no page errors.
 - Stage 3 done (16:20): live freeze caught again, ESPN 2:00 and "0:00 from OU 0", page ~1:03 and "~2:40 from TEX 35". browser checks (moment and live) at 390 and 1440, no page errors; see HANDOFF.md.
 - Stage 2 done: fix in index.html (ckOf, ckLive, ckPlay, ckDrive, ckFrom), tests in _tests/game-clock (bun test _tests/game-clock).
 - Stage 1 done: live ESPN feeds for Texas at Oklahoma (event 401856717) saved in _tests/game-clock/fixtures, about every 90 s.

@@ -1,0 +1,98 @@
+const CK = { map: new WeakMap(), nowMs: null, TYP: 36 };   // nowMs: tests set the moment "now"; the page uses the real time
+/* v116 round 2 rules (checker):
+   - the header never runs ahead of real time: the clock cannot fall faster than the wall clock since the last real ESPN
+     clock, and with no play timestamps it goes at most one typical play (36 s) past that clock;
+   - no estimate after the 4th quarter (college overtime has no game clock): ESPN's value, or none;
+   - within a quarter the clocks shown never go up: a real clock higher than the one before it is a correction, so the
+     plays before it (back to the quarter's start) are lifted to it and marked "~", and the estimates go on from it;
+   - when a play's text clock differs from ESPN's clock field, the text clock is shown, marked "~" (it is not ESPN's field). */
+const ckSecs = v => { const m = String(v ?? "").match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };
+const ckFmt = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const ckStamp = x => { const m = String(x || "").match(/^\s*\((\d{1,2}:\d{2})\)|\bclock (\d{1,2}:\d{2})\b/i); return m ? ckSecs(m[1] || m[2]) : null; };
+const CK_END = /end (of )?(period|quarter|half|game|regulation)|end period/i;
+function ckDur(p) {   // typical game seconds from this snap to the next one, for a play the feed did not stamp
+  const t = String(p.type?.text || ""), x = String(p.text || "");
+  if (/timeout|end (of )?(period|quarter|half|game)|end period/i.test(t)) return 0;
+  if (/kickoff|punt|field goal|extra point|two.?point|conversion|touchdown|safety/i.test(t)) return 6;
+  if (/incomplet|spike|out of bounds|penalty/i.test(t + " " + x)) return 7;
+  return CK.TYP;
+}
+const ckWall = p => { const w = Date.parse(p?.wallclock || ""); return isFinite(w) ? w / 1000 : null; };
+function ckOf(sum) {   // play id -> { s: seconds left in the period at the snap, est: true when not ESPN's own field }; .now: the tail after the last real clock
+  if (!sum || !sum.drives) return null;
+  let r = CK.map.get(sum); if (r) return r;
+  const flat = ofFlat(sum).map(x => x.p); r = new Map(); r.now = null;
+  const per = p => +p.period?.number || 0, raw = p => ckSecs(p.clock?.displayValue ?? p.clock?.value);
+  const out = flat.map(p => ({ s: raw(p), est: false }));
+  const real = flat.map((p, i) => {   // a real clock for this snap, or null when ESPN only repeated the last one
+    if (per(p) > 4) return null;
+    const t = ckStamp(p.text), v = raw(p);
+    if (t != null) { if (v !== t) out[i] = { s: t, est: true }; else out[i] = { s: v, est: false }; return t; }
+    if (v == null) return null;
+    const q = flat[i - 1];
+    if (!q || per(q) !== per(p) || raw(q) !== v || CK_END.test(p.type?.text || "")) return v;
+    return null;
+  });
+  for (let a = 0; a < flat.length; a++) {
+    if (real[a] == null) continue;
+    const A = real[a];
+    let b = a + 1; while (b < flat.length && real[b] == null && per(flat[b]) === per(flat[a])) b++;
+    if (b === a + 1) continue;
+    const cum = [0]; for (let k = a; k < b; k++) cum.push(cum[cum.length - 1] + ckDur(flat[k]));
+    const B = b < flat.length && per(flat[b]) === per(flat[a]) ? real[b] : null, wa = ckWall(flat[a]);
+    const tail = b >= flat.length;
+    for (let k = 1; k < b - a; k++) {
+      let s;
+      if (B != null && B <= A) { const tot = cum[b - a]; s = tot > 0 ? A - (A - B) * (cum[k] / tot) : A; }
+      else {
+        let e = cum[k]; const wp = ckWall(flat[a + k]);
+        if (wa != null && wp != null) e = Math.min(e, Math.max(0, wp - wa));
+        else if (tail) { out[a + k] = { s: A, est: false }; continue; }   // no timestamps after the last real clock: no per-play guess
+        s = Math.max(0, A - e);
+        if (B != null) s = Math.max(s, B);   // the next real clock is higher (a correction): never dip under it
+      }
+      out[a + k] = { s: Math.round(s), est: true };
+    }
+    if (tail && b - a > 1) r.now = { per: per(flat[a]), from: A, wa, cum: cum[b - a], wl: ckWall(flat[b - 1]) };
+    a = b - 1;
+  }
+  // never upward within a quarter: lift anything below a later clock to it (marked), so a correction re-anchors the plays before it
+  for (let i = flat.length - 2; i >= 0; i--) {
+    const x = out[i], y = out[i + 1];
+    if (x.s == null || y.s == null || per(flat[i]) !== per(flat[i + 1]) || per(flat[i]) > 4 || CK_END.test(flat[i].type?.text || "")) continue;
+    if (x.s < y.s) out[i] = { s: y.s, est: true };
+  }
+  flat.forEach((p, i) => r.set(p.id, out[i]));
+  CK.map.set(sum, r); return r;
+}
+function ckNow(m) {   // seconds left now, worked out after the last real clock; capped by real time, or one typical play with no timestamps
+  const c = m?.now; if (!c || c.per > 4) return null;
+  let e = c.cum;
+  if (c.wa != null) { const now = (CK.nowMs ?? Date.now()) / 1000; e = Math.min(e, Math.max(0, now - c.wa)); }
+  else e = Math.min(e, CK.TYP);
+  return Math.max(0, Math.round(c.from - e));
+}
+function ckPlay(p) {   // "2nd ~4:09": the clock shown on a play row
+  const c = ckOf(GC.sum)?.get(p.id), s = c ? c.s : ckSecs(p.clock?.displayValue);
+  return `${ordinal(p.period?.number)} ${s == null ? (p.clock?.displayValue || "") : (c?.est ? "~" : "") + ckFmt(s)}`.trim();
+}
+function ckLive(g, sum) {   // the header clock: ESPN's, unless it is stuck on the last real clock while plays have run since
+  const m = ckOf(sum), c = m?.now; if (!c || g.status === "Halftime" || +g.period > 4) return;
+  const b = ckSecs(g.clock), s = ckNow(m);
+  if (s == null || +g.period !== c.per || b == null || b < c.from || s >= b) return;
+  g.clock = ckFmt(s); g.clockEst = true;
+}
+function ckDrive(d, isCur) {   // { te, est }: time of possession, worked out from the play clocks when ESPN's reads 0:00 or the drive is live
+  const plays = (d.plays || []).filter(p => !/kickoff/i.test(p.type?.text || "")), m = ckOf(GC.sum);
+  const te0 = d.timeElapsed?.displayValue || "", n = d.offensivePlays ?? plays.length;
+  if (!m || !plays.length || (!isCur && !(ckSecs(te0) === 0 && n > 1))) return { te: te0, est: false };
+  const lp = plays[plays.length - 1], l = m.get(lp.id);
+  if (+plays[0].period?.number > 4 || +lp.period?.number > 4) return { te: te0, est: false };   // overtime: no clock
+  const f = m.get(plays[0].id), s0 = f?.s ?? ckSecs(d.start?.clock?.displayValue);
+  const nowS = isCur && m.now && m.now.per === +lp.period?.number ? ckNow(m) : null;
+  const end = nowS != null && (l == null || nowS <= l.s) ? nowS : l ? l.s : null;
+  if (s0 == null || end == null || +plays[0].period?.number !== +lp.period?.number || end > s0) return { te: te0, est: false };
+  const est = !!(f?.est || l?.est || (nowS != null && end === nowS && nowS !== l?.s));
+  if (!est && te0 && ckSecs(te0) > 0) return { te: te0, est: false };
+  return { te: ckFmt(s0 - end), est };
+}

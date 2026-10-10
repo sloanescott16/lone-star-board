@@ -1370,6 +1370,8 @@
   .gc-sit .who .mini { width: 20px; height: 20px; flex: none; }
   /* drive list, newest on top, each one opens into its plays */
   .gc-drives { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .ck-key { display: block; margin: 4px 0 0; font-size: 11px; font-weight: 400; letter-spacing: .03em; text-transform: none; color: var(--muted); }   /* v116 */
+  p.ck-key { margin: 6px 0 0; text-align: right; }
   .gc-dr { border-bottom: 1px solid var(--line); }
   .gc-dr .dr-head { width: 100%; font: inherit; color: inherit; background: transparent; border: 0; padding: 7px 0; display: grid; grid-template-columns: 20px minmax(0, 1fr) auto auto 14px; align-items: center; gap: 10px; cursor: pointer; text-align: left; }
   .gc-dr .dr-head:hover .dr-main span { color: var(--ink-2); }
@@ -2766,70 +2768,103 @@ function ofDriveNote(d, g, isCur) {
    stamps share out the time between them; the plays after the last stamp each take a typical slice of game time
    (never more than the real time that passed), and the live header, each play and the drive time read those, marked "~".
    ===================================================================== */
-const CK = { map: new WeakMap() };
+const CK = { map: new WeakMap(), nowMs: null, TYP: 36 };   // nowMs: tests set the moment "now"; the page uses the real time
+/* v116 round 2 rules (checker):
+   - the header never runs ahead of real time: the clock cannot fall faster than the wall clock since the last real ESPN
+     clock, and with no play timestamps it goes at most one typical play (36 s) past that clock;
+   - no estimate after the 4th quarter (college overtime has no game clock): ESPN's value, or none;
+   - within a quarter the clocks shown never go up: a real clock higher than the one before it is a correction, so the
+     plays before it (back to the quarter's start) are lifted to it and marked "~", and the estimates go on from it;
+   - when a play's text clock differs from ESPN's clock field, the text clock is shown, marked "~" (it is not ESPN's field). */
 const ckSecs = v => { const m = String(v ?? "").match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };
 const ckFmt = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
 const ckStamp = x => { const m = String(x || "").match(/^\s*\((\d{1,2}:\d{2})\)|\bclock (\d{1,2}:\d{2})\b/i); return m ? ckSecs(m[1] || m[2]) : null; };
+const CK_END = /end (of )?(period|quarter|half|game|regulation)|end period/i;
 function ckDur(p) {   // typical game seconds from this snap to the next one, for a play the feed did not stamp
   const t = String(p.type?.text || ""), x = String(p.text || "");
   if (/timeout|end (of )?(period|quarter|half|game)|end period/i.test(t)) return 0;
   if (/kickoff|punt|field goal|extra point|two.?point|conversion|touchdown|safety/i.test(t)) return 6;
   if (/incomplet|spike|out of bounds|penalty/i.test(t + " " + x)) return 7;
-  return 36;
+  return CK.TYP;
 }
 const ckWall = p => { const w = Date.parse(p?.wallclock || ""); return isFinite(w) ? w / 1000 : null; };
-function ckOf(sum) {   // play id -> { s: seconds left in the period at the snap, est: true when worked out here }; .now: the live estimate
+function ckOf(sum) {   // play id -> { s: seconds left in the period at the snap, est: true when not ESPN's own field }; .now: the tail after the last real clock
   if (!sum || !sum.drives) return null;
   let r = CK.map.get(sum); if (r) return r;
   const flat = ofFlat(sum).map(x => x.p); r = new Map(); r.now = null;
   const per = p => +p.period?.number || 0, raw = p => ckSecs(p.clock?.displayValue ?? p.clock?.value);
-  const stamped = flat.map((p, i) => {
-    const t = ckStamp(p.text); if (t != null) return t;
-    const q = flat[i - 1], v = raw(p);
+  const out = flat.map(p => ({ s: raw(p), est: false }));
+  const real = flat.map((p, i) => {   // a real clock for this snap, or null when ESPN only repeated the last one
+    if (per(p) > 4) return null;
+    const t = ckStamp(p.text), v = raw(p);
+    if (t != null) { if (v !== t) out[i] = { s: t, est: true }; else out[i] = { s: v, est: false }; return t; }
     if (v == null) return null;
-    if (!q || per(q) !== per(p) || raw(q) !== v || /end (of )?(period|quarter|half|game)|end period/i.test(p.type?.text || "")) return v;
+    const q = flat[i - 1];
+    if (!q || per(q) !== per(p) || raw(q) !== v || CK_END.test(p.type?.text || "")) return v;
     return null;
   });
   for (let a = 0; a < flat.length; a++) {
-    if (stamped[a] == null) { if (!r.has(flat[a].id)) r.set(flat[a].id, { s: raw(flat[a]), est: false }); continue; }
-    const A = stamped[a]; r.set(flat[a].id, { s: A, est: false });
-    let b = a + 1; while (b < flat.length && stamped[b] == null && per(flat[b]) === per(flat[a])) b++;
-    if (b === a + 1 && b < flat.length) continue;
+    if (real[a] == null) continue;
+    const A = real[a];
+    let b = a + 1; while (b < flat.length && real[b] == null && per(flat[b]) === per(flat[a])) b++;
+    if (b === a + 1) continue;
     const cum = [0]; for (let k = a; k < b; k++) cum.push(cum[cum.length - 1] + ckDur(flat[k]));
-    const nextOk = b < flat.length && per(flat[b]) === per(flat[a]) && stamped[b] != null && stamped[b] <= A;
-    const wa = ckWall(flat[a]);
-    const at = k => {   // estimated clock at the snap of flat[a + k] (k may reach b - a, the moment after the last play)
-      if (nextOk) { const span = A - stamped[b], tot = cum[b - a]; return tot > 0 ? A - span * (cum[k] / tot) : A; }
-      let e = cum[k];
-      const p = flat[a + k] || flat[b - 1], wp = ckWall(p);
-      if (wa != null && wp != null) e = Math.min(e, Math.max(0, wp - wa) + (a + k >= b ? ckDur(flat[b - 1]) : 0));
-      return Math.max(0, A - e);
-    };
-    for (let k = 1; k < b - a; k++) r.set(flat[a + k].id, { s: Math.round(at(k)), est: true });
-    if (b >= flat.length && b - a > 1) r.now = { s: Math.round(at(b - a)), per: per(flat[a]), from: A };
+    const B = b < flat.length && per(flat[b]) === per(flat[a]) ? real[b] : null, wa = ckWall(flat[a]);
+    const tail = b >= flat.length;
+    for (let k = 1; k < b - a; k++) {
+      let s;
+      if (B != null && B <= A) { const tot = cum[b - a]; s = tot > 0 ? A - (A - B) * (cum[k] / tot) : A; }
+      else {
+        let e = cum[k]; const wp = ckWall(flat[a + k]);
+        if (wa != null && wp != null) e = Math.min(e, Math.max(0, wp - wa));
+        else if (tail) { out[a + k] = { s: A, est: false }; continue; }   // no timestamps after the last real clock: no per-play guess
+        s = Math.max(0, A - e);
+        if (B != null) s = Math.max(s, B);   // the next real clock is higher (a correction): never dip under it
+      }
+      out[a + k] = { s: Math.round(s), est: true };
+    }
+    if (tail && b - a > 1) r.now = { per: per(flat[a]), from: A, wa, prev: cum[b - a - 1], last: ckDur(flat[b - 1]), wl: ckWall(flat[b - 1]) };
     a = b - 1;
   }
+  // never upward within a quarter: lift anything below a later clock to it (marked), so a correction re-anchors the plays before it
+  for (let i = flat.length - 2; i >= 0; i--) {
+    const x = out[i], y = out[i + 1];
+    if (x.s == null || y.s == null || per(flat[i]) !== per(flat[i + 1]) || per(flat[i]) > 4 || CK_END.test(flat[i].type?.text || "")) continue;
+    if (x.s < y.s) out[i] = { s: y.s, est: true };
+  }
+  flat.forEach((p, i) => r.set(p.id, out[i]));
   CK.map.set(sum, r); return r;
+}
+function ckNow(m) {   // seconds left now, worked out after the last real clock; capped by real time, or one typical play with no timestamps
+  const c = m?.now; if (!c || c.per > 4) return null;
+  let e;
+  if (c.wa != null && c.wl != null) {   // up to the last snap as the plays say, then no more than the real time since that snap, and never more than the real time since the last real clock
+    const now = (CK.nowMs ?? Date.now()) / 1000;
+    e = Math.min(Math.min(c.prev, Math.max(0, c.wl - c.wa)) + Math.min(c.last, Math.max(0, now - c.wl)), Math.max(0, now - c.wa));
+  } else e = Math.min(c.prev + c.last, CK.TYP);
+  return Math.max(0, Math.round(c.from - e));
 }
 function ckPlay(p) {   // "2nd ~4:09": the clock shown on a play row
   const c = ckOf(GC.sum)?.get(p.id), s = c ? c.s : ckSecs(p.clock?.displayValue);
   return `${ordinal(p.period?.number)} ${s == null ? (p.clock?.displayValue || "") : (c?.est ? "~" : "") + ckFmt(s)}`.trim();
 }
-function ckLive(g, sum) {   // the header clock: ESPN's, unless it is stuck on the last stamp while plays have run since
-  const c = ckOf(sum)?.now; if (!c || g.status === "Halftime") return;
-  const b = ckSecs(g.clock);
-  if (+g.period !== c.per || b == null || b < c.from || c.s >= b) return;
-  g.clock = ckFmt(c.s); g.clockEst = true;
+function ckLive(g, sum) {   // the header clock: ESPN's, unless it is stuck on the last real clock while plays have run since
+  const m = ckOf(sum), c = m?.now; if (!c || g.status === "Halftime" || +g.period > 4) return;
+  const b = ckSecs(g.clock), s = ckNow(m);
+  if (s == null || +g.period !== c.per || b == null || b < c.from || s >= b) return;
+  g.clock = ckFmt(s); g.clockEst = true;
 }
 function ckDrive(d, isCur) {   // { te, est }: time of possession, worked out from the play clocks when ESPN's reads 0:00 or the drive is live
   const plays = (d.plays || []).filter(p => !/kickoff/i.test(p.type?.text || "")), m = ckOf(GC.sum);
   const te0 = d.timeElapsed?.displayValue || "", n = d.offensivePlays ?? plays.length;
   if (!m || !plays.length || (!isCur && !(ckSecs(te0) === 0 && n > 1))) return { te: te0, est: false };
-  const f = m.get(plays[0].id), s0 = f?.s ?? ckSecs(d.start?.clock?.displayValue);
   const lp = plays[plays.length - 1], l = m.get(lp.id);
-  let end = isCur && m.now && m.now.per === +lp.period?.number && plays.some(p => m.get(p.id)?.est) ? m.now.s : l ? l.s : null;
+  if (+plays[0].period?.number > 4 || +lp.period?.number > 4) return { te: te0, est: false };   // overtime: no clock
+  const f = m.get(plays[0].id), s0 = f?.s ?? ckSecs(d.start?.clock?.displayValue);
+  const nowS = isCur && m.now && m.now.per === +lp.period?.number ? ckNow(m) : null;
+  const end = nowS != null && (l == null || nowS <= l.s) ? nowS : l ? l.s : null;
   if (s0 == null || end == null || +plays[0].period?.number !== +lp.period?.number || end > s0) return { te: te0, est: false };
-  const est = !!(l?.est || (isCur && m.now));
+  const est = !!(f?.est || l?.est || (nowS != null && end === nowS && nowS !== l?.s));
   if (!est && te0 && ckSecs(te0) > 0) return { te: te0, est: false };
   return { te: ckFmt(s0 - end), est };
 }
@@ -4989,7 +5024,7 @@ function gcPinHTML(g, cur) {
   const aWin = fin && g.as > g.hs, hWin = fin && g.hs > g.as;
   const side = (ab, s, dim, cls) => `<span class="side ${cls} ${dim ? "dim" : ""}">${mark(ab)}<b>${esc(ab)}${live && g.poss === ab ? '<i class="poss" title="possession"></i>' : ""}</b><i>${pre ? "" : s}</i></span>`;
   const st = live
-    ? `<span class="q live">${g.status === "Halftime" ? "Halftime" : `${ordinal(g.period)} · ${esc((g.clockEst ? "~" : "") + g.clock)}`}</span><span class="dd">${g.dd ? esc(g.dd) + (g.spot ? " at " + esc(g.spot) : "") : ""}</span>`
+    ? `<span class="q live"${g.clockEst ? ` title="~ estimated"` : ""}>${g.status === "Halftime" ? "Halftime" : `${ordinal(g.period)} · ${esc((g.clockEst ? "~" : "") + g.clock)}`}</span><span class="dd">${g.dd ? esc(g.dd) + (g.spot ? " at " + esc(g.spot) : "") : ""}</span>`
     : fin ? `<span class="q">${esc(g.status)}</span>` : `<span class="q">${esc(fmtCT(g.date, { weekday: "short", hour: "numeric", minute: "2-digit" }))}</span>`;
   return `${side(g.away, g.as, hWin, "away")}<span class="mid">${st}</span>${side(g.home, g.hs, aWin, "home")}${live ? gcDriveBar(g, cur) : ""}`;
 }
@@ -5478,7 +5513,8 @@ function gcDrives(sum, g, live, noCur) {   // v104: noCur leaves the live drive 
   const rows = [];
   if (cur && !noCur) rows.push(driveRow(cur, "cur", true, g));
   prev.slice().reverse().forEach((d, i) => rows.push(driveRow(d, String(d.id ?? "d" + (prev.length - 1 - i)), false, g)));
-  return `<ul class="gc-drives">${rows.join("")}</ul>`;
+  const m = ckOf(sum), anyEst = !!m && [...(cur && !noCur ? [cur] : []), ...prev].some(d => (d.plays || []).some(p => m.get(p.id)?.est));   // v116: the key, when any clock shown is worked out
+  return `${anyEst ? `<p class="ck-key">~ estimated</p>` : ""}<ul class="gc-drives">${rows.join("")}</ul>`;
 }
 const GC_PHONE = matchMedia("(max-width: 860px)");   // v102: same breakpoint as the one-column game center
 GC_PHONE.addEventListener?.("change", () => { if (S.view === "game" && GC.g) renderGC(); });
@@ -5495,7 +5531,7 @@ function renderGC() {
   const { hc, ac } = matchupColors(g.home, g.away);
   const team = (ab, rec, side) => { const rk = ab === g.home ? g.homeRank : g.awayRank; return `<button type="button" class="gc-team ${side}" data-team="${esc(ab)}" title="${esc(dispName(ab))}: schedule, standings and stats">${mark(ab)}<span class="gc-nm"><b>${rk ? `<em class="rk">#${rk}</em>` : ""}${esc(T(ab)[1] && LG.key === "nfl" ? T(ab)[1] : dispName(ab))}${live && g.poss === ab ? '<span class="poss" title="possession"></span>' : ""}</b><small>${esc(LG.key === "cfb" ? T(ab)[1] : T(ab)[0])}${rec ? " · " + esc(rec) : ""}</small></span></button>`; };
   const st = live
-    ? `<span class="q live">${g.status === "Halftime" ? "Halftime" : `${ordinal(g.period)} · ${esc((g.clockEst ? "~" : "") + g.clock)}`}</span><span class="dd">${g.dd ? `<b>${esc(g.dd)}</b>${g.spot ? " at " + esc(g.spot) : ""}` : ""}</span>`
+    ? `<span class="q live">${g.status === "Halftime" ? "Halftime" : `${ordinal(g.period)} · ${esc((g.clockEst ? "~" : "") + g.clock)}`}</span>${g.clockEst ? `<small class="ck-key">~ estimated</small>` : ""}<span class="dd">${g.dd ? `<b>${esc(g.dd)}</b>${g.spot ? " at " + esc(g.spot) : ""}` : ""}</span>`
     : fin ? `<span class="q">${esc(g.status)}</span>` : `<span class="q">${fmtCT(g.date, { hour: "numeric", minute: "2-digit" })}</span><span class="dd">${esc(fmtCT(g.date, { weekday: "long" }))}${g.spread ? " · " + esc(g.spread) : ""}</span>`;
   const aWin = !pre && g.as > g.hs, hWin = !pre && g.hs > g.as;
   const top = `<div class="gc-top"><div class="gc-side away">${team(g.away, g.awayRec, "away")}${pre ? "" : `<span class="n ${hWin ? "dim" : ""}">${g.as}</span>`}</div><span class="gc-st">${st}</span><div class="gc-side home">${team(g.home, g.homeRec, "home")}${pre ? "" : `<span class="n ${aWin ? "dim" : ""}">${g.hs}</span>`}</div></div>`;
