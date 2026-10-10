@@ -1,0 +1,83 @@
+/* =====================================================================
+   v116: the game clock when ESPN's feed is behind.
+   ESPN's college feed stamps a clock only on plays whose text carries one ("(10:09) Shotgun ..." or "Timeout Oklahoma,
+   clock 03:43"). Every other play repeats the last stamp, and the board and summary header clock sit on it as well, so a
+   no-huddle drive with no timeout read "2nd 10:09" on every play and in the header while TV showed 4:29 (Texas at
+   Oklahoma, 10 Oct 2026). Mid-drive ESPN also filed the drive as "0:00" from "OU 0".
+   So: a play's clock counts only when it is stamped (in the text, a new value, or a new period). The plays between two
+   stamps share out the time between them; the plays after the last stamp each take a typical slice of game time
+   (never more than the real time that passed), and the live header, each play and the drive time read those, marked "~".
+   ===================================================================== */
+const CK = { map: new WeakMap() };
+const ckSecs = v => { const m = String(v ?? "").match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : null; };
+const ckFmt = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+const ckStamp = x => { const m = String(x || "").match(/^\s*\((\d{1,2}:\d{2})\)|\bclock (\d{1,2}:\d{2})\b/i); return m ? ckSecs(m[1] || m[2]) : null; };
+function ckDur(p) {   // typical game seconds from this snap to the next one, for a play the feed did not stamp
+  const t = String(p.type?.text || ""), x = String(p.text || "");
+  if (/timeout|end (of )?(period|quarter|half|game)|end period/i.test(t)) return 0;
+  if (/kickoff|punt|field goal|extra point|two.?point|conversion|touchdown|safety/i.test(t)) return 6;
+  if (/incomplet|spike|out of bounds|penalty/i.test(t + " " + x)) return 7;
+  return 36;
+}
+const ckWall = p => { const w = Date.parse(p?.wallclock || ""); return isFinite(w) ? w / 1000 : null; };
+function ckOf(sum) {   // play id -> { s: seconds left in the period at the snap, est: true when worked out here }; .now: the live estimate
+  if (!sum || !sum.drives) return null;
+  let r = CK.map.get(sum); if (r) return r;
+  const flat = ofFlat(sum).map(x => x.p); r = new Map(); r.now = null;
+  const per = p => +p.period?.number || 0, raw = p => ckSecs(p.clock?.displayValue ?? p.clock?.value);
+  const stamped = flat.map((p, i) => {
+    const t = ckStamp(p.text); if (t != null) return t;
+    const q = flat[i - 1], v = raw(p);
+    if (v == null) return null;
+    if (!q || per(q) !== per(p) || raw(q) !== v || /end (of )?(period|quarter|half|game)|end period/i.test(p.type?.text || "")) return v;
+    return null;
+  });
+  for (let a = 0; a < flat.length; a++) {
+    if (stamped[a] == null) { if (!r.has(flat[a].id)) r.set(flat[a].id, { s: raw(flat[a]), est: false }); continue; }
+    const A = stamped[a]; r.set(flat[a].id, { s: A, est: false });
+    let b = a + 1; while (b < flat.length && stamped[b] == null && per(flat[b]) === per(flat[a])) b++;
+    if (b === a + 1 && b < flat.length) continue;
+    const cum = [0]; for (let k = a; k < b; k++) cum.push(cum[cum.length - 1] + ckDur(flat[k]));
+    const nextOk = b < flat.length && per(flat[b]) === per(flat[a]) && stamped[b] != null && stamped[b] <= A;
+    const wa = ckWall(flat[a]);
+    const at = k => {   // estimated clock at the snap of flat[a + k] (k may reach b - a, the moment after the last play)
+      if (nextOk) { const span = A - stamped[b], tot = cum[b - a]; return tot > 0 ? A - span * (cum[k] / tot) : A; }
+      let e = cum[k];
+      const p = flat[a + k] || flat[b - 1], wp = ckWall(p);
+      if (wa != null && wp != null) e = Math.min(e, Math.max(0, wp - wa) + (a + k >= b ? ckDur(flat[b - 1]) : 0));
+      return Math.max(0, A - e);
+    };
+    for (let k = 1; k < b - a; k++) r.set(flat[a + k].id, { s: Math.round(at(k)), est: true });
+    if (b >= flat.length && b - a > 1) r.now = { s: Math.round(at(b - a)), per: per(flat[a]), from: A };
+    a = b - 1;
+  }
+  CK.map.set(sum, r); return r;
+}
+function ckPlay(p) {   // "2nd ~4:09": the clock shown on a play row
+  const c = ckOf(GC.sum)?.get(p.id), s = c ? c.s : ckSecs(p.clock?.displayValue);
+  return `${ordinal(p.period?.number)} ${s == null ? (p.clock?.displayValue || "") : (c?.est ? "~" : "") + ckFmt(s)}`.trim();
+}
+function ckLive(g, sum) {   // the header clock: ESPN's, unless it is stuck on the last stamp while plays have run since
+  const c = ckOf(sum)?.now; if (!c || g.status === "Halftime") return;
+  const b = ckSecs(g.clock);
+  if (+g.period !== c.per || b == null || b < c.from || c.s >= b) return;
+  g.clock = ckFmt(c.s); g.clockEst = true;
+}
+function ckDrive(d, isCur) {   // { te, est }: time of possession, worked out from the play clocks when ESPN's reads 0:00 or the drive is live
+  const plays = (d.plays || []).filter(p => !/kickoff/i.test(p.type?.text || "")), m = ckOf(GC.sum);
+  const te0 = d.timeElapsed?.displayValue || "", n = d.offensivePlays ?? plays.length;
+  if (!m || !plays.length || (!isCur && !(ckSecs(te0) === 0 && n > 1))) return { te: te0, est: false };
+  const f = m.get(plays[0].id), s0 = f?.s ?? ckSecs(d.start?.clock?.displayValue);
+  const lp = plays[plays.length - 1], l = m.get(lp.id);
+  let end = isCur && m.now && m.now.per === +lp.period?.number && plays.some(p => m.get(p.id)?.est) ? m.now.s : l ? l.s : null;
+  if (s0 == null || end == null || +plays[0].period?.number !== +lp.period?.number || end > s0) return { te: te0, est: false };
+  const est = !!(l?.est || (isCur && m.now));
+  if (!est && te0 && ckSecs(te0) > 0) return { te: te0, est: false };
+  return { te: ckFmt(s0 - end), est };
+}
+function ckFrom(d) {   // where the drive began: ESPN's start, unless it is missing or on the goal line ("OU 0"), then the first snap's spot
+  const t = String(d?.start?.text || "");
+  if (t && !/(^|\s)0$/.test(t)) return t;
+  const p = (d?.plays || []).find(p => !/kickoff|timeout|end (of )?(period|quarter|half)|end period/i.test(p.type?.text || "") && p.start?.possessionText);
+  return p ? String(p.start.possessionText) : t;
+}
