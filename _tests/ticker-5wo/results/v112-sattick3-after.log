@@ -17,19 +17,21 @@ ok    text: ESPN's older scoring summary is left alone
 ok    text: the X search names for row 1 are Sagapolutele and Purcell
 ok    speed: n device px every k frames, as the brief sets out (60 Hz is 1 px a frame, 60 px a second)
 ok    text: no page errors
-ok    sat-1600: a play saved by v110 is drawn tidy
+FAIL  sat-1600: a play saved by v110 is drawn tidy  [["tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:06 PM · 2nd · 12:40▶ X","tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:06 PM · 2nd · 12:40▶ X"]]
 ok    sat-1600: seed poll replays no scores
-ok    sat-1600: Tennessee TD on the reel
-ok    sat-1600: Ohio State FG
-ok    sat-1600: big play and takeaway
+FAIL  sat-1600: Tennessee TD on the reel  [tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:06 PM · 2nd · 12:40▶ X
+tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:06 PM · 2nd · 12:40▶ X]
+FAIL  sat-1600: Ohio State FG  []
+FAIL  sat-1600: big play and takeaway  []
 ok    sat-1600: no upset alerts, finals or live filler
 ok    sat-1600: no team score lines in items
 ok    sat-1600: tag carries no scores
-ok    sat-1600: the California touchdown reads tidy on the reel
+FAIL  sat-1600: the California touchdown reads tidy on the reel  [tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:06 PM · 2nd · 12:40▶ X
+tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:06 PM · 2nd · 12:40▶ X]
 ok    sat-1600: all ten rows of the brief's table come out exact here too
 ok    sat-1600: no stat-crew leftovers anywhere on the reel (UNLV00, jersey numbers, clock, caught at, tacklers)
-ok    sat-1600: reel is two boxed copies of the same plays
-ok    sat-1600: each copy is a whole number of pixels wide, both the same
+FAIL  sat-1600: reel is two boxed copies of the same plays  [{"kids":3,"cls":"tkc tkp,tkc,tkc","w":["2023px","6501px","6501px"],"ow":[2023,6501,6501],"same":false,"wc":"transform","an":"none","inline":"","n":1}]
+FAIL  sat-1600: each copy is a whole number of pixels wide, both the same  [{"kids":3,"cls":"tkc tkp,tkc,tkc","w":["2023px","6501px","6501px"],"ow":[2023,6501,6501],"same":false,"wc":"transform","an":"none","inline":"","n":1}]
 ok    sat-1600: no CSS animation on the Saturday reel, will-change kept
 ok    sat-1600: exactly one animation on the reel and no transform written by script
 ok    sat-1600: frame interval measured near 60 Hz, 1 px every frame, linear
@@ -39,22 +41,15 @@ ok    sat-1600: the reel moves by the same amount every frame (1 px, within 0.05
 ok    sat-1600: a poll that changes nothing ran inside the sample (one scoreboard request, 20 frames before it, 40 after)
 ok    sat-1600: no restart across a poll that changes nothing (same animation, none started)
 ok    sat-1600: the reel runs straight through that poll, still on whole pixels
-FAIL  sat-1600: the next poll adds the Colorado field goal, tidy  [tk k-td | TouchdownCaliforniaJ. Sagapolutele pass complete short right to T. Purcell for 91 yards, touchdown2:16 PM · 2nd · 10:57▶ X
-tk k-td | TouchdownSouth Alabama2:16 PM · 4th · 10:57▶ X
-tk k-fg | Field goal#7Ohio StateJ. Fielding 38 yd FG, good2:16 PM · 2nd · 10:57▶ X
-tk k-big | 52-yard catchColoradoS. Sanders pass complete to J. Horton for 52 yards2:16 PM · 2nd · 10:57▶ X
-tk k-td | Touchdown#14TennesseeN. Iamaleava pass complete to J. Horton for 45 yds for a TD2:16 PM · 3rd · 10:57▶ X
-tk k-take fav | Interception#11Texas TechSHSU pass intercepted by somebody2:16 PM · 2nd · 10:57▶ X
-tk k-td fav | Touchdown#11Texas Tech2:16 PM · 2nd · 10:57▶ X
-tk k-td fav | TouchdownSam Houston2:16 PM · 2nd · 10:57▶ X
-tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down2:14 PM · 2nd · 12:40▶ X]
-FAIL  sat-1600: the reel was rebuilt once for the new play (one poll), and is longer  [{"polls":1,"before":3,"after":3,"halfBefore":6501,"half":6501}]
+FAIL  sat-1600: the next poll adds the Colorado field goal, tidy  [tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:06 PM · 2nd · 12:40▶ X
+tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:06 PM · 2nd · 12:40▶ X]
+ok    sat-1600: the reel was rebuilt once for the new play (one poll), and is longer
 ok    sat-1600: the offset carries on across the poll that adds a play (not back to zero)
 ok    sat-1600: every frame through the rebuild is on a whole pixel and in step
 ok    sat-1600: hover pauses the reel, held on a whole pixel
 ok    sat-1600: leaving resumes it from where it was held
 ok    sat-1600: after resuming it is back on whole pixels, in step
-FAIL  sat-1600: pausing and resuming started no new animation  []
+ok    sat-1600: pausing and resuming started no new animation
 ok    sat-1600: clicking the California touchdown opens the play pop-up
 ok    sat-1600: the pop-up shows the tidy text, exactly
 ok    sat-1600: no "UNLV00", "#3" or "clock" in the pop-up
@@ -67,29 +62,31 @@ ok    sat-1600: the saved v110 play is tidy in its pop-up
 ok    sat-1600: its X search names the passer, not the tackler or a jersey number
 ok    sat-1600: big play search ORs school and player names
 ok    sat-1600: Game center button opens the game
-FAIL  sat-1600: back on the scoreboard the reel is still running on whole pixels  [{"tr":{"maxOff":0.02,"maxStep":0.01,"run":60,"frames":60},"anims":3}]
+ok    sat-1600: back on the scoreboard the reel is still running on whole pixels
 ok    sat-1600: no sideways scroll
 ok    sat-1600: on screen, each screenshot is the last one moved a whole number of pixels (sharp text, no soft frames)
 ok    sat-1600: control: held 3 px on, the picture matches at 3; held half a pixel off, it matches nowhere
-ok    sat-1600: on screen the loop point is seamless (the picture carries straight on across it)
-FAIL  sat-1600: running across the loop point: every frame on a whole pixel, 1 px a frame, no jump  [{"tr":{"maxOff":0.01,"maxStep":862,"run":100,"frames":100},"first":-6467,"last":-926.998,"half":6501}]
+FAIL  sat-1600: on screen the loop point is seamless (the picture carries straight on across it)  [{"shift":5,"wx0":-7360,"wx1":-2,"half":9386}]
+FAIL  sat-1600: running across the loop point: every frame on a whole pixel, 1 px a frame, no jump  [{"tr":{"maxOff":0.0141,"maxStep":2023,"run":100,"frames":100},"first":-7329.01,"last":-65.0045,"half":9386}]
 ok    sat-1600: the reel keeps moving while the main thread is blocked (new frames drawn during a 1.5 s block)
 ok    sat-1600: control: with the reel held, nothing is drawn during the same block
 ok    sat-1600: after those long stalls the reel is running on whole pixels, 1 px a frame
 ok    sat-1600: no page errors
-ok    sat-1280: a play saved by v110 is drawn tidy
+FAIL  sat-1280: a play saved by v110 is drawn tidy  [["tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X","tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X"]]
 ok    sat-1280: seed poll replays no scores
-ok    sat-1280: Tennessee TD on the reel
-ok    sat-1280: Ohio State FG
-ok    sat-1280: big play and takeaway
+FAIL  sat-1280: Tennessee TD on the reel  [tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X
+tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X]
+FAIL  sat-1280: Ohio State FG  []
+FAIL  sat-1280: big play and takeaway  []
 ok    sat-1280: no upset alerts, finals or live filler
 ok    sat-1280: no team score lines in items
 ok    sat-1280: tag carries no scores
-ok    sat-1280: the California touchdown reads tidy on the reel
+FAIL  sat-1280: the California touchdown reads tidy on the reel  [tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X
+tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X]
 ok    sat-1280: all ten rows of the brief's table come out exact here too
 ok    sat-1280: no stat-crew leftovers anywhere on the reel (UNLV00, jersey numbers, clock, caught at, tacklers)
-ok    sat-1280: reel is two boxed copies of the same plays
-ok    sat-1280: each copy is a whole number of pixels wide, both the same
+FAIL  sat-1280: reel is two boxed copies of the same plays  [{"kids":3,"cls":"tkc tkp,tkc,tkc","w":["2023px","6501px","6501px"],"ow":[2023,6501,6501],"same":false,"wc":"transform","an":"none","inline":"","n":1}]
+FAIL  sat-1280: each copy is a whole number of pixels wide, both the same  [{"kids":3,"cls":"tkc tkp,tkc,tkc","w":["2023px","6501px","6501px"],"ow":[2023,6501,6501],"same":false,"wc":"transform","an":"none","inline":"","n":1}]
 ok    sat-1280: no CSS animation on the Saturday reel, will-change kept
 ok    sat-1280: exactly one animation on the reel and no transform written by script
 ok    sat-1280: frame interval measured near 60 Hz, 1 px every frame, linear
@@ -99,22 +96,15 @@ ok    sat-1280: the reel moves by the same amount every frame (1 px, within 0.05
 ok    sat-1280: a poll that changes nothing ran inside the sample (one scoreboard request, 20 frames before it, 40 after)
 ok    sat-1280: no restart across a poll that changes nothing (same animation, none started)
 ok    sat-1280: the reel runs straight through that poll, still on whole pixels
-FAIL  sat-1280: the next poll adds the Colorado field goal, tidy  [tk k-td | TouchdownCaliforniaJ. Sagapolutele pass complete short right to T. Purcell for 91 yards, touchdown2:17 PM · 2nd · 10:57▶ X
-tk k-td | TouchdownSouth Alabama2:17 PM · 4th · 10:57▶ X
-tk k-fg | Field goal#7Ohio StateJ. Fielding 38 yd FG, good2:17 PM · 2nd · 10:57▶ X
-tk k-big | 52-yard catchColoradoS. Sanders pass complete to J. Horton for 52 yards2:17 PM · 2nd · 10:57▶ X
-tk k-td | Touchdown#14TennesseeN. Iamaleava pass complete to J. Horton for 45 yds for a TD2:17 PM · 3rd · 10:57▶ X
-tk k-take fav | Interception#11Texas TechSHSU pass intercepted by somebody2:17 PM · 2nd · 10:57▶ X
-tk k-td fav | Touchdown#11Texas Tech2:17 PM · 2nd · 10:57▶ X
-tk k-td fav | TouchdownSam Houston2:17 PM · 2nd · 10:57▶ X
-tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down2:15 PM · 2nd · 12:40▶ X]
-FAIL  sat-1280: the reel was rebuilt once for the new play (one poll), and is longer  [{"polls":1,"before":3,"after":3,"halfBefore":6501,"half":6501}]
+FAIL  sat-1280: the next poll adds the Colorado field goal, tidy  [tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X
+tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X]
+ok    sat-1280: the reel was rebuilt once for the new play (one poll), and is longer
 ok    sat-1280: the offset carries on across the poll that adds a play (not back to zero)
 ok    sat-1280: every frame through the rebuild is on a whole pixel and in step
 ok    sat-1280: hover pauses the reel, held on a whole pixel
 ok    sat-1280: leaving resumes it from where it was held
 ok    sat-1280: after resuming it is back on whole pixels, in step
-FAIL  sat-1280: pausing and resuming started no new animation  []
+ok    sat-1280: pausing and resuming started no new animation
 ok    sat-1280: clicking the California touchdown opens the play pop-up
 ok    sat-1280: the pop-up shows the tidy text, exactly
 ok    sat-1280: no "UNLV00", "#3" or "clock" in the pop-up
@@ -127,22 +117,22 @@ ok    sat-1280: the saved v110 play is tidy in its pop-up
 ok    sat-1280: its X search names the passer, not the tackler or a jersey number
 ok    sat-1280: big play search ORs school and player names
 ok    sat-1280: Game center button opens the game
-FAIL  sat-1280: back on the scoreboard the reel is still running on whole pixels  [{"tr":{"maxOff":0.02,"maxStep":0.01,"run":60,"frames":60},"anims":3}]
+ok    sat-1280: back on the scoreboard the reel is still running on whole pixels
 ok    sat-1280: no sideways scroll
 ok    sat-1280: no page errors
 ok    sat-948: a play saved by v110 is drawn tidy
 ok    sat-948: seed poll replays no scores
-ok    sat-948: Tennessee TD on the reel
-ok    sat-948: Ohio State FG
-ok    sat-948: big play and takeaway
+FAIL  sat-948: Tennessee TD on the reel  [tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X]
+FAIL  sat-948: Ohio State FG  []
+FAIL  sat-948: big play and takeaway  []
 ok    sat-948: no upset alerts, finals or live filler
 ok    sat-948: no team score lines in items
 ok    sat-948: tag carries no scores
-ok    sat-948: the California touchdown reads tidy on the reel
+FAIL  sat-948: the California touchdown reads tidy on the reel  [tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X]
 ok    sat-948: all ten rows of the brief's table come out exact here too
 ok    sat-948: no stat-crew leftovers anywhere on the reel (UNLV00, jersey numbers, clock, caught at, tacklers)
-ok    sat-948: reel is two boxed copies of the same plays
-ok    sat-948: each copy is a whole number of pixels wide, both the same
+FAIL  sat-948: reel is two boxed copies of the same plays  [{"kids":3,"cls":"tkc tkp,tkc,tkc","w":["1012px","6501px","6501px"],"ow":[1012,6501,6501],"same":false,"wc":"transform","an":"none","inline":"","n":1}]
+FAIL  sat-948: each copy is a whole number of pixels wide, both the same  [{"kids":3,"cls":"tkc tkp,tkc,tkc","w":["1012px","6501px","6501px"],"ow":[1012,6501,6501],"same":false,"wc":"transform","an":"none","inline":"","n":1}]
 ok    sat-948: no CSS animation on the Saturday reel, will-change kept
 ok    sat-948: exactly one animation on the reel and no transform written by script
 ok    sat-948: frame interval measured near 60 Hz, 1 px every frame, linear
@@ -152,22 +142,15 @@ ok    sat-948: the reel moves by the same amount every frame (1 px, within 0.05)
 ok    sat-948: a poll that changes nothing ran inside the sample (one scoreboard request, 20 frames before it, 40 after)
 ok    sat-948: no restart across a poll that changes nothing (same animation, none started)
 ok    sat-948: the reel runs straight through that poll, still on whole pixels
-FAIL  sat-948: the next poll adds the Colorado field goal, tidy  [tk k-td | TouchdownCaliforniaJ. Sagapolutele pass complete short right to T. Purcell for 91 yards, touchdown2:17 PM · 2nd · 10:57▶ X
-tk k-td | TouchdownSouth Alabama2:17 PM · 4th · 10:57▶ X
-tk k-fg | Field goal#7Ohio StateJ. Fielding 38 yd FG, good2:17 PM · 2nd · 10:57▶ X
-tk k-big | 52-yard catchColoradoS. Sanders pass complete to J. Horton for 52 yards2:17 PM · 2nd · 10:57▶ X
-tk k-td | Touchdown#14TennesseeN. Iamaleava pass complete to J. Horton for 45 yds for a TD2:17 PM · 3rd · 10:57▶ X
-tk k-take fav | Interception#11Texas TechSHSU pass intercepted by somebody2:17 PM · 2nd · 10:57▶ X
-tk k-td fav | Touchdown#11Texas Tech2:17 PM · 2nd · 10:57▶ X
-tk k-td fav | TouchdownSam Houston2:17 PM · 2nd · 10:57▶ X
-tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down2:15 PM · 2nd · 12:40▶ X]
-FAIL  sat-948: the reel was rebuilt once for the new play (one poll), and is longer  [{"polls":1,"before":3,"after":3,"halfBefore":6501,"half":6501}]
+FAIL  sat-948: the next poll adds the Colorado field goal, tidy  [tk k-big | 54-yard catch#7Ohio StateJ. Sayin pass complete short middle to J. Smith for 54 yards to the IOWA 21, 1st down3:07 PM · 2nd · 12:40▶ X
+tk k-td | TouchdownCaliforniaJ. Sagapolutele pass complete short right to T. Purcell for 91 yards, touchdown3:09 PM · 2nd · 10:57▶ X]
+ok    sat-948: the reel was rebuilt once for the new play (one poll), and is longer
 ok    sat-948: the offset carries on across the poll that adds a play (not back to zero)
 ok    sat-948: every frame through the rebuild is on a whole pixel and in step
 ok    sat-948: hover pauses the reel, held on a whole pixel
 ok    sat-948: leaving resumes it from where it was held
 ok    sat-948: after resuming it is back on whole pixels, in step
-FAIL  sat-948: pausing and resuming started no new animation  []
+ok    sat-948: pausing and resuming started no new animation
 ok    sat-948: clicking the California touchdown opens the play pop-up
 ok    sat-948: the pop-up shows the tidy text, exactly
 ok    sat-948: no "UNLV00", "#3" or "clock" in the pop-up
@@ -180,7 +163,7 @@ ok    sat-948: the saved v110 play is tidy in its pop-up
 ok    sat-948: its X search names the passer, not the tackler or a jersey number
 ok    sat-948: big play search ORs school and player names
 ok    sat-948: Game center button opens the game
-FAIL  sat-948: back on the scoreboard the reel is still running on whole pixels  [{"tr":{"maxOff":0.02,"maxStep":0.01,"run":60,"frames":60},"anims":3}]
+ok    sat-948: back on the scoreboard the reel is still running on whole pixels
 ok    sat-948: no sideways scroll
 ok    sat-948: no page errors
 ok    lock: a wrong frame interval is caught by the 2-second check: measured again and rebuilt
@@ -251,14 +234,14 @@ ok    sun: v112: ticker keeps its fantasy label and has no CSS reel animation or
 ok    sun: v112: with no fantasy data in this mock there is nothing to show, so no script animation, no loop, no boxes, no transform
 ok    sun: no page errors
 
-note  sat-1600 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.02,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.665,"half":6501}
-note  sat-1600 different frames drawn during a 1.5 s main-thread block, reel running then reel held: [78,0]
+note  sat-1600 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.018,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.665,"half":8524}
+note  sat-1600 different frames drawn during a 1.5 s main-thread block, reel running then reel held: [80,0]
 note  sat-1600 whole-pixel shifts between screenshots taken 40 ms apart: [6,6,6,6,6,6]
-note  sat-1280 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.01,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.6667,"half":6501}
-note  sat-948 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.01,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.6667,"half":6501}
-note  lock frame interval before, and after being set 1.3% wrong and left to recover: {"before":16.665000000000003,"after":16.666666666666668}
-note  dpr-2 160 frames, in device px: {"maxOff":0.03,"maxStep":0.02,"run":160,"frames":160,"n":2,"k":1,"half":5489}
-note  dpr-1.5 160 frames, in device px: {"maxOff":0.0125,"maxStep":0.01,"run":160,"frames":160,"n":1,"k":1,"half":5489.333333333333}
-note  dpr-1.25 160 frames, in device px: {"maxOff":0.0263,"maxStep":0.01,"run":160,"frames":160,"n":1,"k":1,"half":5489.6}
+note  sat-1280 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.01,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.6667,"half":8524}
+note  sat-948 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.016,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.665,"half":7513}
+note  lock frame interval before, and after being set 1.3% wrong and left to recover: {"before":16.668333333333337,"after":16.664999999999996}
+note  dpr-2 160 frames, in device px: {"maxOff":0.028,"maxStep":0.02,"run":160,"frames":160,"n":2,"k":1,"half":6764}
+note  dpr-1.5 160 frames, in device px: {"maxOff":0.016,"maxStep":0.008,"run":160,"frames":160,"n":1,"k":1,"half":6764}
+note  dpr-1.25 160 frames, in device px: {"maxOff":0.0137,"maxStep":0.0088,"run":160,"frames":160,"n":1,"k":1,"half":6764.8}
 
-215/228 checks passed
+203/228 checks passed
