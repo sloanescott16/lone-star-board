@@ -17,3 +17,8 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
   Still 1 px at the first rebuild after a mouse hold (hover test at 0.5 px fails). New plays from one refresh go in as
   one group after plays still waiting; bursts arrive back to back, but the third play of a burst needs about 27 s at
   1440 (each play is about 750 px), so the 20 s burst check fails.
+- Option B (16:4x, Captain chose B): short play text on the reel. tkShort (index.html, "5wo-B") turns the feed text into
+  "Manning 41-yd TD to Coleman", "Roberts 80-yd TD run", "Woodson picks off Taylor", "Dicker 45-yd FG wide left"; cap 36
+  characters; keeps the tidied feed text whole when a play was nullified, reversed, overturned or carries a live penalty,
+  or the shape is unknown. The tap card still shows the full play. short.test.js 25/25 (19 real Saturday and Sunday
+  strings, 4 fallbacks). Over 621 real scoring and take plays: average 76 characters before, 23 after, 5 kept whole.

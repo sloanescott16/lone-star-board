@@ -5153,6 +5153,64 @@ function tkClean(s) {
     .replace(/\s+/g, " ").replace(/ ,/g, ",").replace(/,(?:\s*,)+/g, ",").replace(/^[,\s]+|[,\s]+$/g, "");
   return s.replace(/^(?:penalty|touchdown|no play|no good|good|1st down)\b/, m => m[0].toUpperCase() + m.slice(1));
 }
+/* 5wo-B: the reel shows a short, scannable line for each play ("Manning 41-yd TD to Coleman"), made here from the feed
+   text: the player, the play and the key number, without the clock, formation, tacklers, kick notes or team names.
+   Anything it cannot read for sure (a play wiped out or changed by a penalty or a review, an unknown shape) keeps the
+   tidied feed text. The tap card still shows the full play. kind is the reel item's kind ("td", "take", "big", ...). */
+const TK_SHORT_MAX = 36;
+function tkShort(raw, kind) {
+  const s = tkClean(raw).replace(/^\((?:No Huddle, )?Shotgun\)\s*/i, ""); if (!s) return "";
+  const core = s.replace(/\([^()]*\bConversion\b[^()]*\)/gi, "").replace(/\bpenalty [^.]*?\bdeclined\b/gi, "")
+    .replace(/(\btouchdown\b|\bfor a TD\b)(?!,? nullified)[\s\S]*$/i, "$1");   // a declined penalty, and the kick after a touchdown, change nothing
+  if (/nullified|overturned|reversed|no play|penalty|\bsafety\b|two-point|conversion/i.test(core)) return s;   // the meaning hangs on the detail: keep it all
+  const N = "((?:[A-Z]{2,6}[ -])?[A-Z][A-Za-z'.-]*(?: [A-Z][A-Za-z'.-]*|,? (?:(?:Jr|Sr)\\.?|II|III|IV|V)(?=[\\s,.]|$))*)";   // a player (capitals kept), maybe after a team code: "OU D. Fields", "LAC-D. Henley", "R. Vick, Jr."
+  const sur = n => { const t = String(n || "").replace(/,/g, "").replace(/^[A-Z]{2,6}[ -](?=[A-Z])/, "").trim().split(/\s+/); const l = t.pop() || ""; return /^(?:Jr\.?|Sr\.?|II|III|IV|V)$/.test(l) && t.length ? `${t.pop()} ${l}` : l; };
+  const td = kind === "td" || /\btouchdown\b|for a TD\b/i.test(s);
+  const m = re => s.match(new RegExp(re.replace(/@/g, N)));   // @ is a player; no "i" flag, so a name has to start with a capital
+  const yd = (re, t = s) => { const x = t.match(re); return x ? +x[1] : null; };
+  let out = null, extra = "", alt = "", x;   // extra is dropped first when too long; alt is a shorter way to say it
+  if ((x = m(String.raw`^@ (?:field goal attempt from (\d+) yards?|(\d+)[ -](?:[Yy]d|yard) (?:FG|[Ff]ield [Gg]oal))(.*)$`))) {   // field goals
+    const n = x[2] || x[3], rest = x[4] || "", b = rest.match(new RegExp("blocked by " + N)), w = rest.match(/wide (left|right)/i);
+    out = b ? `${sur(b[1])} blocks ${n}-yd FG` : `${sur(x[1])} ${n}-yd FG${w ? " wide " + w[1].toLowerCase() : /no good/i.test(rest) || kind === "miss" ? " no good" : ""}`;
+  }
+  // scoring summaries: "Keaton Mitchell 1 Yd pass from Justin Herbert (...)", "A. Manning pass to C. Coleman for 41 yds, for a TD (...)"
+  else if ((x = m(String.raw`^@ (\d+) Yd pass from @`))) out = `${sur(x[3])} ${x[2]}-yd TD to ${sur(x[1])}`;
+  else if ((x = m(String.raw`^@ pass to @ for (\d+) yds?,? for a TD`))) out = `${sur(x[1])} ${x[3]}-yd TD to ${sur(x[2])}`;
+  else if ((x = m(String.raw`^@ (\d+) Yd (?:Run|Rush)\b`)) || (x = m(String.raw`^@ run for (\d+) yds?,? for a TD`))) out = `${sur(x[1])} ${x[2]}-yd TD run`;
+  else if ((x = m(String.raw`^@ (\d+) Yd (Interception|Fumble|Punt|Kickoff|Blocked Punt|Blocked Field Goal|Missed Field Goal) Return\b`))) {
+    const w = x[3].toLowerCase().replace("field goal", "FG");
+    out = w === "interception" ? `${sur(x[1])} ${x[2]}-yd pick-six` : `${sur(x[1])} ${x[2]}-yd ${w} return TD`;
+  }
+  else if ((x = m(String.raw`^Fumble recovery by @, return (\d+) yds`))) out = `${sur(x[1])} ${x[2]}-yd fumble return TD`;
+  else if ((x = m(String.raw`^@ pass intercepted, @ return for (\d+) yds`))) out = `${sur(x[2])} ${x[3]}-yd pick-six`;
+  else if ((x = m(String.raw`^@ (punt|kickoff) for \d+ yds?, @ returns? for (\d+) yds?,? for a TD`))) out = `${sur(x[3])} ${x[4]}-yd ${x[2]} return TD`;
+  else if ((x = m(String.raw`^Punt blocked by @, recovered by @ for a TD`))) out = `${sur(x[1])} blocks punt, ${sur(x[2]) === sur(x[1]) ? "" : sur(x[2]) + " "}TD`;
+  // play by play
+  else if ((x = m(String.raw`^@ (kickoff|punt)\b[^.]*?\b@ return (\d+) yards?\b.*?\btouchdown`))) out = `${sur(x[3])} ${x[4]}-yd ${x[2]} return TD`;
+  else if ((x = m(String.raw`^@ punt\b.*?blocked by @`))) {   // blocked punts
+    const r = m(String.raw`recovered by @`), who = r ? sur(r[1]) : "", b = sur(x[2]);
+    out = td ? `${b} blocks punt, ${who && who !== b ? who + " " : ""}TD` : `${b} blocks ${sur(x[1])} punt`;
+  }
+  else if ((x = m(String.raw`^@ pass\b.*?\b(?:intercepted|INTERCEPTED) by @`))) {   // interceptions
+    const r = yd(/(?:return|for) (\d+) yards?/i, s.slice(x.index + x[0].length));
+    out = td ? `${sur(x[2])}${r ? ` ${r}-yd` : ""} pick-six` : `${sur(x[2])} picks off ${sur(x[1])}`; if (!td && r >= 20) extra = `, ${r}-yd return`;
+  }
+  else if ((x = m(String.raw`(?:fumbled by|fumble by) @`) || (/\bFUMBLES\b/.test(s) && m(String.raw`^@ `))) && (x.r = m(String.raw`(?:recovered|RECOVERED) by @`))) {   // fumbles (NFL: "FUMBLES (forcer)", so the fumbler is the ball carrier)
+    const f = sur(x[1]), r = sur(x.r[1]), ret = yd(/(?:return|for) (\d+) yards?,? touchdown/i);
+    out = td ? `${r}${ret ? ` ${ret}-yd` : ""} fumble return TD` : r === f ? null : `${r} recovers ${f} fumble`; alt = `${r} recovers fumble`;
+  }
+  else if ((x = m(String.raw`^@ pass (?:complete )?(?:(?:short|deep) (?:left|right|middle) )?to @ .*?\bfor (\d+) yards?(?! loss)`))) {   // completions
+    if (+x[3] > 0) out = `${sur(x[1])} ${x[3]}-yd ${td ? "TD" : "pass"} to ${sur(x[2])}`;
+  }
+  else if ((x = m(String.raw`^@ (?:rush|run|scrambles|left end|right end|left tackle|right tackle|left guard|right guard|up the middle)\b.*?\bfor (\d+) yards?(?! loss)`))) {   // runs
+    if (+x[2] > 0) out = `${sur(x[1])} ${x[2]}-yd ${td ? "TD " : ""}run`;
+  }
+  if (!out || out.length < 6) return s;
+  if ((out + extra).length <= TK_SHORT_MAX) return out + extra;
+  if (out.length <= TK_SHORT_MAX) return out;
+  if (alt && alt.length <= TK_SHORT_MAX) return alt;
+  return out.slice(0, TK_SHORT_MAX - 1).replace(/\s+\S*$/, "") + "…";
+}
 function tkUpset(g) {   // who is ranked and behind a worse or unranked team, or null
   if (g.as == null || g.hs == null || g.as === g.hs) return null;
   const lo = g.as < g.hs ? g.away : g.home, wi = tkOther(g, lo);
@@ -5223,7 +5281,7 @@ function tkItem(x) {
   const fav = x.sc && (x.sc.a === CFG.fav || x.sc.h === CFG.fav);
   const ts = x.t ? `<span class="ts">${fmtCT(x.t, { hour: "numeric", minute: "2-digit" })}${x.when ? " · " + esc(x.when) : ""}</span>` : "";
   const kd = `${esc(x.lbl)}${x.sub ? " · " + esc(x.sub) : ""}`;
-  const tx = tkClean(x.text), txt = tx ? `<span class="tx">${esc(tx)}</span>` : "";   // v111: tidied on the way out too (older stored items)
+  const tx = tkShort(x.text, x.kind), txt = tx ? `<span class="tx">${esc(tx)}</span>` : "";   // v111: tidied on the way out too (older stored items); 5wo-B: the short line, the tap card keeps the full play
   return `<span class="tk k-${x.kind}${fav ? " fav" : ""}" data-k="${esc(x.k)}" title="Tap for the play and a video search on X"><span class="kd">${kd}</span>${mark(x.team, "mini")}<span class="who">${tkName(x.team, rk(x.team))}</span>${txt}${ts}<span class="xv">&#9654; X</span></span>`;
 }
 function renderSatTicker() {
