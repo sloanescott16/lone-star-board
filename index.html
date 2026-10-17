@@ -5280,7 +5280,7 @@ try { document.fonts.addEventListener("loadingdone", () => { TKR.dirty = true; }
    Once the lead-in has scrolled off the left (tkrDrop) it is taken out and the reel loops on the copies alone. */
 function tkrItems(html) { const t = document.createElement("template"); t.innerHTML = html || ""; return [...t.content.children].map(e => ({ k: e.getAttribute("data-k") || e.getAttribute("data-pid") || e.outerHTML, h: e.outerHTML })); }
 // still (first load, reduced motion, hidden, no Web Animations): two plain copies, straight in
-function tkrWrite(reel, html) { reel.innerHTML = html ? `<span class="tkc">${html}</span><span class="tkc">${html}</span>` : ""; TKR.html = html || ""; TKR.cur = tkrItems(html); TKR.keys = TKR.cur.map(i => i.k); TKR.pend = null; TKR.pre = 0; }
+function tkrWrite(reel, html) { reel.innerHTML = html ? `<span class="tkc">${html}</span><span class="tkc">${html}</span>` : ""; TKR.html = html || ""; TKR.cur = tkrItems(html); TKR.keys = TKR.cur.map(i => i.k); TKR.seen = new Set(TKR.keys); TKR.pend = null; TKR.pre = 0; }
 function tkrLoad(html) {
   const reel = el("#reel"); if (!reel) return;
   if (!html) { tkrWrite(reel, ""); tkrStop(); return; }   // nothing to show: no animation
@@ -5317,16 +5317,27 @@ function tkrBuild(t, reel) {
   const L = tkrItems(html), old = new Set(TKR.keys || []), { n, k } = tkrPick(1000 / TKR.fi, dpr);
   // the plays on screen now, left to right, with where they sit
   const V = []; let r0 = 0;
-  if (TKR.anim) { r0 = reel.getBoundingClientRect().left + tkrX();
-    for (const c of reel.children) for (const e of c.children) { const b = e.getBoundingClientRect(); if (b.right > tb.left + 0.5 && b.left < tb.right - 0.5) V.push([b.left, e]); }
-    V.sort((a, b) => a[0] - b[0]); }
   const keyOf = e => e.getAttribute("data-k") || e.getAttribute("data-pid") || e.outerHTML;
-  // where the list starts after the lead-in: the newest new play, or the play after the last one on screen
-  let s = old.size ? L.findIndex(i => !old.has(i.k)) : 0;
-  if (s < 0) { const j = V.length ? L.findIndex(i => i.k === keyOf(V[V.length - 1][1])) : -1; s = j >= 0 ? (j + 1) % L.length : 0; }
-  const C = L.slice(s).concat(L.slice(0, s)).map(i => i.h).join("");
-  let P = null;
-  if (V.length) { P = document.createElement("span"); P.className = "tkc tkp"; for (const [, e] of V) P.appendChild(e); }   // moved, not redrawn: same nodes, same images
+  if (!old.size || !TKR.seen) TKR.seen = new Set(L.map(i => i.k));   // first build: everything on it counts as shown
+  if (TKR.anim) { r0 = reel.getBoundingClientRect().left + tkrX();
+    for (const c of reel.children) for (const e of c.children) { const b = e.getBoundingClientRect(); if (b.left < tb.right) TKR.seen.add(keyOf(e)); if (b.right > tb.left + 0.5 && b.left < tb.right - 0.5) V.push([b.left, e, b.right]); }
+    V.sort((a, b) => a[0] - b[0]); }
+  /* 5wo round 3: what follows the lead-in. First the plays still waiting to come on screen from earlier refreshes, then
+     all of this refresh's new plays as one group, both newest first; then the rest of the list, carrying on from the
+     play after the last one on screen. So a burst comes in back to back and a later play never pushes earlier ones back. */
+  const fresh = L.filter(i => !old.has(i.k)), wait = L.filter(i => old.has(i.k) && !TKR.seen.has(i.k)), lead = new Set([...fresh, ...wait].map(i => i.k));
+  const j = V.length ? L.findIndex(i => i.k === keyOf(V[V.length - 1][1])) : -1, s = j >= 0 ? (j + 1) % L.length : 0;
+  const C = [...wait, ...fresh, ...L.slice(s).concat(L.slice(0, s)).filter(i => !lead.has(i.k))].map(i => i.h).join("");
+  let P = null, x = 0;
+  if (V.length) {   // moved, not redrawn: same nodes, same images
+    /* 5wo round 3: the 1.5 to 2 px hop. The plays on screen were packed together in the lead-in, which dropped the
+       sub-pixel gaps between them (up to 1 px where two copies met, as each copy is rounded up to a whole pixel), and the
+       new offset was rounded to a whole pixel on top. Now each play keeps its exact gap (margin), and the lead-in starts
+       with a sub-pixel pad so the offset is a whole step and the first play lands exactly where it was. */
+    P = document.createElement("span"); P.className = "tkc tkp"; let pr = null;
+    for (const [l, e, r] of V) { e.style.marginLeft = pr == null ? "" : (l - pr) + "px"; pr = r; P.appendChild(e); }
+    const st = n / dpr, xt = r0 - V[0][0]; x = Math.ceil(xt / st - 1e-6) * st; P.style.paddingLeft = (x - xt) + "px";
+  }
   reel.innerHTML = `<span class="tkc">${C}</span>`; if (P) reel.prepend(P);
   const c0 = reel.lastElementChild, tot = Math.ceil(c0.getBoundingClientRect().width * dpr / n - 0.001) * n;   // one copy in device pixels, rounded up to a whole number of steps
   const ptot = P ? Math.ceil(P.getBoundingClientRect().width * dpr / n - 0.001) * n : 0;
@@ -5334,7 +5345,6 @@ function tkrBuild(t, reel) {
   const cw = tot / dpr, pre = ptot / dpr; c0.style.width = cw + "px"; if (P) P.style.width = pre + "px";
   // enough copies that the track is covered at every point of the loop (one short play on a wide screen left a blank at the right)
   const K = 1 + Math.max(1, Math.ceil(tb.width / cw)); for (let i = 1; i < K; i++) reel.appendChild(c0.cloneNode(true));
-  const x = P ? r0 - V[0][0] : 0;   // the first play on screen stays put
   if (TKR.anim) TKR.anim.cancel();
   Object.assign(TKR, { html, cur: L, keys: L.map(i => i.k), pend: null, half: pre + cw, pre, cw, n, k, N: (ptot + tot) / n * k, dpr, wait: false, bad: 0, t1: TKR.t1 || t, tw: tb.width });
   // k > 1 (a fast display): steps, so the frames in between hold a whole pixel instead of landing on a fraction

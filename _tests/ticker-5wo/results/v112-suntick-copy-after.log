@@ -23,8 +23,8 @@ FAIL  sun-1600: the new play is on the reel (+1 rec, +12 rec yd, +2.20) and the 
 ok    sun-1600: rebuilt once for it, nothing else
 FAIL  sun-1600: the offset carried on (a plain step every frame, or wrapped at the new width at the one rebuild; never back to zero)  [{"jumps":1,"worst":506.01}]
 ok    sun-1600: after the rebuild every frame is on a whole pixel, in step
-FAIL  sun-1600: the second play lands in front of the first, the reel is longer  [{"items2":["tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total","tk  | YOURex BackfieldRB · PHI30 rush yd3.00 total","tk  | YOUWill WideoutWR · DAL71 rec yd · 5 rec12.10 total","tk  | YOUWalt ReceiverWR · PHI1 rec TD · 40 rec yd · 3 rec13.00 total"],"H1":2576,"H":3183}]
-ok    sun-1600: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)
+FAIL  sun-1600: the second play lands in front of the first, the reel is longer  [{"items2":["tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total","tk  | YOURex BackfieldRB · PHI30 rush yd3.00 total","tk  | YOUWill WideoutWR · DAL71 rec yd · 5 rec12.10 total","tk  | YOUWalt ReceiverWR · PHI1 rec TD · 40 rec yd · 3 rec13.00 total"],"H1":2577,"H":3185}]
+FAIL  sun-1600: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)  [{"anims":[2,4],"cr":{"jumps":1,"worst":0.994},"last":-225.004}]
 ok    sun-1600: no sideways scroll
 ok    sun-1600: no page errors
 FAIL  sun-1280: the fantasy plays are on the reel (both lineups, YOU and OPP)  [["tk  | YOUQuinn PasserQB · DAL212 pass yd · 1 pass TD12.48 total","tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total"]]
@@ -79,9 +79,9 @@ ok    sun-948: Escape closes it
 ok    sun-948: clicking a player in the second copy asks for the same player
 FAIL  sun-948: the new play is on the reel (+1 rec, +12 rec yd, +2.20) and the content changed  [["tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total","tk  | YOURex BackfieldRB · PHI30 rush yd3.00 total"]]
 ok    sun-948: rebuilt once for it, nothing else
-FAIL  sun-948: the offset carried on (a plain step every frame, or wrapped at the new width at the one rebuild; never back to zero)  [{"jumps":1,"worst":505.998}]
+FAIL  sun-948: the offset carried on (a plain step every frame, or wrapped at the new width at the one rebuild; never back to zero)  [{"jumps":1,"worst":505.997}]
 ok    sun-948: after the rebuild every frame is on a whole pixel, in step
-FAIL  sun-948: the second play lands in front of the first, the reel is longer  [{"items2":["tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total","tk  | YOURex BackfieldRB · PHI30 rush yd3.00 total","tk  | YOU3:16 PM · 2nd · 10:57Will WideoutWR · DAL+1 rec, +12 rec yd+2.2014.30 total"],"H1":1592,"H":2852}]
+FAIL  sun-948: the second play lands in front of the first, the reel is longer  [{"items2":["tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total","tk  | YOURex BackfieldRB · PHI30 rush yd3.00 total","tk  | YOU3:59 PM · 2nd · 10:57Will WideoutWR · DAL+1 rec, +12 rec yd+2.2014.30 total"],"H1":1592,"H":2853}]
 ok    sun-948: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)
 ok    sun-948: no sideways scroll
 ok    sun-948: no page errors
@@ -108,9 +108,9 @@ ok    sun-390: Escape closes it
 ok    sun-390: clicking a player in the second copy asks for the same player
 FAIL  sun-390: the new play is on the reel (+1 rec, +12 rec yd, +2.20) and the content changed  [["tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total"]]
 ok    sun-390: rebuilt once for it, nothing else
-ok    sun-390: the offset carried on (a plain step every frame, or wrapped at the new width at the one rebuild; never back to zero)
+FAIL  sun-390: the offset carried on (a plain step every frame, or wrapped at the new width at the one rebuild; never back to zero)  [{"jumps":1,"worst":0.9991}]
 ok    sun-390: after the rebuild every frame is on a whole pixel, in step
-FAIL  sun-390: the second play lands in front of the first, the reel is longer  [{"items2":["tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total"],"H1":1180,"H":1787}]
+FAIL  sun-390: the second play lands in front of the first, the reel is longer  [{"items2":["tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total"],"H1":1181,"H":1788}]
 ok    sun-390: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)
 ok    sun-390: no sideways scroll
 ok    sun-390: no page errors
@@ -158,9 +158,9 @@ ok    font-sat: control: a 46 px blank is seen as one, and a rebuild takes it ou
 ok    font-sat: no page errors
 ok    hidden: on the Home tab the ticker is not showing
 ok    hidden: content changed while hidden: no layout tried in 90 frames
-FAIL  hidden: shown again: it was built then, once, with the new play, running on whole pixels  [{"builds":1,"anims":[2,3],"items":2,"tr":{"maxOff":0.008,"maxStep":0.01,"run":90,"frames":90}}]
+FAIL  hidden: shown again: it was built then, once, with the new play, running on whole pixels  [{"builds":1,"anims":[2,3],"items":2,"tr":{"maxOff":0.022,"maxStep":0.008,"run":90,"frames":90}}]
 ok    hidden: ticker hidden under the scoreboard, content changed: one try, then it waits (not every frame)
-FAIL  hidden: shown again: built at once with both plays, on whole pixels  [{"builds":1,"items":3,"e":{"fi":16.665000000000003,"n":1,"k":1,"N":3129,"half":3129,"dpr":1,"ok":true,"bad":0,"wait":false,"dirty":false,"anims":4,"ps":"running","ease":"linear","real":1,"w":"1868px"},"tr":{"maxOff":0.013,"maxStep":0.01,"run":90,"frames":90}}]
+FAIL  hidden: shown again: built at once with both plays, on whole pixels  [{"builds":1,"items":3,"e":{"fi":16.66333333333333,"n":1,"k":1,"N":3130,"half":3130,"dpr":1,"ok":true,"bad":0,"wait":false,"dirty":false,"anims":4,"ps":"running","ease":"linear","real":1,"w":"1869px"},"tr":{"maxOff":0.02,"maxStep":0.009,"run":90,"frames":90}}]
 ok    hidden: no page errors
 ok    empty: nothing to show: an empty reel, no animation, no layout in 90 frames
 ok    empty: plays arrive: the reel is built and runs
@@ -169,24 +169,24 @@ ok    noanimate-sun: animate is missing, the plays are on the reel, no animation
 ok    noanimate-sun: and nothing throws (not one page error in 3 seconds of frames)
 ok    noanimate-sat: animate is missing, the plays are on the reel, no animation, reel still at zero
 ok    noanimate-sat: and nothing throws (not one page error in 3 seconds of frames)
-FAIL  sun-resize: at 390 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels  [{"anims":[2,2],"st":{"flip":false,"pid":3,"same":true},"tr":{"maxOff":0.012,"maxStep":0.008,"run":90,"frames":90}}]
-FAIL  sun-resize: at 1280 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels  [{"anims":[2,2],"st":{"flip":false,"pid":3,"same":true},"tr":{"maxOff":0.018,"maxStep":0.008,"run":90,"frames":90}}]
-FAIL  sun-resize: at 360 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels  [{"anims":[2,2],"st":{"flip":false,"pid":3,"same":true},"tr":{"maxOff":0.022,"maxStep":0.01,"run":90,"frames":90}}]
+FAIL  sun-resize: at 390 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels  [{"anims":[2,2],"st":{"flip":false,"pid":3,"same":true},"tr":{"maxOff":0.028,"maxStep":0.024,"run":90,"frames":90}}]
+FAIL  sun-resize: at 1280 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels  [{"anims":[2,2],"st":{"flip":false,"pid":3,"same":true},"tr":{"maxOff":0.02,"maxStep":0.018,"run":90,"frames":90}}]
+FAIL  sun-resize: at 360 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels  [{"anims":[2,2],"st":{"flip":false,"pid":3,"same":true},"tr":{"maxOff":0.026,"maxStep":0.01,"run":90,"frames":90}}]
 ok    sun-resize: no page errors
 ok    sun-dpr-2: 2 device px a frame, one copy a whole number of device pixels, a multiple of n
 ok    sun-dpr-2: every frame on a whole device pixel (within 0.05), same move every frame
 ok    sun-dpr-2: no page errors
 
-note  sun-1600 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.017,"maxStep":0.009,"run":200,"frames":200,"frameMs":16.665,"half":9949}
-note  sun-1600 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":9949,"H1":2576,"jumps":1,"worst":506.01}
-note  sun-1280 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.016,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.6667,"half":9496}
+note  sun-1600 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.018,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.665,"half":9949}
+note  sun-1600 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":9949,"H1":2577,"jumps":1,"worst":506.01}
+note  sun-1280 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.014,"maxStep":0.008,"run":200,"frames":200,"frameMs":16.6667,"half":9496}
 note  sun-1280 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":9496,"H1":2045,"jumps":1,"worst":505.992}
-note  sun-948 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.016,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.6667,"half":9084}
-note  sun-948 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":9084,"H1":1592,"jumps":1,"worst":505.998}
-note  sun-390 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.017,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.665,"half":8559}
-note  sun-390 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":8052,"H1":1180,"jumps":0,"worst":0.0081}
+note  sun-948 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.034,"maxStep":0.008,"run":200,"frames":200,"frameMs":16.6683,"half":9084}
+note  sun-948 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":9084,"H1":1592,"jumps":1,"worst":505.997}
+note  sun-390 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.018,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.665,"half":8559}
+note  sun-390 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":8052,"H1":1181,"jumps":1,"worst":0.9991}
 note  trip animations started on the reel over 3 round trips (6 switches): 6
 note  font-sun half width before and after the font, gap at the seam before and after (CSS px), animations started: {"before":9496,"after":8655,"gapBefore":0.47,"gapAfter":0.31,"anims":[2,3]}
-note  font-sat half width before and after the font, gap at the seam before and after (CSS px), animations started: {"before":2202,"after":1991,"gapBefore":0.31,"gapAfter":0.06,"anims":[2,3]}
+note  font-sat half width before and after the font, gap at the seam before and after (CSS px), animations started: {"before":2202,"after":1993,"gapBefore":0.16,"gapAfter":0.92,"anims":[2,3]}
 
-149/178 checks passed
+147/178 checks passed

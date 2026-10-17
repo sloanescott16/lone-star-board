@@ -4,8 +4,8 @@
    One change from the checker's copy: two copies of the same play side by side are only counted when they are not both
    in the lead-in (.tkp). A one-play reel on a wide screen shows that play several times before anything lands, and the
    lead-in keeps exactly what was on screen until it scrolls off. */
-module.exports = () => {
-  const C = window.__C = { iss: [], frames: 0, gaps: [], fr: [], vis1: {}, stopped: false, still: 0, maxStill: 0 };
+module.exports = (tol) => { tol = tol || 1.5;   // round 3: tolerance in CSS px (the hover case uses 0.5)
+  const C = window.__C = { pz: false, iss: [], frames: 0, gaps: [], fr: [], vis1: {}, stopped: false, still: 0, maxStill: 0 };
   let prev = null, lastT = 0, v = null, vs = [];
   const snap = () => { const tr = document.querySelector(".ticker .track").getBoundingClientRect(), r = document.querySelector("#reel");
     const its = []; [...r.children].forEach((c, ci) => [...c.children].forEach(e => { const b = e.getBoundingClientRect(); its.push({ k: e.getAttribute("data-k") || e.textContent.slice(0, 30), ci, p: c.classList.contains("tkp"), l: b.left, rt: b.right, w: b.width, tx: e.textContent }); }));
@@ -18,16 +18,17 @@ module.exports = () => {
     if (prev) {
       if (v == null) { const d = []; for (const i of vis) { const p = prev.its.filter(q => q.k === i.k).sort((a, b) => Math.abs(a.l - i.l) - Math.abs(b.l - i.l))[0]; if (p) d.push((i.l - p.l) / dt); }
         if (d.length) vs.push(d.sort((a, b) => a - b)[d.length >> 1]); if (vs.length >= 20) v = [...vs].sort((a, b) => a - b)[10]; }
-      else if (!TKR.paused) {
+      else {
+        const pz = !!(TKR.paused || (TKR.anim && TKR.anim.playState === "paused")), pzc = pz !== C.pz; C.pz = pz; if (pz || pzc) { prev = s; lastT = t; return; }   // as the checker's chk2: skip the frame the reel is held or let go
         const ex = v * dt;
         for (const i of vis) {
           const cand = prev.its.filter(q => q.k === i.k).map(q => ({ q, e: i.l - (q.l + ex) })).sort((a, b) => Math.abs(a.e) - Math.abs(b.e))[0];
           const entering = i.l > R - Math.abs(ex) - 3;
-          if (cand && Math.abs(cand.e) <= 1.5) { if (Math.abs(cand.q.w - i.w) > 0.5 || cand.q.tx !== i.tx) C.iss.push({ t: Math.round(t), kind: "changed in place on screen", k: i.k, dw: +(i.w - cand.q.w).toFixed(1) }); }
+          if (cand && Math.abs(cand.e) <= tol) { if (Math.abs(cand.q.w - i.w) > 0.5 || cand.q.tx !== i.tx) C.iss.push({ t: Math.round(t), kind: "changed in place on screen", k: i.k, dw: +(i.w - cand.q.w).toFixed(1) }); }
           else if (!entering) C.iss.push({ t: Math.round(t), kind: "jump or pop-in", k: i.k, e: cand ? +cand.e.toFixed(1) : null, l: Math.round(i.l) });
         }
         for (const p of prev.its.filter(q => q.rt > L && q.l < R)) { if (p.rt + ex < L + 3) continue;
-          if (!s.its.some(i => i.k === p.k && Math.abs(i.l - (p.l + ex)) <= 1.5)) C.iss.push({ t: Math.round(t), kind: "vanished from screen", k: p.k, l: Math.round(p.l) }); }
+          if (!s.its.some(i => i.k === p.k && Math.abs(i.l - (p.l + ex)) <= tol)) C.iss.push({ t: Math.round(t), kind: "vanished from screen", k: p.k, l: Math.round(p.l) }); }
         for (let m = 1; m < vis.length; m++) C.gaps.push(vis[m].l - vis[m - 1].rt);
         for (let m = 1; m < vis.length; m++) if (vis[m].k === vis[m - 1].k && !(vis[m].p && vis[m - 1].p)) C.iss.push({ t: Math.round(t), kind: "same play twice side by side", k: vis[m].k });
         if (!vis.length || vis[0].l > L + 40 || vis[vis.length - 1].rt < R - 40) C.iss.push({ t: Math.round(t), kind: "blank at an end" });

@@ -12,3 +12,8 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
 - Round 2 done (checker fail): new plays go in past the right edge on the next frame (lead-in box keeps what is on
   screen), no waiting, no forced insertion; phone keeps the play on show unchanged. tick-jump 49/52 (the three misses are
   the 3 s time-to-visible check at 1440: worst 15.1 s, exactly the time the play at the right edge needs to clear).
+- Round 3 (16:05): the lead-in now keeps each play's exact sub-pixel gap and starts with a sub-pixel pad, so the offset is
+  a whole step with no rounding (the 1.5 to 2 px hop at rebuilds came from packing the plays and rounding the offset).
+  Still 1 px at the first rebuild after a mouse hold (hover test at 0.5 px fails). New plays from one refresh go in as
+  one group after plays still waiting; bursts arrive back to back, but the third play of a burst needs about 27 s at
+  1440 (each play is about 750 px), so the 20 s burst check fails.

@@ -1,69 +1,92 @@
-ok    1280@1.5: a touchdown goes into the reel on the poll that brings it  ["s-1-13-3-SHSU"]
-ok    1280@1.5: the extra point is in the list at once (off-screen copies say TD + XP)  ["Touchdown","Touchdown · TD + XP","Touchdown · TD + XP"]
-ok    1280@1.5: a burst of three touchdowns all go in, newest first  ["s-7-7-23-PITT","s-6-27-10-WAKE","s-5-14-9-UTSA"]
-ok    1280@1.5: over 9408 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end
-ok    1280@1.5: the reel never stood still  0
-ok    1280@1.5: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-1-13-3-SHSU","first":true,"ttv":15492,"clear":15506},{"k":"s-7-7-23-PITT","first":true,"ttv":22956,"clear":22950},{"k":"s-10-13-10-NEV","first":true,"ttv":15987,"clear":15987},{"k":"s-11-14-23-KENT","first":true,"ttv":18506,"clear":18511},{"k":"s-12-21-30-UK","first":true,"ttv":15977,"clear":15997},{"k":"s-13-7-9-EMU","first":true,"ttv":9032,"clear":9044}]
-note  1280@1.5: time to visible (ms): [15492,22956,41372,63454,15987,18506,15977,9032], play at the edge needed (ms): [15506,22950,22950,22950,15987,18511,15997,9044]
-ok    1280@1.5: one animation on the reel
-ok    1280@1.5: no page errors  []
+ok    1440 after hover, 0.5 px: held by the mouse while a play landed  {"h":["paused",-183],"h2":-183}
+ok    1440 after hover, 0.5 px: a touchdown goes into the reel on the poll that brings it  ["s-1-13-3-SHSU"]
+ok    1440 after hover, 0.5 px: the extra point is in the list at once (off-screen copies say TD + XP)  ["Touchdown","Touchdown · TD + XP","Touchdown · TD + XP"]
+ok    1440 after hover, 0.5 px: a burst of three touchdowns all go in, newest first  ["s-7-7-23-PITT","s-6-27-10-WAKE","s-5-14-9-UTSA"]
+FAIL  1440 after hover, 0.5 px: every play of the burst on screen within 20 s  [15280,27546,42262]
+note  1440 after hover, 0.5 px: burst time to visible (ms): [15280,27546,42262]
+FAIL  1440 after hover, 0.5 px: over 6766 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end  {"frames":6766,"long":0,"iss":[{"t":7615,"kind":"jump or pop-in","k":"s-pre-0","e":-1,"l":-14},{"t":7615,"kind":"jump or pop-in","k":"s-pre-1","e":-1,"l":980},{"t":7615,"kind":"vanished from screen","k":"s-pre-0","l":-13},{"t":7615,"kind":"vanished from screen","k":"s-pre-1","l":981},{"t":7632,"kind":"jump or pop-in","k":"s-pre-0","e":-1,"l":-15},{"t":7632,"kind":"jump or pop-in","k":"s-pre-1","e":-1,"l":979}],"n":33574,"kinds":{"jump or pop-in":16786,"vanished from screen":16788},"maxStill":0}
+ok    1440 after hover, 0.5 px: the reel never stood still  0
+ok    1440 after hover, 0.5 px: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-7-7-23-PITT","first":true,"ttv":15280,"clear":15268},{"k":"s-10-13-10-NEV","first":true,"ttv":8365,"clear":8351},{"k":"s-11-14-23-KENT","first":true,"ttv":11503,"clear":11505},{"k":"s-12-21-36-UK","first":true,"ttv":9411,"clear":9429},{"k":"s-13-7-9-EMU","first":true,"ttv":5555,"clear":5539}]
+FAIL  1440 after hover, 0.5 px: each landing's newest play on screen within 3 s (worst 15.3 s)
+note  1440 after hover, 0.5 px: time to visible (ms): [12271,15280,27546,42262,8365,11503,9411,5555], play at the edge needed (ms): [5237,15268,15268,15268,8351,11505,9429,5539]
+ok    1440 after hover, 0.5 px: one animation on the reel
+ok    1440 after hover, 0.5 px: no page errors  []
 
-8/8 checks passed
+8/11 checks passed
 ok    1440: a touchdown goes into the reel on the poll that brings it  ["s-1-13-3-SHSU"]
 ok    1440: the extra point is in the list at once (off-screen copies say TD + XP)  ["Touchdown","Touchdown · TD + XP","Touchdown · TD + XP"]
 ok    1440: a burst of three touchdowns all go in, newest first  ["s-7-7-23-PITT","s-6-27-10-WAKE","s-5-14-9-UTSA"]
-ok    1440: over 6088 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end
+FAIL  1440: every play of the burst on screen within 20 s  [15089,27372,42088]
+note  1440: burst time to visible (ms): [15089,27372,42088]
+ok    1440: over 6079 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end
 ok    1440: the reel never stood still  0
-ok    1440: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-1-13-3-SHSU","first":true,"ttv":6565,"clear":6604},{"k":"s-7-7-23-PITT","first":true,"ttv":15104,"clear":15099},{"k":"s-10-13-10-NEV","first":true,"ttv":8430,"clear":8430},{"k":"s-11-14-23-KENT","first":true,"ttv":11582,"clear":11569},{"k":"s-12-21-30-UK","first":true,"ttv":9477,"clear":9476},{"k":"s-13-7-9-EMU","first":true,"ttv":5596,"clear":5591}]
+ok    1440: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-1-13-3-SHSU","first":true,"ttv":6602,"clear":6604},{"k":"s-7-7-23-PITT","first":true,"ttv":15089,"clear":15113},{"k":"s-10-13-10-NEV","first":true,"ttv":8347,"clear":8334},{"k":"s-11-14-23-KENT","first":true,"ttv":11470,"clear":11471},{"k":"s-12-21-30-UK","first":true,"ttv":9361,"clear":9378},{"k":"s-13-7-9-EMU","first":true,"ttv":5507,"clear":5506}]
 FAIL  1440: each landing's newest play on screen within 3 s (worst 15.1 s)
-note  1440: time to visible (ms): [6565,15104,27370,42086,8430,11582,9477,5596], play at the edge needed (ms): [6604,15099,15099,15099,8430,11569,9476,5591]
+note  1440: time to visible (ms): [6602,15089,27372,42088,8347,11470,9361,5507], play at the edge needed (ms): [6604,15113,15113,15113,8334,11471,9378,5506]
 ok    1440: one animation on the reel
 ok    1440: no page errors  []
 
-8/9 checks passed
-ok    hover: the reel holds still and the new play went in off screen  {"a":[-160,"paused","s-3-21-23-BAY"],"b":-160,"vis":["s-pre-0","s-pre-1"]}
-ok    hover: leaving resumes it  {"c2":[-207.994,"running"],"d":-237.994}
-ok    hover: no page errors  []
-ok    reduced motion: no animation on the reel
-ok    reduced motion: the new play is on the reel at once  ["s-6-27-10-WAKE","s-pre-0"]
-ok    reduced motion: no page errors  []
-ok    390: each play on show its full 5 s while plays and extra points land  [5017,5017]
-ok    390: the play on show is never rewritten in place  []
-ok    390: no page errors  []
-
-9/9 checks passed
-ok    1440 one short play: a touchdown goes into the reel on the poll that brings it  ["s-1-13-3-SHSU"]
-ok    1440 one short play: the extra point is in the list at once (off-screen copies say TD + XP)  ["Touchdown","Touchdown · TD + XP","Touchdown · TD + XP"]
-ok    1440 one short play: a burst of three touchdowns all go in, newest first  ["s-7-7-23-PITT","s-6-27-10-WAKE","s-5-14-9-UTSA"]
-ok    1440 one short play: over 6027 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end
-ok    1440 one short play: the reel never stood still  0
-ok    1440 one short play: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-1-13-3-SHSU","first":true,"ttv":5569,"clear":5607},{"k":"s-7-7-23-PITT","first":true,"ttv":15136,"clear":15121},{"k":"s-10-13-10-NEV","first":true,"ttv":8420,"clear":8430},{"k":"s-11-14-23-KENT","first":true,"ttv":11590,"clear":11569},{"k":"s-12-21-30-UK","first":true,"ttv":9475,"clear":9476},{"k":"s-13-7-9-EMU","first":true,"ttv":5590,"clear":5591}]
-FAIL  1440 one short play: each landing's newest play on screen within 3 s (worst 15.1 s)
-note  1440 one short play: time to visible (ms): [5569,15136,27402,42118,8420,11590,9475,5590], play at the edge needed (ms): [5607,15121,15121,15121,8430,11569,9476,5591]
-ok    1440 one short play: one animation on the reel
-ok    1440 one short play: no page errors  []
-
-8/9 checks passed
-ok    1920 one short play: a touchdown goes into the reel on the poll that brings it  ["s-1-13-3-SHSU"]
-ok    1920 one short play: the extra point is in the list at once (off-screen copies say TD + XP)  ["Touchdown","Touchdown · TD + XP","Touchdown · TD + XP","Touchdown · TD + XP"]
-ok    1920 one short play: a burst of three touchdowns all go in, newest first  ["s-7-7-23-PITT","s-6-27-10-WAKE","s-5-14-9-UTSA"]
-ok    1920 one short play: over 5996 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end
-ok    1920 one short play: the reel never stood still  0
-ok    1920 one short play: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-1-13-3-SHSU","first":true,"ttv":5147,"clear":5155},{"k":"s-7-7-23-PITT","first":true,"ttv":15200,"clear":15187},{"k":"s-10-13-10-NEV","first":true,"ttv":8282,"clear":8285},{"k":"s-11-14-23-KENT","first":true,"ttv":11675,"clear":11669},{"k":"s-12-21-30-UK","first":true,"ttv":9322,"clear":9326},{"k":"s-13-7-9-EMU","first":true,"ttv":5701,"clear":5699}]
-note  1920 one short play: time to visible (ms): [5147,15200,27466,42182,8282,11675,9322,5701], play at the edge needed (ms): [5155,15187,15187,15187,8285,11669,9326,5699]
-ok    1920 one short play: one animation on the reel
-ok    1920 one short play: no page errors  []
+8/10 checks passed
+ok    1280@1.5: a touchdown goes into the reel on the poll that brings it  ["s-1-13-3-SHSU"]
+ok    1280@1.5: the extra point is in the list at once (off-screen copies say TD + XP)  ["Touchdown","Touchdown · TD + XP","Touchdown · TD + XP"]
+ok    1280@1.5: a burst of three touchdowns all go in, newest first  ["s-7-7-23-PITT","s-6-27-10-WAKE","s-5-14-9-UTSA"]
+note  1280@1.5: burst time to visible (ms): [22959,41375,63458]
+ok    1280@1.5: over 9412 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end
+ok    1280@1.5: the reel never stood still  0
+ok    1280@1.5: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-1-13-3-SHSU","first":true,"ttv":15534,"clear":15556},{"k":"s-7-7-23-PITT","first":true,"ttv":22959,"clear":22976},{"k":"s-10-13-10-NEV","first":true,"ttv":15983,"clear":15994},{"k":"s-11-14-23-KENT","first":true,"ttv":18505,"clear":18490},{"k":"s-12-21-30-UK","first":true,"ttv":15996,"clear":15985},{"k":"s-13-7-9-EMU","first":true,"ttv":9059,"clear":9051}]
+note  1280@1.5: time to visible (ms): [15534,22959,41375,63458,15983,18505,15996,9059], play at the edge needed (ms): [15556,22976,22976,22976,15994,18490,15985,9051]
+ok    1280@1.5: one animation on the reel
+ok    1280@1.5: no page errors  []
 
 8/8 checks passed
 ok    1440 two plays: a touchdown goes into the reel on the poll that brings it  ["s-1-13-3-SHSU"]
 ok    1440 two plays: the extra point is in the list at once (off-screen copies say TD + XP)  ["Touchdown","Touchdown · TD + XP","Touchdown · TD + XP"]
 ok    1440 two plays: a burst of three touchdowns all go in, newest first  ["s-7-7-23-PITT","s-6-27-10-WAKE","s-5-14-9-UTSA"]
-ok    1440 two plays: over 6088 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end
+FAIL  1440 two plays: every play of the burst on screen within 20 s  [15054,27337,42053]
+note  1440 two plays: burst time to visible (ms): [15054,27337,42053]
+ok    1440 two plays: over 6078 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end
 ok    1440 two plays: the reel never stood still  0
-ok    1440 two plays: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-1-13-3-SHSU","first":true,"ttv":6562,"clear":6604},{"k":"s-7-7-23-PITT","first":true,"ttv":15111,"clear":15099},{"k":"s-10-13-10-NEV","first":true,"ttv":8400,"clear":8397},{"k":"s-11-14-23-KENT","first":true,"ttv":11551,"clear":11536},{"k":"s-12-21-30-UK","first":true,"ttv":9448,"clear":9442},{"k":"s-13-7-9-EMU","first":true,"ttv":5564,"clear":5574}]
+ok    1440 two plays: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-1-13-3-SHSU","first":true,"ttv":6604,"clear":6638},{"k":"s-7-7-23-PITT","first":true,"ttv":15054,"clear":15063},{"k":"s-10-13-10-NEV","first":true,"ttv":8374,"clear":8368},{"k":"s-11-14-23-KENT","first":true,"ttv":11522,"clear":11504},{"k":"s-12-21-30-UK","first":true,"ttv":9435,"clear":9429},{"k":"s-13-7-9-EMU","first":true,"ttv":5536,"clear":5540}]
 FAIL  1440 two plays: each landing's newest play on screen within 3 s (worst 15.1 s)
-note  1440 two plays: time to visible (ms): [6562,15111,27377,42093,8400,11551,9448,5564], play at the edge needed (ms): [6604,15099,15099,15099,8397,11536,9442,5574]
+note  1440 two plays: time to visible (ms): [6604,15054,27337,42053,8374,11522,9435,5536], play at the edge needed (ms): [6638,15063,15063,15063,8368,11504,9429,5540]
 ok    1440 two plays: one animation on the reel
 ok    1440 two plays: no page errors  []
 
-8/9 checks passed
+8/10 checks passed
+ok    1440 one short play: a touchdown goes into the reel on the poll that brings it  ["s-1-13-3-SHSU"]
+ok    1440 one short play: the extra point is in the list at once (off-screen copies say TD + XP)  ["Touchdown","Touchdown · TD + XP","Touchdown · TD + XP"]
+ok    1440 one short play: a burst of three touchdowns all go in, newest first  ["s-7-7-23-PITT","s-6-27-10-WAKE","s-5-14-9-UTSA"]
+FAIL  1440 one short play: every play of the burst on screen within 20 s  [15151,27417,42133]
+note  1440 one short play: burst time to visible (ms): [15151,27417,42133]
+ok    1440 one short play: over 6034 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end
+ok    1440 one short play: the reel never stood still  0
+ok    1440 one short play: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-1-13-3-SHSU","first":true,"ttv":5608,"clear":5630},{"k":"s-7-7-23-PITT","first":true,"ttv":15151,"clear":15146},{"k":"s-10-13-10-NEV","first":true,"ttv":8378,"clear":8385},{"k":"s-11-14-23-KENT","first":true,"ttv":11532,"clear":11538},{"k":"s-12-21-30-UK","first":true,"ttv":9420,"clear":9429},{"k":"s-13-7-9-EMU","first":true,"ttv":5555,"clear":5556}]
+FAIL  1440 one short play: each landing's newest play on screen within 3 s (worst 15.2 s)
+note  1440 one short play: time to visible (ms): [5608,15151,27417,42133,8378,11532,9420,5555], play at the edge needed (ms): [5630,15146,15146,15146,8385,11538,9429,5556]
+ok    1440 one short play: one animation on the reel
+ok    1440 one short play: no page errors  []
+
+8/10 checks passed
+ok    1920 one short play: a touchdown goes into the reel on the poll that brings it  ["s-1-13-3-SHSU"]
+ok    1920 one short play: the extra point is in the list at once (off-screen copies say TD + XP)  ["Touchdown","Touchdown · TD + XP","Touchdown · TD + XP","Touchdown · TD + XP"]
+ok    1920 one short play: a burst of three touchdowns all go in, newest first  ["s-7-7-23-PITT","s-6-27-10-WAKE","s-5-14-9-UTSA"]
+note  1920 one short play: burst time to visible (ms): [15117,27383,42099]
+ok    1920 one short play: over 5989 frames no play on screen jumped, popped in, vanished, changed in place or doubled, and no blank end
+ok    1920 one short play: the reel never stood still  0
+ok    1920 one short play: each landing's newest play showed by the time the play crossing the right edge had cleared it (+0.5 s)  [{"k":"s-1-13-3-SHSU","first":true,"ttv":5077,"clear":5130},{"k":"s-7-7-23-PITT","first":true,"ttv":15117,"clear":15111},{"k":"s-10-13-10-NEV","first":true,"ttv":8319,"clear":8318},{"k":"s-11-14-23-KENT","first":true,"ttv":11469,"clear":11455},{"k":"s-12-21-30-UK","first":true,"ttv":9355,"clear":9346},{"k":"s-13-7-9-EMU","first":true,"ttv":5477,"clear":5473}]
+note  1920 one short play: time to visible (ms): [5077,15117,27383,42099,8319,11469,9355,5477], play at the edge needed (ms): [5130,15111,15111,15111,8318,11455,9346,5473]
+ok    1920 one short play: one animation on the reel
+ok    1920 one short play: no page errors  []
+
+8/8 checks passed
+ok    hover: the reel holds still and the new play went in off screen  {"a":[-157,"paused","s-3-21-23-BAY"],"b":-157,"vis":["s-pre-0","s-pre-1"]}
+ok    hover: leaving resumes it  {"c2":[-205,"running"],"d":-235}
+ok    hover: no page errors  []
+ok    reduced motion: no animation on the reel
+ok    reduced motion: the new play is on the reel at once  ["s-6-27-10-WAKE","s-pre-0"]
+ok    reduced motion: no page errors  []
+ok    390: each play on show its full 5 s while plays and extra points land  [5017,5016]
+ok    390: the play on show is never rewritten in place  []
+ok    390: no page errors  []
+
+9/9 checks passed
