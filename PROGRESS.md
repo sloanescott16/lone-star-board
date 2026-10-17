@@ -1,12 +1,9 @@
-# v116 game clock (job 1010-1609-a00)
+# Saturday ticker smooth (job 1017-1402-5wo)
 
-Branch game-clock, worktree builds/press-box/lsb-clock, from origin/main fc89a6e.
-The Game Center lives in this repo (lone-star-board), not in the Press Box hub; hub-clock was made first and left unused.
+Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/main 8e872e9 (live).
 
-- Round 2 done (16:30): checker findings 1 to 6 fixed, round2.test.js, browser rerun moment and live (halftime), no page errors.
-- Stage 3 done (16:20): live freeze caught again, ESPN 2:00 and "0:00 from OU 0", page ~1:03 and "~2:40 from TEX 35". browser checks (moment and live) at 390 and 1440, no page errors; see HANDOFF.md.
-- Stage 2 done: fix in index.html (ckOf, ckLive, ckPlay, ckDrive, ckFrom), tests in _tests/game-clock (bun test _tests/game-clock).
-- Stage 1 done: live ESPN feeds for Texas at Oklahoma (event 401856717) saved in _tests/game-clock/fixtures, about every 90 s.
-- Cause: ESPN's college feed only stamps a game clock on plays whose text carries one ("(10:09)" or "clock 03:43").
-  Every other play repeats the last stamped clock, and the board and header clock stay on it too, so a no-huddle drive with
-  no timeout reads 10:09 throughout. Mid-drive ESPN also files the drive as "0:00" from "OU 0".
+- Stage 1 done: diagnosis harness in _tests/ticker-5wo (diag.js). Live version: the reel animation itself is steady
+  (composited, whole-pixel frames, no long tasks), but every new play or extra point moves what is on screen:
+  jumps of 994, 61, 428, 61 and 449 px in 24 s at 1440. Cause: plays are newest first, so a new play is put in at the
+  front of the strip and the reel keeps the same offset, which slides every visible play along; an extra point
+  relabels "TD + XP" and widens an item. On a phone the shown play is swapped early (6 of 8 changes under 4.5 s).
