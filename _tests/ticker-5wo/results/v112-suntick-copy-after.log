@@ -24,7 +24,7 @@ FAIL  sun-1600: rebuilt once for it, nothing else  [{"before":2,"after":2}]
 ok    sun-1600: the offset carried on (a plain step every frame, or wrapped at the new width at the one rebuild; never back to zero)
 ok    sun-1600: after the rebuild every frame is on a whole pixel, in step
 FAIL  sun-1600: the second play lands in front of the first, the reel is longer  [{"items2":["tk  | YOUQuinn PasserQB · DAL212 pass yd · 1 pass TD12.48 total","tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total","tk  | YOURex BackfieldRB · PHI30 rush yd3.00 total","tk  | YOUWill WideoutWR · DAL71 rec yd · 5 rec12.10 total","tk  | YOUWalt ReceiverWR · PHI1 rec TD · 40 rec yd · 3 rec13.00 total","tk  | YOUTerry TightendTE · NYG2 rec · 18 rec yd3.80 total","tk  | YOUFlex FielderWR · WSH4 rec · 33 rec yd7.30 total","tk  | YOUKirk KickerK · DAL2 FG · 2 XP8.00 total","tk  | YOUDallas CowboysDEF · DAL3 sack3.00 total","tk opp | OPPOscar OpponentQB · PHI180 pass yd · 1 pass TD11.20 total","tk opp | OPPRay RusherRB · NYG41 rush yd4.10 total","tk opp | OPPRob RivalRB · WSH22 rush yd · 1 rec · 6 rec yd3.80 total","tk opp | OPPWade WideWR · PHI55 rec yd · 4 rec9.50 total","tk opp | OPPWes WestWR · DAL2 rec · 20 rec yd4.00 total","tk opp | OPPTim TightTE · WSH3 rec · 28 rec yd5.80 total","tk opp | OPPFran FlexibleRB · NYG19 rush yd1.90 total","tk opp | OPPKarl KicksK · PHI1 FG · 1 XP4.00 total","tk opp | OPPPhiladelphia EaglesDEF · PHI2 sack2.00 total"],"H1":8052,"H":8052}]
-FAIL  sun-1600: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)  [{"anims":[2,2],"cr":{"jumps":0,"worst":0.004},"last":-721.022}]
+FAIL  sun-1600: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)  [{"anims":[2,2],"cr":{"jumps":0,"worst":0.008},"last":-720.982}]
 ok    sun-1600: no sideways scroll
 ok    sun-1600: no page errors
 ok    sun-1280: the fantasy plays are on the reel (both lineups, YOU and OPP)
@@ -53,7 +53,7 @@ FAIL  sun-1280: rebuilt once for it, nothing else  [{"before":2,"after":2}]
 ok    sun-1280: the offset carried on (a plain step every frame, or wrapped at the new width at the one rebuild; never back to zero)
 ok    sun-1280: after the rebuild every frame is on a whole pixel, in step
 FAIL  sun-1280: the second play lands in front of the first, the reel is longer  [{"items2":["tk  | YOUQuinn PasserQB · DAL212 pass yd · 1 pass TD12.48 total","tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total","tk  | YOURex BackfieldRB · PHI30 rush yd3.00 total","tk  | YOUWill WideoutWR · DAL71 rec yd · 5 rec12.10 total","tk  | YOUWalt ReceiverWR · PHI1 rec TD · 40 rec yd · 3 rec13.00 total","tk  | YOUTerry TightendTE · NYG2 rec · 18 rec yd3.80 total","tk  | YOUFlex FielderWR · WSH4 rec · 33 rec yd7.30 total","tk  | YOUKirk KickerK · DAL2 FG · 2 XP8.00 total","tk  | YOUDallas CowboysDEF · DAL3 sack3.00 total","tk opp | OPPOscar OpponentQB · PHI180 pass yd · 1 pass TD11.20 total","tk opp | OPPRay RusherRB · NYG41 rush yd4.10 total","tk opp | OPPRob RivalRB · WSH22 rush yd · 1 rec · 6 rec yd3.80 total","tk opp | OPPWade WideWR · PHI55 rec yd · 4 rec9.50 total","tk opp | OPPWes WestWR · DAL2 rec · 20 rec yd4.00 total","tk opp | OPPTim TightTE · WSH3 rec · 28 rec yd5.80 total","tk opp | OPPFran FlexibleRB · NYG19 rush yd1.90 total","tk opp | OPPKarl KicksK · PHI1 FG · 1 XP4.00 total","tk opp | OPPPhiladelphia EaglesDEF · PHI2 sack2.00 total"],"H1":8052,"H":8052}]
-FAIL  sun-1280: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)  [{"anims":[2,2],"cr":{"jumps":0,"worst":0.008},"last":-720.988}]
+FAIL  sun-1280: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)  [{"anims":[2,2],"cr":{"jumps":0,"worst":0.008},"last":-720.994}]
 ok    sun-1280: no sideways scroll
 ok    sun-1280: no page errors
 ok    sun-948: the fantasy plays are on the reel (both lineups, YOU and OPP)
@@ -82,7 +82,7 @@ FAIL  sun-948: rebuilt once for it, nothing else  [{"before":2,"after":2}]
 ok    sun-948: the offset carried on (a plain step every frame, or wrapped at the new width at the one rebuild; never back to zero)
 ok    sun-948: after the rebuild every frame is on a whole pixel, in step
 FAIL  sun-948: the second play lands in front of the first, the reel is longer  [{"items2":["tk  | YOUQuinn PasserQB · DAL212 pass yd · 1 pass TD12.48 total","tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total","tk  | YOURex BackfieldRB · PHI30 rush yd3.00 total","tk  | YOUWill WideoutWR · DAL71 rec yd · 5 rec12.10 total","tk  | YOUWalt ReceiverWR · PHI1 rec TD · 40 rec yd · 3 rec13.00 total","tk  | YOUTerry TightendTE · NYG2 rec · 18 rec yd3.80 total","tk  | YOUFlex FielderWR · WSH4 rec · 33 rec yd7.30 total","tk  | YOUKirk KickerK · DAL2 FG · 2 XP8.00 total","tk  | YOUDallas CowboysDEF · DAL3 sack3.00 total","tk opp | OPPOscar OpponentQB · PHI180 pass yd · 1 pass TD11.20 total","tk opp | OPPRay RusherRB · NYG41 rush yd4.10 total","tk opp | OPPRob RivalRB · WSH22 rush yd · 1 rec · 6 rec yd3.80 total","tk opp | OPPWade WideWR · PHI55 rec yd · 4 rec9.50 total","tk opp | OPPWes WestWR · DAL2 rec · 20 rec yd4.00 total","tk opp | OPPTim TightTE · WSH3 rec · 28 rec yd5.80 total","tk opp | OPPFran FlexibleRB · NYG19 rush yd1.90 total","tk opp | OPPKarl KicksK · PHI1 FG · 1 XP4.00 total","tk opp | OPPPhiladelphia EaglesDEF · PHI2 sack2.00 total"],"H1":8052,"H":8052}]
-FAIL  sun-948: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)  [{"anims":[2,2],"cr":{"jumps":0,"worst":0.008},"last":-720.988}]
+FAIL  sun-948: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)  [{"anims":[2,2],"cr":{"jumps":0,"worst":0.009},"last":-718.022}]
 ok    sun-948: no sideways scroll
 ok    sun-948: no page errors
 ok    sun-390: the fantasy plays are on the reel (both lineups, YOU and OPP)
@@ -111,7 +111,7 @@ FAIL  sun-390: rebuilt once for it, nothing else  [{"before":2,"after":2}]
 ok    sun-390: the offset carried on (a plain step every frame, or wrapped at the new width at the one rebuild; never back to zero)
 ok    sun-390: after the rebuild every frame is on a whole pixel, in step
 FAIL  sun-390: the second play lands in front of the first, the reel is longer  [{"items2":["tk  | YOUQuinn PasserQB · DAL212 pass yd · 1 pass TD12.48 total","tk  | YOURudy RunnerRB · DAL64 rush yd · 2 rec · 15 rec yd9.90 total","tk  | YOURex BackfieldRB · PHI30 rush yd3.00 total","tk  | YOUWill WideoutWR · DAL71 rec yd · 5 rec12.10 total","tk  | YOUWalt ReceiverWR · PHI1 rec TD · 40 rec yd · 3 rec13.00 total","tk  | YOUTerry TightendTE · NYG2 rec · 18 rec yd3.80 total","tk  | YOUFlex FielderWR · WSH4 rec · 33 rec yd7.30 total","tk  | YOUKirk KickerK · DAL2 FG · 2 XP8.00 total","tk  | YOUDallas CowboysDEF · DAL3 sack3.00 total","tk opp | OPPOscar OpponentQB · PHI180 pass yd · 1 pass TD11.20 total","tk opp | OPPRay RusherRB · NYG41 rush yd4.10 total","tk opp | OPPRob RivalRB · WSH22 rush yd · 1 rec · 6 rec yd3.80 total","tk opp | OPPWade WideWR · PHI55 rec yd · 4 rec9.50 total","tk opp | OPPWes WestWR · DAL2 rec · 20 rec yd4.00 total","tk opp | OPPTim TightTE · WSH3 rec · 28 rec yd5.80 total","tk opp | OPPFran FlexibleRB · NYG19 rush yd1.90 total","tk opp | OPPKarl KicksK · PHI1 FG · 1 XP4.00 total","tk opp | OPPPhiladelphia EaglesDEF · PHI2 sack2.00 total"],"H1":8052,"H":8052}]
-FAIL  sun-390: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)  [{"anims":[2,2],"cr":{"jumps":0,"worst":0.01},"last":-655.988}]
+FAIL  sun-390: rebuilt once more, and the offset carried on exactly (not one frame out of step, not back to zero)  [{"anims":[2,2],"cr":{"jumps":0,"worst":0.008},"last":-657.016}]
 ok    sun-390: no sideways scroll
 ok    sun-390: no page errors
 ok    sun-reduced-1600: reduced motion gives no animation at all (none ever started)
@@ -169,24 +169,24 @@ ok    noanimate-sun: animate is missing, the plays are on the reel, no animation
 ok    noanimate-sun: and nothing throws (not one page error in 3 seconds of frames)
 ok    noanimate-sat: animate is missing, the plays are on the reel, no animation, reel still at zero
 ok    noanimate-sat: and nothing throws (not one page error in 3 seconds of frames)
-FAIL  sun-resize: at 390 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels  [{"anims":[2,3],"st":{"flip":false,"pid":18,"same":false},"tr":{"maxOff":0.013,"maxStep":0.008,"run":90,"frames":90}}]
-FAIL  sun-resize: at 1280 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels  [{"anims":[2,4],"st":{"flip":false,"pid":18,"same":false},"tr":{"maxOff":0.014,"maxStep":0.009,"run":90,"frames":90}}]
-FAIL  sun-resize: at 360 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels  [{"anims":[2,5],"st":{"flip":false,"pid":18,"same":false},"tr":{"maxOff":0.009,"maxStep":0.008,"run":90,"frames":90}}]
+ok    sun-resize: at 390 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels
+ok    sun-resize: at 1280 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels
+ok    sun-resize: at 360 wide: same animation (no restart), no phone mode, all 18 plays, whole pixels
 ok    sun-resize: no page errors
 ok    sun-dpr-2: 2 device px a frame, one copy a whole number of device pixels, a multiple of n
 ok    sun-dpr-2: every frame on a whole device pixel (within 0.05), same move every frame
 ok    sun-dpr-2: no page errors
 
-note  sun-1600 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.017,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.665,"half":8052}
+note  sun-1600 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.014,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.6667,"half":8052}
 note  sun-1600 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":8052,"H1":8052,"jumps":0,"worst":0.008}
-note  sun-1280 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.012,"maxStep":0.008,"run":200,"frames":200,"frameMs":16.6667,"half":8052}
+note  sun-1280 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.014,"maxStep":0.008,"run":200,"frames":200,"frameMs":16.6667,"half":8052}
 note  sun-1280 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":8052,"H1":8052,"jumps":0,"worst":0.008}
-note  sun-948 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.012,"maxStep":0.008,"run":200,"frames":200,"frameMs":16.6667,"half":8052}
-note  sun-948 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":8052,"H1":8052,"jumps":0,"worst":0.008}
-note  sun-390 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.016,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.6667,"half":8052}
+note  sun-948 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.02,"maxStep":0.009,"run":200,"frames":200,"frameMs":16.665,"half":8052}
+note  sun-948 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":8052,"H1":8052,"jumps":0,"worst":0.01}
+note  sun-390 200 frames, in device px: furthest from a whole pixel, furthest from an even step, longest run of back-to-back frames: {"maxOff":0.016,"maxStep":0.01,"run":200,"frames":200,"frameMs":16.665,"half":8052}
 note  sun-390 points change, idle lineup to one play: half width before and after, frames that were not a plain step, worst miss: {"H0":8052,"H1":8052,"jumps":0,"worst":0.008}
 note  trip animations started on the reel over 3 round trips (6 switches): 6
-note  font-sun half width before and after the font, gap at the seam before and after (CSS px), animations started: {"before":8052,"after":7344,"gapBefore":0.55,"gapAfter":0.87,"anims":[2,3]}
+note  font-sun half width before and after the font, gap at the seam before and after (CSS px), animations started: {"before":8052,"after":7344,"gapBefore":0.55,"gapAfter":0.88,"anims":[2,3]}
 note  font-sat half width before and after the font, gap at the seam before and after (CSS px), animations started: {"before":734,"after":664,"gapBefore":0.16,"gapAfter":0.53,"anims":[2,3]}
 
-159/178 checks passed
+162/178 checks passed

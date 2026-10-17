@@ -39,7 +39,7 @@ head origin/main 8e872e9. Not pushed, not merged. Publishing needs the Captain's
   both are now deliberately deferred. The transform "jump" it reports during one loop sample is the anchored rebuild
   (the transform moves, the plays on screen do not; tick-jump checks that on screen).
 - test-suntick-mock.js needed "two boxes" changed to "at least two" (copy in _tests/ticker-5wo/v112-copies): 159/178,
-  the same deferral assumptions, plus "resize starts no new animation" before the resize fix (not rerun after it).
+  all 16 failures are the same deferral assumptions (rerun after the resize fix; resize checks pass).
 
 ## Unsure of
 - Headless Chrome runs at 60 Hz with software compositing; a real high-refresh monitor was not tested.
