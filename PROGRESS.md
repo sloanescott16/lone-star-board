@@ -7,3 +7,5 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
   jumps of 994, 61, 428, 61 and 449 px in 24 s at 1440. Cause: plays are newest first, so a new play is put in at the
   front of the strip and the reel keeps the same offset, which slides every visible play along; an extra point
   relabels "TD + XP" and widens an item. On a phone the shown play is swapped early (6 of 8 changes under 4.5 s).
+- Stage 2 done: fix in index.html ("5wo"): new content waits for a moment nobody sees and goes in anchored, copies cover
+  the track, phone keeps the play on show. tick-jump.test.js 23/23 after, 18/23 on live 8e872e9. See HANDOFF.md.

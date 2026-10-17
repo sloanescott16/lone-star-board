@@ -1,3 +1,52 @@
+# Handoff: Saturday "Big plays" ticker jumps (job 1017-1402-5wo, 2026-10-17)
+
+Branch ticker-smooth-5wo in worktree builds/press-box/lsb-tick5wo (repo sloanescott16/lone-star-board), from the live
+head origin/main 8e872e9. Not pushed, not merged. Publishing needs the Captain's typed yes.
+
+## What was wrong (measured, headless Chrome, mocked live Saturday, 24 s with plays landing on the 5 s polls)
+- The animation engine itself was fine: one compositor animation, whole-pixel frames, no frames over 1.5x, no long
+  main-thread tasks, no composite failures in the trace. Dropped frames in the trace 8 to 9 before, 6 to 8 after (noise).
+- The fault was the content. Plays are newest first, so a new play went in at the front of the strip while the reel kept
+  its offset: every play on screen slid along by the new play's width. An extra point relabels "TD + XP" and widens a
+  play, which slid everything after it. Measured jumps of a play on screen at 1440: 994, 61, 428, 61, 449 px in 24 s.
+- With one short play on a wide screen only two copies were made, so 819 px at the right of the track went blank.
+- Phone (390, one play at a time): a new play swapped the play on show at once (6 of 8 changes under 4.5 s).
+
+## The fix (index.html, all marked "5wo")
+- New content waits (TKR.pend) until the plays on screen read the same, in the same order, in the new list (tkrSafe).
+  Then it goes in with the offset moved so those plays stay exactly where they were. A changed play on screen scrolls
+  off first. While hovered it waits. Out of sight it goes in at once. After 30 s, or if the strip is shorter than the
+  track, it goes in anyway, anchored on the first play on screen.
+- Enough copies to cover the track (1 + ceil(track / copy)); a resize only re-boxes if more copies are needed.
+- Phone mode keeps the play on show for its full 5 s; if its own text changes it is updated in place.
+- Reduced motion unchanged: no animation, new plays go straight in. Sunday's fantasy reel uses the same engine and
+  gets the same benefit.
+
+## Before and after (8e872e9 against this branch)
+- diag.js, 1440: 5 jumps (61 to 994 px) before, 0 after. 390: 6 early swaps before, 0 after. Frame timing the same
+  (median 16.7 ms). Logs: _tests/ticker-5wo/results/diag-*.log
+- tick-jump.test.js: 18/23 before (fails on the jump at 1440 and 1280@1.5x, the blank on a short reel, the phone swap,
+  and the hover hold), 23/23 after. Logs: results/tick-jump-*.log
+
+## How to run
+- From _tests/ticker-5wo: `bun tick-jump.test.js` (or give a path to another index.html). Set TEMP, TMP and PW_TMP to
+  a scratch folder; the Chrome profile is made there and removed after. Sound muted, speech stubbed, no network.
+- `bun diag.js <index.html> <label>` prints the measurements (and a trace summary).
+
+## Older tests, honestly
+- pc-test/cc-v112/test-sattick3-v112-mock.js on this branch: 215/228. The 13 failures are its own assumptions that a
+  new play is on the reel on the very poll that brings it, with one rebuild, and that later samples see no rebuild;
+  both are now deliberately deferred. The transform "jump" it reports during one loop sample is the anchored rebuild
+  (the transform moves, the plays on screen do not; tick-jump checks that on screen).
+- test-suntick-mock.js needed "two boxes" changed to "at least two" (copy in _tests/ticker-5wo/v112-copies): 159/178,
+  the same deferral assumptions, plus "resize starts no new animation" before the resize fix (not rerun after it).
+
+## Unsure of
+- Headless Chrome runs at 60 Hz with software compositing; a real high-refresh monitor was not tested.
+- No version marker was bumped; the publish step should tag it (next after v116) if wanted.
+- A new play can take up to about 25 s at 1440 to appear while the plays around the loop point are on screen. That is
+  the price of never moving what is on screen.
+
 # Handoff: v116 Game Center clock (job 1010-1609-a00)
 
 Branch game-clock in worktree builds/press-box/lsb-clock (repo sloanescott16/lone-star-board), from origin/main fc89a6e.

@@ -4750,7 +4750,7 @@ function setLeague(k) {
   if (!LG.fantasy && location.hash === "#fantasy") location.hash = "#home";
   if (LG.key !== "cfb" && location.hash === "#ranks") location.hash = "#home";   // v75
   route();
-  { const r = el("#reel"); tkrStop(); r.innerHTML = ""; r.dataset.k = ""; el("#tkTag").innerHTML = ""; TKR.key = ""; el(".ticker").classList.remove("flip"); }   // v100, v105; v111: tkrStop cancels the reel animation and clears the transform
+  { const r = el("#reel"); tkrStop(); r.innerHTML = ""; r.dataset.k = ""; el("#tkTag").innerHTML = ""; TKR.key = ""; TKR.cur = []; TKR.pend = TKR.pendI = null; TKR.shownH = ""; el(".ticker").classList.remove("flip"); }   // v100, v105; v111: tkrStop cancels the reel animation and clears the transform
   el("#board").innerHTML = `<div class="empty">Loading scores</div>`;
   el("#hero").innerHTML = `<div class="empty">Loading the ${esc(dispName(CFG.fav))} game</div>`;
   el("#slots").innerHTML = ""; el("#sched").innerHTML = `<div class="empty">Loading the schedule</div>`; el("#feed").innerHTML = `<li class="empty">Nothing yet</li>`; el("#standings").innerHTML = "";
@@ -5234,7 +5234,16 @@ function renderSatTicker() {
   el(".ticker").classList.toggle("flip", tkFlip());
   if (TKR.key !== key) {
     TKR.key = key;
-    if (tkFlip()) { tkrStop(); TKR.i = Math.min(TKR.i, TKR.list.length - 1); reel.innerHTML = TKR.list[Math.max(0, TKR.i)]; }
+    if (tkFlip()) {
+      tkrStop();
+      // 5wo: a new play used to swap the play on show straight away (the list is newest first, so index i moved to another play).
+      // Now the play on show stays until its 5 seconds are up; if its own wording changed (an extra point) it is updated in place.
+      const sh = reel.firstElementChild, sk = sh && sh.classList.contains("tk") ? sh.getAttribute("data-k") : null;
+      const j = sk ? TKR.list.findIndex(h => h.includes(`data-k="${esc(sk)}"`)) : -1;
+      if (j >= 0) { TKR.i = j; if (TKR.list[j] !== TKR.shownH) { reel.innerHTML = TKR.shownH = TKR.list[j]; } }
+      else if (sk && TKR.list.length) TKR.i = Math.min(TKR.i, TKR.list.length - 1) - 1;   // the play on show left the list: it stays until the next turn, which shows the play after it
+      else { TKR.i = Math.max(0, Math.min(TKR.i, TKR.list.length - 1)); reel.innerHTML = TKR.shownH = TKR.list[TKR.i]; }
+    }
     else tkrLoad(TKR.list.join(""));   // v111: the next frame rebuilds the animation from the same offset (tkrBuild); no jump when a play lands
   }
   el(".ticker").setAttribute("aria-label", "Saturday: scoring plays and big plays");
@@ -5254,18 +5263,37 @@ function renderSatTicker() {
    v112: Sunday's fantasy reel (renderFantasy) is on the same engine, one for both leagues; the old CSS reel keyframes are gone.
    Sunday scrolls at every width; only Saturday has the one-at-a-time phone mode. */
 const TKR = { half: 0, paused: false, i: 0, flipT: 0, list: [], key: "", raf: 0, last: 0,
-  anim: null, dirty: false, fi: 1000 / 60, ok: false, m: [], n: 1, k: 1, N: 0, dpr: 0, chk: 0, t1: 0, bad: 0, wait: false, ro: null };   // v111: fi = frame interval in ms (60 Hz assumed until measured), N = frames in one loop; v112: wait = could not measure (hidden), the observer on the track says when it shows
+  anim: null, dirty: false, fi: 1000 / 60, ok: false, m: [], n: 1, k: 1, N: 0, dpr: 0, chk: 0, t1: 0, bad: 0, wait: false, ro: null, cur: [], pend: null, pendI: null, pendT: 0, tw: 0, shownH: "" };   // 5wo: cur = the items on the reel, pend = new content waiting for a safe moment, tw = track width at the last build   // v111: fi = frame interval in ms (60 Hz assumed until measured), N = frames in one loop; v112: wait = could not measure (hidden), the observer on the track says when it shows
 const tkMQ = matchMedia("(max-width: 640px)"), tkRM = matchMedia("(prefers-reduced-motion: reduce)");
 const tkFlip = () => LG.key === "cfb" && tkMQ.matches;   // v112: Saturday only
 try { tkMQ.addEventListener("change", () => { if (LG.key !== "cfb") return; TKR.key = ""; tkrStop(); renderSatTicker(); }); } catch (_) {}
 // v112: a web font that arrives after the two copies were boxed changes the text widths and leaves a blank at the loop point (46 px once): box them again, from the same offset
 try { document.fonts.addEventListener("loadingdone", () => { TKR.dirty = true; }); document.fonts.ready.then(() => { TKR.dirty = true; }); } catch (_) {}
 // v112: both leagues put their plays on the reel here: two boxed copies, built on the next frame from the same offset. The callers decide the content changed.
+/* 5wo: plays are newest first, so a new play went in at the front of the strip while the reel kept its offset, and every
+   play on screen slid along by the new one's width (61 to 994 px jumps measured at 1440); an extra point relabelling
+   "TD + XP" did the same from mid-strip. Now new content waits (TKR.pend) until the plays on screen read the same, in the
+   same order, in the new list (tkrSafe), then goes in with the offset moved so those plays stay exactly where they were.
+   A changed play that is on screen just scrolls off first. Still waiting after 30 s: put in anyway, anchored. */
+function tkrItems(html) { const t = document.createElement("template"); t.innerHTML = html || ""; return [...t.content.children].map(e => ({ k: e.getAttribute("data-k") || e.getAttribute("data-pid") || e.outerHTML, h: e.outerHTML })); }
+function tkrWrite(reel, html) { reel.innerHTML = html ? `<span class="tkc">${html}</span><span class="tkc">${html}</span>` : ""; TKR.cur = tkrItems(html); TKR.pend = null; TKR.pendT = 0; }
 function tkrLoad(html) {
   const reel = el("#reel"); if (!reel) return;
-  reel.innerHTML = html ? `<span class="tkc">${html}</span><span class="tkc">${html}</span>` : "";
-  if (html) TKR.dirty = true; else tkrStop();   // nothing to show: no animation
-  tkrStart();
+  if (!html) { tkrWrite(reel, ""); tkrStop(); return; }   // nothing to show: no animation
+  if (TKR.anim && !tkRM.matches) { TKR.pend = html; TKR.pendI = tkrItems(html); TKR.pendT = 0; }   // 5wo: moving: wait for a moment nobody will see
+  else tkrWrite(reel, html);   // still (first load, reduced motion, no Web Animations): straight in
+  TKR.dirty = true; tkrStart();
+}
+// 5wo: is now a safe moment for the pending content? Returns { ok, a }: a = the first play on screen that is also in the new
+// list, with its place in the new list (j) and in the old strip (p, CSS px from the strip's start), so the rebuild can keep it still.
+function tkrSafe(reel, tb) {
+  const nw = TKR.pendI || [], cur = TKR.cur || [], rl = reel.getBoundingClientRect().left, vis = [];
+  for (const c of reel.children) { const kids = c.children; for (let i = 0; i < kids.length; i++) { const b = kids[i].getBoundingClientRect(); if (b.right > tb.left - 40 && b.left < tb.right + 40) vis.push({ i, p: b.left - rl }); } }
+  let a = null; for (const v of vis) { const o = cur[v.i]; const j = o ? nw.findIndex(x => x.k === o.k) : -1; if (j >= 0) { a = { j, p: v.p }; break; } }
+  let ok = vis.length > 0 && vis.length <= nw.length;
+  if (ok) { const o0 = cur[vis[0].i], j0 = o0 ? nw.findIndex(x => x.k === o0.k) : -1; ok = j0 >= 0;
+    for (let m = 0; ok && m < vis.length; m++) { const o = cur[vis[m].i], x = nw[(j0 + m) % nw.length]; ok = !!o && x.k === o.k && x.h === o.h; } }
+  return { ok, a };
 }
 // v111: n device pixels every k frames, one of them 1, at least 45 steps a second, nearest to 55 CSS px a second (ties go to k = 1)
 function tkrPick(hz, dpr) {
@@ -5288,15 +5316,35 @@ const tkrF = () => Math.round(TKR.anim.currentTime / TKR.fi - (TKR.k > 1 ? 0.5 :
 function tkrSeek(t, F) { TKR.anim.startTime = (document.timeline.currentTime ?? t) - (F % TKR.N + (TKR.k > 1 ? 0.5 : 0)) * TKR.fi; TKR.chk = t; }
 // v111: called at a frame's timestamp: box the two copies to whole device pixels, (re)make the animation, carry on from the same offset
 function tkrBuild(t, reel) {
+  const tb = reel.parentElement.getBoundingClientRect();
+  let x = tkrX(), a = null;
+  if (TKR.pend != null) {   // 5wo: new content waiting
+    if (TKR.anim && tb.width > 0 && reel.children.length) {
+      if (!TKR.pendT) TKR.pendT = t;
+      if (TKR.paused) return "wait";   // hovering: nothing moves off screen, so wait for the mouse to leave
+      const s = tkrSafe(reel, tb);
+      if (!s.ok && t - TKR.pendT < 30000 && TKR.half > tb.width) return "wait";   // a changed play is on screen: try again next frame (TKR.dirty stays set). A strip shorter than the track is always all on screen, so it does not wait
+      a = s.a;
+    }
+    tkrWrite(reel, TKR.pend);
+  }
   TKR.dirty = false;   // v112: one try per change. If it cannot be measured yet (hidden) it waits for the observer below instead of trying every frame
-  const dpr = devicePixelRatio || 1, { n, k } = tkrPick(1000 / TKR.fi, dpr), c = reel.children, x = tkrX();
-  if (typeof reel.animate !== "function" || c.length !== 2) return;   // v112: no Web Animations in this browser: leave the reel still, throw nothing
-  c[0].style.width = c[1].style.width = "";
+  const dpr = devicePixelRatio || 1, { n, k } = tkrPick(1000 / TKR.fi, dpr), c = reel.children;
+  if (typeof reel.animate !== "function" || c.length < 2) return;   // v112: no Web Animations in this browser: leave the reel still, throw nothing
+  for (const e of c) e.style.width = "";
   const tot = Math.ceil(c[0].getBoundingClientRect().width * dpr / n - 0.001) * n;   // one copy in device pixels, rounded up to a whole number of steps
   if (!(tot > 0)) { TKR.wait = true; TKR.dpr = dpr; return; }   // v112: hidden (or empty): the old animation, if any, keeps its place for the rebuild
+  const half = tot / dpr;
+  // 5wo: enough copies to cover the track at every point of the loop (one short play on a wide screen left a blank at the right)
+  const need = 1 + Math.max(1, Math.ceil(tb.width / half));
+  while (c.length < need) reel.appendChild(c[0].cloneNode(true));
+  while (c.length > need) reel.lastElementChild.remove();
+  for (const e of c) e.style.width = half + "px";
+  // 5wo: keep the anchor play where it was on screen: offset moves by how far that play moved within the strip
+  if (a) { const q = c[0].children[a.j]; if (q) x = x + (q.getBoundingClientRect().left - c[0].getBoundingClientRect().left) - a.p; }
+  x = ((x % half) + half) % half;
   if (TKR.anim) TKR.anim.cancel();
-  const half = tot / dpr; c[0].style.width = c[1].style.width = half + "px";
-  Object.assign(TKR, { half, n, k, N: tot / n * k, dpr, wait: false, bad: 0, t1: TKR.t1 || t });
+  Object.assign(TKR, { half, n, k, N: tot / n * k, dpr, wait: false, bad: 0, t1: TKR.t1 || t, tw: tb.width });
   // k > 1 (a fast display): steps, so the frames in between hold a whole pixel instead of landing on a fraction
   TKR.anim = reel.animate([{ transform: "translate3d(0,0,0)" }, { transform: `translate3d(${-half}px,0,0)` }], { duration: TKR.N * TKR.fi, iterations: Infinity, easing: k > 1 ? `steps(${tot})` : "linear" });
   tkrSeek(t, Math.round(x * dpr / n) * k);
@@ -5306,7 +5354,7 @@ function tkrPause(on) {   // v111: hovering holds the reel on a whole pixel; the
   TKR.paused = on; const a = TKR.anim; if (!on || !a || a.playState === "paused") return;
   const F = tkrF(); a.pause(); a.currentTime = (F % TKR.N + (TKR.k > 1 ? 0.5 : 0)) * TKR.fi;
 }
-function tkrStop() { if (TKR.anim) TKR.anim.cancel(); TKR.anim = null; TKR.dirty = TKR.wait = false; const r = el("#reel"); if (r) r.style.transform = ""; }   // v111: league switch, phone mode, reduced motion
+function tkrStop() { if (TKR.anim) TKR.anim.cancel(); TKR.anim = null; if (TKR.pend != null) { const r = el("#reel"); if (r) tkrWrite(r, TKR.pend); }   /* 5wo: nothing moves now, so waiting content goes straight in */ TKR.dirty = TKR.wait = false; const r = el("#reel"); if (r) r.style.transform = ""; }   // v111: league switch, phone mode, reduced motion
 // v111: phase lock, every 2 seconds at a frame's timestamp. Off by more than 0.02 device px: set the phase again, and once 600
 // frames have been counted use that long run for a finer frame interval than the first 60 gave. Off by more than 0.1 three
 // checks running: the display changed (another monitor), so measure again and rebuild.
@@ -5323,18 +5371,18 @@ function tkrStart() {
   if (TKR.raf) return;
   const tr = document.querySelector(".ticker .track");
   if (tr && !tr.dataset.tkw) { tr.dataset.tkw = 1; tr.addEventListener("mouseenter", () => tkrPause(true)); tr.addEventListener("mouseleave", () => tkrPause(false)); }
-  try { if (tr && !TKR.ro) (TKR.ro = new ResizeObserver(es => { if (TKR.wait && es[es.length - 1].contentRect.width > 0) { TKR.wait = false; TKR.dirty = true; } })).observe(tr); } catch (_) {}   // v112: the ticker came out of hiding: build now
+  try { if (tr && !TKR.ro) (TKR.ro = new ResizeObserver(es => { const w = es[es.length - 1].contentRect.width; if (TKR.wait && w > 0) { TKR.wait = false; TKR.dirty = true; } else if (TKR.anim && w > 0 && TKR.half > 0 && 1 + Math.max(1, Math.ceil(w / TKR.half)) > el("#reel").children.length) TKR.dirty = true; }   /* 5wo: widened past what the copies cover: box again with more */)).observe(tr); } catch (_) {}   // v112: the ticker came out of hiding: build now
   const step = t => {
     TKR.raf = requestAnimationFrame(step);
     const gap = t - TKR.last; TKR.last = t;
-    if (!document.body.classList.contains("v-scores") || document.hidden) { TKR.m.length = 0; return; }   // v111: never measure while the ticker is out of sight; v112: either league
+    if (!document.body.classList.contains("v-scores") || document.hidden) { TKR.m.length = 0; if (TKR.pend != null) { const r = el("#reel"); if (r) tkrWrite(r, TKR.pend); } return; }   /* 5wo: out of sight, so waiting content goes in now */   // v111: never measure while the ticker is out of sight; v112: either league
     const reel = el("#reel");
     if (tkFlip()) {
       if (TKR.list.length < 2) return;
       if (!TKR.flipT) TKR.flipT = t;
       if (t - TKR.flipT > 5000 && !TKR.paused) {
         TKR.flipT = t; TKR.i = (TKR.i + 1) % TKR.list.length;
-        reel.innerHTML = TKR.list[TKR.i]; const n = reel.firstElementChild; if (n && !tkRM.matches) n.classList.add("in");
+        reel.innerHTML = TKR.shownH = TKR.list[TKR.i]; const n = reel.firstElementChild; if (n && !tkRM.matches) n.classList.add("in");
       }
       return;
     }
@@ -5343,7 +5391,7 @@ function tkrStart() {
     if (TKR.anim && (devicePixelRatio || 1) !== TKR.dpr) { TKR.dirty = true; TKR.ok = false; TKR.m = []; }   // zoomed, or on another screen: box and measure again
     if (gap > 1000) { TKR.t1 = t; TKR.chk = t - 1500; }   // back from a hidden tab: count frames afresh and check the phase shortly
     if (!TKR.ok) { const fi = tkrMeasure(t); if (fi) { TKR.fi = fi; TKR.ok = TKR.dirty = true; TKR.t1 = t; } }
-    if (TKR.dirty) return tkrBuild(t, reel);
+    if (TKR.dirty && tkrBuild(t, reel) !== "wait") return;   // 5wo: new content still waiting: the reel carries on as it is (resume, phase lock)
     const a = TKR.anim; if (!a || TKR.paused) return;
     if (a.playState === "paused") return tkrSeek(t, tkrF());   // the mouse left: carry on from the held pixel
     if (t - TKR.chk > 2000) tkrLock(t);

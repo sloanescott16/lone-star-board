@@ -29,11 +29,11 @@ function board(w) {
       broadcasts: [{ names: ["ESPN"] }], geoBroadcasts: [{ media: { shortName: "ESPN" } }], odds: [] }] })) };
 }
 /* plays already on the reel when the page opens (as a Saturday afternoon would have them stored) */
-function stored(n) {
+function stored(n, short) {
   const out = [];
   for (let i = 0; i < n; i++) { const p = PAIRS[i % PAIRS.length];
     out.push({ t: Date.now() - (i + 1) * 90e3, k: `s-pre-${i}`, kind: i % 3 === 2 ? "fg" : "td", gid: String((i % PAIRS.length) + 1), team: p[i % 2], lbl: i % 3 === 2 ? "Field goal" : "Touchdown", pts: 6,
-      text: TEXTS[i % TEXTS.length], when: "4th · 0:00", sc: { a: p[0], h: p[1], as: 21, hs: 17, ar: 0, hr: 0 }, pri: 10 }); }
+      text: short ? "" : TEXTS[i % TEXTS.length], when: "4th · 0:00", sc: { a: p[0], h: p[1], as: 21, hs: 17, ar: 0, hr: 0 }, pri: 10 }); }
   return out;
 }
 async function launch() { process.env.PW_TMP = process.env.PW_TMP || "C:/NIGEL-scratch/5wo"; fs.mkdirSync(process.env.PW_TMP, { recursive: true }); return chromium.launch(); }
@@ -63,7 +63,7 @@ async function open(browser, file, o) {
         out.push([t, window.__rx(), el ? el.getBoundingClientRect().left : null, flip ? 0 : Math.max(0, tb.right - last.right), (typeof TKR !== "undefined" ? TKR.half : 0), shown]);
         if (t - t0 < ms) requestAnimationFrame(f); else res(out); };
       requestAnimationFrame(f); });
-  }, { items: stored(o.stored ?? 6) });
+  }, { items: stored(o.stored ?? 6, o.short) });
   if (o.reduce) await page.emulateMedia({ reducedMotion: "reduce" });
   const json = (r, b) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(b) });
   await page.route("**/*", r => { const u = r.request().url();

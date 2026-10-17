@@ -1,0 +1,25 @@
+ok    1440@1: a play on screen never jumps while six polls add plays and extra points (20 s, 1202 frames)  []
+ok    1440@1: the right end of the track is never blank  0
+ok    1440@1: no frame takes more than one and a half frame times  {"n":1202,"med":16.7,"long":0,"worst":16.8}
+ok    1440@1: the three new touchdowns are on the reel in the end, newest first  ["s-8-20-24-VT","s-4-7-30-OSU","s-1-13-3-SHSU","s-pre-0"]
+ok    1440@1: one animation on the reel
+ok    1440@1: no page errors  []
+ok    1280@1.5: a play on screen never jumps while six polls add plays and extra points (20 s, 1202 frames)  []
+ok    1280@1.5: the right end of the track is never blank  0
+ok    1280@1.5: no frame takes more than one and a half frame times  {"n":1202,"med":16.7,"long":0,"worst":16.8}
+ok    1280@1.5: the three new touchdowns are on the reel in the end, newest first  ["s-8-20-24-VT","s-4-7-30-OSU","s-1-13-3-SHSU","s-pre-0"]
+ok    1280@1.5: one animation on the reel
+ok    1280@1.5: no page errors  []
+ok    short reel: the right end of the track is never blank over 6 s  0
+ok    short reel: no jumps
+ok    short reel: no page errors  []
+ok    hover: the reel holds still with a new play waiting  {"a":[-156,"paused",true],"b":-156}
+ok    hover: leaving resumes it  {"c":[-968.994,"running"],"d":-998.994}
+ok    hover: no page errors  []
+ok    reduced motion: no animation on the reel
+ok    reduced motion: the new play is on the reel at once  ["s-6-27-10-WAKE","s-pre-0"]
+ok    reduced motion: no page errors  []
+ok    390: one play at a time, each on show its full 5 s while plays land  [4483,5016,5017,5016]
+ok    390: no page errors  []
+
+23/23 checks passed
