@@ -22,3 +22,7 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
   characters; keeps the tidied feed text whole when a play was nullified, reversed, overturned or carries a live penalty,
   or the shape is unknown. The tap card still shows the full play. short.test.js 25/25 (19 real Saturday and Sunday
   strings, 4 fallbacks). Over 621 real scoring and take plays: average 76 characters before, 23 after, 5 kept whole.
+- Option B stage 2: "for 45 yds" completions read too (harness string). short.test.js 26/26. tick-jump (all cases but
+  phone, run before this last fix): same 9 checks fail as round 3 and no new ones; no jumps in flow1440, flow1280, two1440,
+  short1440, short1920; the hover case keeps its known 1 px hop on the pre-loaded plays. phone 3/3. flow1440 after the
+  fix: worst time to visible 10.2 s (was 15.1 s), burst 10.2, 19.4, 30.6 s (was 15.1, 27.4, 42.1 s).

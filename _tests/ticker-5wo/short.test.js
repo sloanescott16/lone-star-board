@@ -22,6 +22,7 @@ const CASES = [   // [kind, feed text, expected short line]
   // Saturday, college scoring summaries
   ["td", "A. Manning pass to C. Coleman for 41 yds, for a TD (G. Spetic KICK)", "Manning 41-yd TD to Coleman"],
   ["td", "Dijon Lee Jr. 30 Yd Interception Return (Conor Talty Kick)", "Lee Jr. 30-yd pick-six"],
+  ["td", "N. Iamaleava pass complete to J. Horton for 45 yds for a TD", "Iamaleava 45-yd TD to Horton"],
   ["td", "Anthony Evans III 45 Yd pass from Kamario Taylor (Two-Point Pass Conversion Failed)", "Taylor 45-yd TD to Evans III"],
   // Sunday, NFL play by play and scoring summaries
   ["td", "(Shotgun) J.Herbert pass short middle to K.Mitchell for 1 yard, TOUCHDOWN. C.Dicker extra point is GOOD, Center-J.Harris, Holder-J.Scott.", "Herbert 1-yd TD to Mitchell"],

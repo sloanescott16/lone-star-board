@@ -97,3 +97,14 @@ The page showed those values as they came.
   401856717328 in the 1624 and 1625 snapshots: its loop counts the live drive twice (ESPN lists it in previous and
   current); the page drops the copy, and the new test that does the same finds no clock going up.
 - Feed capture loop stopped at 16:26; its last snapshots are committed.
+
+## Option B (Captain's choice): short play lines
+- tkShort in index.html ("5wo-B") makes the reel line from the feed text: "Manning 41-yd TD to Coleman", "Roberts 80-yd
+  TD run", "Woodson picks off Taylor", "Carter recovers Brown fumble", "Dicker 45-yd FG wide left", "Lee Jr. 30-yd
+  pick-six". Cap 36 characters (an optional tail is dropped first, then a shorter wording, then a word-boundary cut).
+  It keeps the tidied feed text whole when the play was nullified, reversed or overturned, carries a live penalty or a
+  conversion note that matters, or has a shape it does not know. The tap card still shows the full play text.
+- Test: `bun _tests/ticker-5wo/short.test.js` (26/26: 20 real Saturday and Sunday strings, 4 fallbacks, cap, empty).
+- Unsure: surnames only, so a two-word surname shows its last word ("Echeverria Lozano" shows "Lozano"); all-caps
+  "SURNAME, First" feed text is not shortened (kept whole). Item width is still mostly label, logo, team and time, so
+  bursts still take about 9 s per play at 1440.

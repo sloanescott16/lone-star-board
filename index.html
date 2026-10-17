@@ -5199,10 +5199,10 @@ function tkShort(raw, kind) {
     const f = sur(x[1]), r = sur(x.r[1]), ret = yd(/(?:return|for) (\d+) yards?,? touchdown/i);
     out = td ? `${r}${ret ? ` ${ret}-yd` : ""} fumble return TD` : r === f ? null : `${r} recovers ${f} fumble`; alt = `${r} recovers fumble`;
   }
-  else if ((x = m(String.raw`^@ pass (?:complete )?(?:(?:short|deep) (?:left|right|middle) )?to @ .*?\bfor (\d+) yards?(?! loss)`))) {   // completions
+  else if ((x = m(String.raw`^@ pass (?:complete )?(?:(?:short|deep) (?:left|right|middle) )?to @ .*?\bfor (\d+) (?:yards?|yds?)(?! loss)`))) {   // completions
     if (+x[3] > 0) out = `${sur(x[1])} ${x[3]}-yd ${td ? "TD" : "pass"} to ${sur(x[2])}`;
   }
-  else if ((x = m(String.raw`^@ (?:rush|run|scrambles|left end|right end|left tackle|right tackle|left guard|right guard|up the middle)\b.*?\bfor (\d+) yards?(?! loss)`))) {   // runs
+  else if ((x = m(String.raw`^@ (?:rush|run|scrambles|left end|right end|left tackle|right tackle|left guard|right guard|up the middle)\b.*?\bfor (\d+) (?:yards?|yds?)(?! loss)`))) {   // runs
     if (+x[2] > 0) out = `${sur(x[1])} ${x[2]}-yd ${td ? "TD " : ""}run`;
   }
   if (!out || out.length < 6) return s;
