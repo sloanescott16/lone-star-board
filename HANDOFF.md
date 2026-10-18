@@ -16,12 +16,16 @@ origin/main 1d4eed5. Not pushed, not merged. Publishing needs the Captain's yes.
   win chance in big type with a two-colour bar, and a line of win chance through the day.
 - fxMark (each Sleeper poll): keeps the last refresh's numbers and appends to localStorage "lsb-fxwp-<season>-<week>-<roster>"
   (a point a minute or on a 1 percent move, last 720 kept). Line starts when the page is first opened that day.
-- Each lineup row: "proj X" before kickoff, live projection with an arrow against pregame while playing, "final · proj was X" after.
+  fxPrune, once per page load at the first refresh: removes lsb-fxwp- keys for any other season or week.
+- Each lineup row: "proj X" before kickoff, live projection with an arrow against pregame while playing, "final · proj was X"
+  after. A starter on a bye reads "bye", one with no team "no game".
 
 ## How to test
 - bun _tests/fan-1018/fxl.test.js : unit tests on the real block from index.html.
-- bun _tests/fan-1018/live-check.js : real Sleeper (read only) and ESPN (through curl), 1440 and 390 screenshots into
-  _tests/fan-1018/shots, numbers into live-HHMM.json. Own profile C:\NIGEL-scratch\m21\profile, audio muted, speech stubbed.
+- bun _tests/fan-1018/live-check.js : real Sleeper (read only) and ESPN (through curl). 1440 and 390 screenshots and
+  live-HHMM.json go to C:\NIGEL-scratch\m21\shots (env SHOTS), outside the repo, so they never publish. One reused profile,
+  C:\NIGEL-scratch\m21\profile (env PW_PROFILE); the pw-shim.js copy here honours it and deletes nothing. Audio muted, speech
+  stubbed. Also checks that a stale week's day line is pruned and that bye and no-team starters read "bye" and "no game".
 - Sunday ticker regression: _tests/ticker-5wo/v112-copies/test-suntick-mock.js on this file and on the live file.
 
 ## Unsure

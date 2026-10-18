@@ -4463,11 +4463,18 @@ function fxMark() {
   S.fxl.poll = { a: L.a.live, b: L.b ? L.b.live : null, p: L.p, t: Date.now() };
   S.fxl.trace = (S.fxl.trace || []).concat([{ t: Date.now(), a: +L.a.live.toFixed(1), b: L.b ? +L.b.live.toFixed(1) : null, pa: S.sleeper.mine?.points, pb: S.sleeper.oppM?.points }]).slice(-12);   // the last few refreshes, for checking the arrows
   if (L.p == null || offWeek()) return;
+  fxPrune();
   const k = fxWpKey(), h = store.get(k, []), last = h[h.length - 1], now = Date.now();
   if (!last || now - last.t >= 60e3 || Math.abs(last.p - L.p) >= 0.01) {
     h.push({ t: now, p: Math.round(L.p * 1000) / 1000, a: Math.round(L.a.live * 10) / 10, b: Math.round(L.b.live * 10) / 10 });
     store.set(k, h.slice(-720));
   }
+}
+// once per page load: drop day lines from other weeks, keeping only this season and week, so they never pile up
+function fxPrune() {
+  if (S.fxPruned) return; S.fxPruned = true;
+  const keep = `lsb-fxwp-${S.sleeper.season}-${fxWeek()}-`;
+  try { const old = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("lsb-fxwp-") && !k.startsWith(keep)) old.push(k); } old.forEach(k => localStorage.removeItem(k)); } catch (e) {}
 }
 const fxArrow = (d, cls = "") => Math.abs(d) < 0.05 ? `<span class="fxd flat ${cls}">&#9644; 0.0</span>` : `<span class="fxd ${d > 0 ? "up" : "dn"} ${cls}">${d > 0 ? "&#9650;" : "&#9660;"} ${Math.abs(d).toFixed(1)}</span>`;
 function fxChart(h, L) {
@@ -4523,6 +4530,8 @@ function renderFxHead() {
 }
 function fxProjCell(pid, pts) {
   const sl = S.sleeper; if (sl.proj?.[pid] == null) return "";
+  const p = sl.players?.[pid] || [pid, "", ""];
+  if (S.events.length && !gameForTeam(p[2])) return p[2] ? "bye" : "no game";   // a starter on a bye, or with no team, has no final to show
   const x = fxPlayerIn(pid, pts), r = FXL.player(x);
   if (r.state === "up") return `proj ${x.proj.toFixed(1)}`;
   if (r.state === "done") return `final · proj was ${x.proj.toFixed(1)}`;

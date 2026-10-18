@@ -4,6 +4,7 @@ Branch fan-1018, worktree builds/press-box/lsb-fan1018, from origin/main 1d4eed5
 
 - Stage 1 (15:45): FXL maths block in index.html (remFrac, player, team, winProb), renderFxHead with live projections, arrows, win chance bars and the day's line (localStorage lsb-fxwp-*), per-player live projection cells. Not yet tested.
 - Stages 2 to 4 (15:44): unit tests 30/30 (_tests/fan-1018/fxl.test.js). Live check on real Sleeper and ESPN at 3:41 PM: 62.62 vs 58.30, live proj 139.3 vs 93.6 (pregame 135.5 vs 105.4), win chance 96.3 percent, no page errors, scoreboard still draws 4 live tiles; shots in _tests/fan-1018/shots (1540). Sunday ticker test: 148/178 on this file, 147/178 on the live file, no check fails here that passes on live. Done, not pushed.
+- Checker fixes (16:0x): day lines for other weeks pruned once per load; screenshots and live JSON moved to C:/NIGEL-scratch/m21/shots and removed from the repo; pw-shim.js copy honours PW_PROFILE and deletes nothing; bye and no-team starters read "bye" and "no game". Unit tests 30/30.
 
 ---
 

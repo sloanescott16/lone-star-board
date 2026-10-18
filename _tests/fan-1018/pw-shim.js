@@ -5,6 +5,7 @@
    page.keyboard.press, page.screenshot, page.setViewportSize, page.waitForEvent('popup'), page.close.
    A popup (a link opened in a new tab) is caught before it loads: its first request is read and refused, so no test
    ever touches the real internet.
+   fan-1018 copy: honours PW_PROFILE (one reused profile, default C:/NIGEL-scratch/m21/profile), deletes nothing, mutes audio.
    Added for the Command Center v111 ticker test (this copy only): page.addInitScript, page.reload, page.emulateMedia
    ({ reducedMotion }), the deviceScaleFactor context option and page.setDeviceScaleFactor, page.mouse.wheel, and raw
    DevTools access: page.send(method, params) and page.on('Domain.event', handler).
@@ -118,12 +119,14 @@ class Browser {
   async newContext(opts) { const r = await this.send('Target.createBrowserContext', { disposeOnDetach: true }); return new Context(this, r.browserContextId, opts || {}); }
   newPage(opts) { return this._newPage(null, opts || {}); }
   async close() { try { await this.send('Browser.close'); } catch (e) {} try { this.ws.close(); } catch (e) {} await sleep(300); try { this.proc.kill(); } catch (e) {}
-    await sleep(200); try { fs.rmSync(this.dir, { recursive: true, force: true }); } catch (e) {} }
+    /* fan-1018: the profile folder is never removed; it is reused by the next run */ }
 }
 const chromium = { async launch() {
   if (!CHROME) throw new Error('No Chrome or Edge found; set CHROME to the browser exe');
   const b = new Browser(); b.pops = {}; b.popups = [];
-  b.dir = fs.mkdtempSync(path.join(process.env.PW_TMP || os.tmpdir(), 'pc-test-chrome-'));
+  /* fan-1018: one fixed profile, PW_PROFILE (default C:/NIGEL-scratch/m21/profile), reused by every run and never removed */
+  b.dir = process.env.PW_PROFILE || 'C:/NIGEL-scratch/m21/profile'; fs.mkdirSync(b.dir, { recursive: true });
+  try { fs.writeFileSync(path.join(b.dir, 'DevToolsActivePort'), ''); } catch (e) {}   // a stale port file from the last run must not be read as this run's
   b.proc = spawn(CHROME, ['--headless=new', '--remote-debugging-port=0', '--user-data-dir=' + b.dir, '--no-first-run', '--no-default-browser-check', '--disable-gpu', '--hide-scrollbars', '--disable-extensions', '--mute-audio',
     '--disable-background-networking', '--disable-component-update', '--disable-sync', '--disable-popup-blocking', '--mute-audio', 'about:blank'], { stdio: 'ignore' });
   const f = path.join(b.dir, 'DevToolsActivePort'); let txt = '';
