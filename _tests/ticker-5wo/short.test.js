@@ -43,6 +43,31 @@ const KEEP = [
   ["take", "(Shotgun) J.Allen sacked at BUF 28 for -6 yards (K.Mack).Los Angeles Chargers challenged the passer was down by contact ruling, and the play was REVERSED.(Shotgun) J.Allen sacked at BUF 28 for -6 yards (K.Mack). FUMBLES (K.Mack) [K.Mack], RECOVERED by LAC-D.Henley at BUF 28."],
   ["td", "JENNINGS, Kevin pass up the middle complete for 14 yards to PITTMAN JR., Randy to the BC 0, 1st down, TOUCHDOWN SMU (Scoring play confirmed)."],
 ];
+// fix round 1 (checker): the review or no-play test runs on the whole text, even after the touchdown
+KEEP.push(
+  ["td", "(No Huddle, Shotgun) J.Herbert sacked at BUF 18 for -3 yards (E.Oliver). FUMBLES (E.Oliver) [E.Oliver], RECOVERED by BUF-D.Alford at BUF 13. D.Alford for 87 yards, TOUCHDOWN.The Replay Official reviewed the fumble ruling, and the play was REVERSED.(No Huddle, Shotgun) J.Herbert pass incomplete short left [E.Oliver]."],   // real, nfl-401872953
+  ["td", "(04:12) #5 J.Smith rush middle for 3 yards gain to the ABC00 TOUCHDOWN, clock 04:08. The previous play is under automatic review - \"Runner broke the plane\". CALL OVERTURNED"],
+  ["td", "(Shotgun) J.Herbert pass short middle to K.Mitchell for 12 yards, TOUCHDOWN. Penalty on LAC-J.Alt, Offensive Holding, 10 yards, enforced at BUF 15 - No Play."],
+  ["td", "#12 Q.Ewers rush left for 2 yards gain to the OU00 TOUCHDOWN, clock 00:00 #12 Q.Ewers pass attempt failed. The previous play is under automatic review. CALL REVERSED"],
+  // pick then fumbled back, and a defensive two-point return
+  ["take", "(05:00) #7 A.Qb pass intercepted by #2 D.Back at XYZ10 #2 D.Back return 40 yards to the ABC50 fumbled by #2 D.Back recovered by ABC #9 O.Line at ABC50"],
+  ["td", "(05:00) #7 A.Qb rush middle for 3 yards gain to the XYZ00 TOUCHDOWN, clock 04:55 #4 K.Kick kick attempt blocked by #90 D.Big, #22 S.Fast return 98 yards DEFENSIVE TWO-POINT"],
+);
+const R1 = [   // [kind, feed text, expected]
+  ["td", "#4 J.Pass rush middle for 9 yards gain to the ABC00 TOUCHDOWN, clock 03:00. The previous play is under automatic review - \"Runner in\". CALL UPHELD", "Pass 9-yd TD run"],   // upheld is fine
+  ["td", "(Shotgun) J.Allen left guard for 1 yard, TOUCHDOWN.Penalty on LAC-T.Tart, Defensive Offside, declined. T.Bass extra point is GOOD, Center-R.Ferguson, Holder-T.Doman.", "Allen 1-yd TD run"],   // declined after the TD
+  // real, 401869962: too long with both names, so the scorer is kept
+  ["td", "(02:10) Shotgun #8 C.Del Rio-Wilson pass complete short left to #4 X.Turner-Bradshaw caught at UNM00, for 3 yards to the UNM00 TOUCHDOWN, clock 02:05 #97 J.Diaz Nicolas kick attempt good", "Turner-Bradshaw 3-yd TD catch"],
+  ["td", "C. Del Rio-Wilson pass to X. Turner-Bradshaw for 3 yds, for a TD (J. Diaz Nicholas KICK)", "Turner-Bradshaw 3-yd TD catch"],   // real, 401869962 scoring summary
+  // compound surnames kept whole
+  ["fg", "#36 J.Echeverria Lozano field goal attempt from 34 yards GOOD (H: #19 A.Holder, LS: #50 B.Snap), clock 04:00", "Echeverria Lozano 34-yd FG"],
+  ["fg", "#97 J.Diaz Nicolas field goal attempt from 27 yards GOOD (H: #19 A.Holder, LS: #50 B.Snap)", "Diaz Nicolas 27-yd FG"],
+  ["take", "#8 C.Del Rio-Wilson pass intercepted by #3 D.Kelly, Touchback", "Kelly picks off Del Rio-Wilson"],
+  // TD only when the text says so (real, a "td" item whose play text is a plain catch)
+  ["td", "G. Lopez pass complete short right to D. Lawrence for 8 yards to the STAN 12", "Lopez 8-yd pass to Lawrence"],
+  ["td", "G. Johnson pass intercepted by I. Esonwune at SAM 24, I. Esonwune return 5 yards to the SAM 19, End Of Play", "Esonwune picks off Johnson"],
+];
+for (const [k, raw, want] of R1) { const got = tkShort(raw, k); ok(`round 1: ${want}`, got === want, got === want ? undefined : { got, raw: raw.slice(0, 70) }); }
 for (const [k, raw] of KEEP) { const got = tkShort(raw, k); ok(`kept whole: ${raw.slice(0, 50)}...`, got === tkClean(raw).replace(/^\((?:No Huddle, )?Shotgun\)\s*/i, ""), got); }
 ok("empty text stays empty", tkShort("", "td") === "" && tkShort(null, "td") === "");
 console.log(`\n${pass}/${pass + fail} passed`); process.exit(fail ? 1 : 0);
