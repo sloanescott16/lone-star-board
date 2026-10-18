@@ -1,3 +1,11 @@
+# Live fantasy projections and win chance (job 1018-1528-m21)
+
+Branch fan-1018, worktree builds/press-box/lsb-fan1018, from origin/main 1d4eed5 (live).
+
+- Stage 1 (15:45): FXL maths block in index.html (remFrac, player, team, winProb), renderFxHead with live projections, arrows, win chance bars and the day's line (localStorage lsb-fxwp-*), per-player live projection cells. Not yet tested.
+
+---
+
 # Saturday ticker smooth (job 1017-1402-5wo)
 
 Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/main 8e872e9 (live).

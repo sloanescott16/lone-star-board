@@ -298,6 +298,28 @@
   .fx-score .sc { display: grid; justify-items: center; gap: 6px; }
   .fx-score .sc .proj b { font-family: var(--display); font-size: 17px; }
   .fx-score .proj b { color: var(--ink-2); font-weight: 600; }
+  /* fan-1018: live projections, arrows and win chance in the matchup header */
+  .fx-score .fxds { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 6px; font-size: 11px; color: var(--muted); max-width: 190px; }
+  .fx-score .fxds i { font-style: normal; }
+  .fxd { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .fxd.up { color: var(--good); } .fxd.dn { color: var(--live); } .fxd.flat { color: var(--muted); font-weight: 600; }
+  .fxd.sm { font-size: 10.5px; }
+  .fx-wp { grid-column: 1 / -1; display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .fx-wp .wph { display: flex; justify-content: center; align-items: baseline; gap: 10px; font-size: 12px; }
+  .fx-wp .wph .lbl { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .fx-wp .wpr { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
+  .fx-wp .pc { font-family: var(--display); font-weight: 800; font-size: clamp(26px, 3vw, 38px); line-height: 1; color: var(--ink-2); min-width: 2.6em; font-variant-numeric: tabular-nums; }
+  .fx-wp .pc.op { text-align: right; } .fx-wp .pc.lead { color: var(--ink); }
+  .fx-wp .wpbar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: var(--line); }
+  .fx-wp .wpbar i { display: block; height: 100%; transition: width .8s ease; }
+  .fx-wp .wpbar .me { background: var(--accent); } .fx-wp .wpbar .op { background: var(--muted); opacity: .55; }
+  .fx-wpc svg { display: block; width: 100%; height: 56px; }
+  .fx-wpc .ln { fill: none; stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .fx-wpc .area { fill: var(--accent); opacity: .12; }
+  .fx-wpc .mid { stroke: var(--muted); stroke-dasharray: 3 4; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .6; }
+  .fx-wpc .ax { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); }
+  .fx-wpc.empty-c { font-size: 11px; color: var(--muted); text-align: center; }
+  @media (prefers-reduced-motion: reduce) { .fx-wp .wpbar i { transition: none; } }
   .fx-body { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 18px; align-items: start; }
   .roster table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .roster th { text-align: left; font-size: 11px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 4px 8px; }
@@ -4368,6 +4390,143 @@ function renderSchedule() {
   el("#schSub").textContent = list.length ? `${dayName} · ${shown} game${shown === 1 ? "" : "s"} · ${live} live · ${fin} final` : "";
 }
 
+/* fan-1018 FXL start: live fantasy projection and win probability. Pure maths, no page state; _tests/fan-1018 loads this block on its own. */
+const FXL = (() => {
+  const QSEC = 900, GSEC = 3600;
+  // share of the game still to play: 1 before kickoff, 0 when final (or a bye), worked out from the quarter and clock
+  function remFrac(g) {
+    if (!g) return 0;
+    if (g.state === "pre") return 1;
+    if (g.state === "post") return 0;
+    const p = +g.period || 0;
+    if (p < 1) return 1;
+    if (p > 4) return 0;   // overtime: the pregame projection covers regulation only, points still count as they land
+    const m = String(g.clock || "").match(/^(\d+):(\d{1,2})(?:\.\d+)?$/);
+    const s = m ? Math.min(QSEC, +m[1] * 60 + +m[2]) : QSEC / 2;
+    const left = (4 - p) * QSEC + s;
+    return Math.max(0, Math.min(1, left / GSEC));
+  }
+  // a full game's spread of fantasy points for one player, from his position and projection
+  const SDK = { QB: 0.30, RB: 0.45, WR: 0.50, TE: 0.50, K: 0.40, DEF: 0.50 };
+  const sdFull = (pos, proj) => 2 + (SDK[pos] ?? 0.45) * Math.max(0, +proj || 0);
+  // one player: finished is his actual score, not started is his projection, in progress is points so far plus the share still to play
+  function player({ pts = 0, proj = 0, pos = "", rem = 0 } = {}) {
+    pts = +pts || 0; proj = Math.max(0, +proj || 0); rem = Math.max(0, Math.min(1, +rem || 0));
+    // a defence's points-allowed tier is scored all at once from kickoff, so it moves from projection to actual instead of adding
+    const live = pos === "DEF" ? rem * proj + (1 - rem) * pts : pts + rem * proj;
+    const sd = sdFull(pos, proj) * Math.sqrt(rem);
+    return { live, sd, state: rem >= 1 && !pts ? "up" : rem <= 0 ? "done" : "live" };
+  }
+  function team(list) {
+    let live = 0, v = 0, pre = 0;
+    for (const x of list || []) { const r = player(x); live += r.live; v += r.sd * r.sd; pre += Math.max(0, +x.proj || 0); }
+    return { live, sd: Math.sqrt(v), var: v, pre };
+  }
+  // standard normal CDF (Abramowitz and Stegun 7.1.26, error under 1.5e-7)
+  function phi(z) {
+    const t = 1 / (1 + 0.3275911 * Math.abs(z) / Math.SQRT2);
+    const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-z * z / 2);
+    return z >= 0 ? (1 + y) / 2 : (1 - y) / 2;
+  }
+  // chance side a beats side b: normal approximation on the difference of the two live projections
+  function winProb(a, b) {
+    const d = a.live - b.live, sd = Math.sqrt((a.var || 0) + (b.var || 0));
+    if (sd < 1e-6) return d > 0.004 ? 1 : d < -0.004 ? 0 : 0.5;
+    return phi(d / sd);
+  }
+  const pct = (p, open) => { const n = Math.round(p * 100); return open && n >= 100 ? ">99%" : open && n <= 0 ? "<1%" : n + "%"; };
+  return { remFrac, sdFull, player, team, phi, winProb, pct };
+})();
+/* fan-1018 FXL end */
+// fan-1018: the live view of one lineup, from Sleeper's points and the board's game clocks
+function fxSide(m) {
+  const sl = S.sleeper, pp = m?.players_points || {};
+  return (m?.starters || []).filter(pid => pid && pid !== "0").map(pid => fxPlayerIn(pid, pp[pid]));
+}
+function fxPlayerIn(pid, pts) {
+  const sl = S.sleeper, p = sl.players?.[pid] || [pid, "", ""], g = gameForTeam(p[2]), proj = +(sl.proj?.[pid]) || 0;
+  const rem = g ? FXL.remFrac(g) : (!S.events.length && proj > 0 ? 1 : 0);   // no board yet: hold the projection rather than lock it at zero
+  return { pid, pts: +pts || 0, proj, pos: p[1], rem };
+}
+function fxLive() {
+  const sl = S.sleeper; if (!sl.mine) return null;
+  const a = FXL.team(fxSide(sl.mine)), b = sl.oppM ? FXL.team(fxSide(sl.oppM)) : null;
+  return { a, b, p: b ? FXL.winProb(a, b) : null, open: (a.sd + (b ? b.sd : 0)) > 1e-6 };
+}
+const fxWpKey = () => { const sl = S.sleeper; return `lsb-fxwp-${sl.season}-${fxWeek()}-${sl.me?.roster?.roster_id}`; };
+// once per Sleeper refresh: remember the last refresh's numbers for the arrows, and add a point to today's win chance line
+function fxMark() {
+  const L = fxLive(); if (!L || !S.sleeper.proj || !Object.keys(S.sleeper.proj).length) return;
+  S.fxl = S.fxl || {};
+  if (S.fxl.wk !== fxWeek()) S.fxl = { wk: fxWeek() };
+  S.fxl.ref = S.fxl.poll || null;
+  S.fxl.poll = { a: L.a.live, b: L.b ? L.b.live : null, p: L.p, t: Date.now() };
+  if (L.p == null || offWeek()) return;
+  const k = fxWpKey(), h = store.get(k, []), last = h[h.length - 1], now = Date.now();
+  if (!last || now - last.t >= 60e3 || Math.abs(last.p - L.p) >= 0.01) {
+    h.push({ t: now, p: Math.round(L.p * 1000) / 1000, a: Math.round(L.a.live * 10) / 10, b: Math.round(L.b.live * 10) / 10 });
+    store.set(k, h.slice(-720));
+  }
+}
+const fxArrow = (d, cls = "") => Math.abs(d) < 0.05 ? `<span class="fxd flat ${cls}">&#9644; 0.0</span>` : `<span class="fxd ${d > 0 ? "up" : "dn"} ${cls}">${d > 0 ? "&#9650;" : "&#9660;"} ${Math.abs(d).toFixed(1)}</span>`;
+function fxChart(h, L) {
+  const pts = (h || []).slice(); if (L && L.p != null) pts.push({ t: Date.now(), p: L.p });
+  if (pts.length < 2) return `<div class="fx-wpc empty-c">Win chance line starts here and fills in through the day</div>`;
+  const t0 = pts[0].t, t1 = Math.max(pts[pts.length - 1].t, t0 + 60e3), W = 300, H = 56;
+  const xy = q => `${((q.t - t0) / (t1 - t0) * W).toFixed(1)},${((1 - q.p) * H).toFixed(1)}`;
+  const line = pts.map(xy).join(" ");
+  const tm = t => fmtCT(t, { hour: "numeric", minute: "2-digit" });
+  return `<div class="fx-wpc"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Your win chance through the day">
+      <line x1="0" y1="${H / 2}" x2="${W}" y2="${H / 2}" class="mid"/>
+      <polygon points="0,${H} ${line} ${W},${H}" class="area"/><polyline points="${line}" class="ln"/></svg>
+    <div class="ax"><span>${esc(tm(t0))}</span><span>50%</span><span>now</span></div></div>`;
+}
+function fxTally(m) {
+  const t = { done: 0, live: 0, up: 0 };
+  for (const x of fxSide(m)) t[x.rem <= 0 ? "done" : x.rem >= 1 && !x.pts ? "up" : "live"]++;
+  return `<span class="tally"><b class="d">${t.done}</b> done <span class="sep">·</span> <b class="l">${t.live}</b> playing <span class="sep">·</span> <b class="u">${t.up}</b> to play</span>`;
+}
+// the matchup header: scores, live projections with their arrows, win chance bars and the day's line. Redrawn on every board and Sleeper refresh.
+function renderFxHead() {
+  const sl = S.sleeper; if (!sl.me) return;
+  const mine = sl.mine, opp = sl.oppM;
+  const myPts = mine?.points ?? 0, opPts = opp?.points ?? 0, lead = myPts >= opPts;
+  const hasP = sl.proj && Object.keys(sl.proj).length, L = hasP && mine ? fxLive() : null, R = S.fxl?.wk === fxWeek() ? S.fxl.ref : null;
+  const pj = (side) => {
+    if (!L || (side === "b" && !L.b)) return "";
+    const T = L[side], since = R && R[side] != null ? fxArrow(T.live - R[side], "r") : "";
+    return `<span class="proj">proj <b>${T.live.toFixed(1)}</b></span><span class="fxds">${since ? since + `<i>last refresh</i>` : ""}${fxArrow(T.live - T.pre, "k")}<i>since kickoff · was ${T.pre.toFixed(1)}</i></span>`;
+  };
+  let wp = "";
+  if (L && L.p != null) {
+    const me = L.p, wr = Math.round(me * 1000) / 10, dp = R && R.p != null ? me - R.p : 0;
+    wp = `<div class="fx-wp" data-wp="${me.toFixed(3)}">
+      <div class="wph"><span class="lbl">Win chance</span>${R && R.p != null && Math.abs(dp) >= 0.0005 ? `<span class="fxd ${dp > 0 ? "up" : "dn"}">${dp > 0 ? "&#9650;" : "&#9660;"} ${Math.abs(dp * 100).toFixed(1)} pts</span>` : ""}</div>
+      <div class="wpr"><span class="pc ${me >= 0.5 ? "lead" : ""}">${FXL.pct(me, L.open)}</span>
+        <div class="wpbar" role="img" aria-label="${esc(sl.me.name)} ${FXL.pct(me, L.open)}, ${esc(sl.opp?.name || "Opponent")} ${FXL.pct(1 - me, L.open)}"><i class="me" style="width:${wr}%"></i><i class="op" style="width:${(100 - wr).toFixed(1)}%"></i></div>
+        <span class="pc op ${me < 0.5 ? "lead" : ""}">${FXL.pct(1 - me, L.open)}</span></div>
+      ${fxChart(store.get(fxWpKey(), []), L)}
+    </div>`;
+  }
+  el("#fxHead").innerHTML = `
+    <div class="fx-team"><span class="lbl">My team</span><span class="tn">${esc(sl.me.name)}</span><span class="own">${esc(sl.me.owner)}</span><span class="meta">Week ${fxWeek()}${sl.league?.name ? " · " + esc(sl.league.name) : ""}${mine?.preview ? " · lineup as set" : ""}</span>${fxTally(mine)}</div>
+    <div class="fx-score">
+      <div class="sc"><span class="n ${lead ? "" : "trail"}">${myPts.toFixed(2)}</span>${pj("a")}</div>
+      <div class="mid"><b>VS</b></div>
+      <div class="sc"><span class="n ${lead ? "trail" : ""}">${opPts.toFixed(2)}</span>${pj("b")}</div>
+    </div>
+    <div class="fx-team opp"><span class="lbl">Opponent</span><span class="tn">${esc(sl.opp?.name || "Bye week")}</span><span class="own">${esc(sl.opp?.owner || "")}</span>${opp ? fxTally(opp) : ""}</div>
+    ${wp}`;
+  // each player's live projection, kept up to date between Sleeper refreshes
+  document.querySelectorAll("#roster [data-lp]").forEach(n => { const pid = n.dataset.lp, side = sl.view === "opp" && opp ? opp : mine; n.innerHTML = fxProjCell(pid, side?.players_points?.[pid]); });
+}
+function fxProjCell(pid, pts) {
+  const sl = S.sleeper; if (sl.proj?.[pid] == null) return "";
+  const x = fxPlayerIn(pid, pts), r = FXL.player(x);
+  if (r.state === "up") return `proj ${x.proj.toFixed(1)}`;
+  if (r.state === "done") return `final · proj was ${x.proj.toFixed(1)}`;
+  return `proj <b>${r.live.toFixed(1)}</b> ${fxArrow(r.live - x.proj, "sm")}`;
+}
 function playerRow(pid, slot, pts, bench) {
   if (!pid || pid === "0") return `<tr class="${bench?'bench':''} empty-slot"><td class="slot">${esc(slot)}</td><td><div class="pn" style="color:var(--muted)">Empty slot</div></td><td></td><td class="pts zero">–</td></tr>`;   // v58: Sleeper's "0" placeholder
   const sl = S.sleeper, p = sl.players?.[pid] || [pid, "", ""], g = gameForTeam(p[2]);
@@ -4378,29 +4537,13 @@ function playerRow(pid, slot, pts, bench) {
       <td class="slot">${esc(slot)}</td>
       <td><div class="pl">${mark(p[2] || "FA","abbr")}<div><div class="pn">${esc(p[0])}</div><div class="pt">${esc(p[1])} · ${esc(p[2])} · ${esc(gtxt)}</div></div></div></td>
       <td><span class="gs ${st}">${g ? esc(g.status) : "–"}</span></td>
-      <td class="pts ${pts?'':'zero'}">${(+pts||0).toFixed(2)}${proj != null ? `<small>proj ${(+proj).toFixed(1)}</small>` : ""}</td>
+      <td class="pts ${pts?'':'zero'}">${(+pts||0).toFixed(2)}${proj != null ? `<small data-lp="${esc(pid)}">${fxProjCell(pid, pts)}</small>` : ""}</td>
     </tr>`;
 }
 function renderFantasy() {
   const sl = S.sleeper; if (!sl.me) return;
   const mine = sl.mine, opp = sl.oppM;
-  const myPts = mine?.points ?? 0, opPts = opp?.points ?? 0, lead = myPts >= opPts;
-  const projOf = m => m ? (m.starters||[]).reduce((a,pid)=> a + (+(sl.proj?.[pid]) || 0), 0) : 0;
-  const tally = m => {
-    const t = { done:0, live:0, up:0 };
-    for (const pid of (m?.starters || [])) { if (!pid || pid === "0") continue; const p = sl.players?.[pid]; const g = p && gameForTeam(p[2]); t[!g ? "done" : g.live ? "live" : g.state === "post" ? "done" : "up"]++; }
-    return `<span class="tally"><b class="d">${t.done}</b> done <span class="sep">·</span> <b class="l">${t.live}</b> playing <span class="sep">·</span> <b class="u">${t.up}</b> to play</span>`;
-  };
-  const myProj = projOf(mine), opProj = projOf(opp);
-  el("#fxHead").innerHTML = `
-    <div class="fx-team"><span class="lbl">My team</span><span class="tn">${esc(sl.me.name)}</span><span class="own">${esc(sl.me.owner)}</span><span class="meta">Week ${fxWeek()}${sl.league?.name ? " · " + esc(sl.league.name) : ""}${mine?.preview ? " · lineup as set" : ""}</span>${tally(mine)}</div>
-    <div class="fx-score">
-      ${(() => { const hasP = sl.proj && Object.keys(sl.proj).length, pj = v => hasP ? `<span class="proj">proj <b>${v.toFixed(1)}</b></span>` : "";   // v52: each projection sits under its own score
-        return `<div class="sc"><span class="n ${lead?'':'trail'}">${myPts.toFixed(2)}</span>${pj(myProj)}</div>
-      <div class="mid"><b>VS</b></div>
-      <div class="sc"><span class="n ${lead?'trail':''}">${opPts.toFixed(2)}</span>${pj(opProj)}</div>`; })()}
-    </div>
-    <div class="fx-team opp"><span class="lbl">Opponent</span><span class="tn">${esc(sl.opp?.name || "Bye week")}</span><span class="own">${esc(sl.opp?.owner || "")}</span>${opp ? tally(opp) : ""}</div>`;
+  renderFxHead();   // fan-1018: the header (scores, live projections, win chance) is its own function so the board refresh can redraw it between Sleeper polls
   if (!mine) { el("#roster").innerHTML = `<tbody><tr><td class="empty">No matchup this week</td></tr></tbody>`; return; }
   const starters = mine.starters || [], pp = mine.players_points || {};
   const side = sl.view === "opp" && opp ? opp : mine;
@@ -4526,6 +4669,7 @@ function renderAll() { holdScroll(renderAllNow); }
 function renderAllNow() {
   renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderPre(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderSchedule(); renderRegroup();
   if (LG.key === "cfb") renderSatTicker();   // v100
+  if (LG.fantasy && S.view === "fantasy" && S.sleeper.me) renderFxHead();   // fan-1018: live projections and win chance follow the game clocks every board refresh
   if (S.view === "season") renderSeason();
   if (S.view === "ranks") renderRanks();
 }
@@ -4556,7 +4700,8 @@ async function sleeperLoop() {
     await loadSleeperStatic();
     if (!S.sleeper.players) await loadPlayers();
     await loadMatchup();
-    loadProjections().then(() => holdScroll(renderFantasy));
+    fxMark();   // fan-1018
+    loadProjections().then(() => { if (!S.fxl?.poll) fxMark(); holdScroll(renderFantasy); });
     holdScroll(renderFantasy); setErr(false);   // v114: keeps his place
     (S.sleeper.fresh || []).forEach(celebrate); S.sleeper.fresh = [];
     S.slErrN = 0;
