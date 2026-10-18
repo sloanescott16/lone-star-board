@@ -4515,7 +4515,7 @@ const fxArrow = (d, cls = "") => Math.abs(d) < 0.05 ? `<span class="fxd flat ${c
 function fxChart(h, L) {
   const pts = (h || []).slice(); if (L && L.p != null) pts.push({ t: Date.now(), p: L.p });
   if (pts.length < 2) return `<div class="fx-wpc empty-c">Win chance line starts here and fills in through the day</div>`;
-  const t0 = pts[0].t, t1 = Math.max(pts[pts.length - 1].t, t0 + 60e3), W = 300, H = 56;
+  const t0 = pts[0].t, t1 = pts[pts.length - 1].t > t0 ? pts[pts.length - 1].t : t0 + 60e3, W = 300, H = 56;
   const xy = q => `${((q.t - t0) / (t1 - t0) * W).toFixed(1)},${((1 - q.p) * H).toFixed(1)}`;
   const line = pts.map(xy).join(" "), lastX = xy(pts[pts.length - 1]).split(",")[0];
   const tm = t => fmtCT(t, { hour: "numeric", minute: "2-digit" });

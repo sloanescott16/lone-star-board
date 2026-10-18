@@ -1,3 +1,22 @@
+# Handoff: fantasy accuracy against the Sleeper app (job 1018-1644-bej, branch fan2-1018 from 54f96c1)
+
+The Captain at 4:43 PM: ours said 131.7 v 93.5 and 95/5, Sleeper said 126.67 v 92.09 and 89/11.
+- Sleeper has no public live projection or win probability feed (projections endpoint values stay pregame, the player and
+  "live" variants tried return the same or a 404). So the in-game curve is fitted instead.
+- Pregame projection is now the league-scored stat line (sum of projected stats x the league's scoring_settings), which
+  is what Sleeper shows: Watson 18.54, Pickens 13.58, Kraft 13.21, Golden 15.67 match it exactly. The "since kickoff"
+  baseline uses the same numbers.
+- In progress: points + projection x rem^1.23 (FXL.share). Fitted on Cousins, McBride, Nacua, Dicker: all within 0.9 of
+  Sleeper, totals 126.79 v 92.42. A pace blend was tried on paper and does not fit (McBride ran hot and Sleeper still cut him).
+- Win chance: per-player spread 2.5 + k x projection (QB .38, RB .50, WR/TE/DEF .55, K .45) x sqrt(time left), same-team
+  correlation .25 and same-game .10 in the variance of the difference (FXL.match), then a t distribution with 5 df.
+  The 4:43 snapshot gives 88.9 v 11.1.
+- Test: bun _tests/fan-1018/snapshot-1643.test.js prints before and after against Sleeper (13 checks).
+- Unsure: one snapshot of four live players is a thin fit; the exponent and spread should be checked against a few more
+  Sleeper readings. Day lines saved earlier today were drawn by the old model, so the line steps down at the update.
+
+---
+
 # Handoff: live fantasy projections and win chance (job 1018-1528-m21, 2026-10-18)
 
 Branch fan-1018 in worktree builds/press-box/lsb-fan1018 (repo sloanescott16/lone-star-board), from the live head

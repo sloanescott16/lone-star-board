@@ -1,3 +1,10 @@
+# Fantasy accuracy against Sleeper (job 1018-1644-bej), branch fan2-1018 from 54f96c1
+
+- 16:5x: league-scored pregame projections, in-game share rem^1.23, wider spread, same-game correlation, t(5). Snapshot test 13/13 (126.79 v 92.42, 88.9 v 11.1; Sleeper 126.67 v 92.09, 89 v 11). Unit tests 30/30.
+- 16:49 live check: 75.04 v 61.02, proj 125.1 v 92.3, pregame 134.0 v 102.7, win chance 88.5 v 11.5, no page errors, prune and bye checks pass. Shots in C:/NIGEL-scratch/m21/shots (1648). Day line now always reaches the right edge.
+
+---
+
 # Live fantasy projections and win chance (job 1018-1528-m21)
 
 Branch fan-1018, worktree builds/press-box/lsb-fan1018, from origin/main 1d4eed5 (live).
