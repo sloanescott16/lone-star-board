@@ -3221,7 +3221,9 @@ async function loadProjections() {
   try {
     const url = `https://api.sleeper.com/projections/nfl/${sl.season}/${wk}?season_type=regular&position[]=QB&position[]=RB&position[]=WR&position[]=TE&position[]=K&position[]=DEF`;
     const rows = await getJSON(url); const m = {};
-    for (const r of rows) m[r.player_id] = r.stats?.[sl.scoringKey] ?? r.stats?.pts_ppr;
+    // fan2-1018: score each projected stat line with the league's own settings, as Sleeper does (bonuses, TE premium, kicker by distance)
+    const sc = sl.league?.scoring_settings || {}, byLeague = st => { let t = 0, n = 0; for (const k in sc) if (st[k] != null && sc[k]) { t += st[k] * sc[k]; n++; } return n ? Math.round(t * 100) / 100 : null; };
+    for (const r of rows) { const st = r.stats || {}; m[r.player_id] = byLeague(st) ?? st[sl.scoringKey] ?? st.pts_ppr; }
     sl.proj = m; sl.projT = Date.now(); sl.projWk = wk;
   } catch (e) { sl.proj = sl.proj || {}; sl.projT = Date.now(); sl.projWk = wk; }
 }
@@ -4406,14 +4408,19 @@ const FXL = (() => {
     const left = (4 - p) * QSEC + s;
     return Math.max(0, Math.min(1, left / GSEC));
   }
-  // a full game's spread of fantasy points for one player, from his position and projection
-  const SDK = { QB: 0.30, RB: 0.45, WR: 0.50, TE: 0.50, K: 0.40, DEF: 0.50 };
-  const sdFull = (pos, proj) => 2 + (SDK[pos] ?? 0.45) * Math.max(0, +proj || 0);
-  // one player: finished is his actual score, not started is his projection, in progress is points so far plus the share still to play
+  // a full game's spread of fantasy points for one player, from his position and projection (fan2-1018: widened to real weekly swings)
+  const SDK = { QB: 0.38, RB: 0.50, WR: 0.55, TE: 0.55, K: 0.45, DEF: 0.55 };
+  const SD0 = 2.5;
+  const sdFull = (pos, proj) => SD0 + (SDK[pos] ?? 0.6) * Math.max(0, +proj || 0);
+  // fan2-1018: the share of a player's projection still to come is rem^LIVEP, not rem. Fitted to Sleeper's own in-game
+  // projections on 18 Oct 2026 at 4:43 PM (Cousins, McBride, Nacua, Dicker all within 0.9 of Sleeper); it is 1 at kickoff and 0 at the end.
+  const LIVEP = 1.23;
+  const share = rem => Math.pow(rem, LIVEP);
+  // one player: finished is his actual score, not started is his projection, in progress is points so far plus the share still to come
   function player({ pts = 0, proj = 0, pos = "", rem = 0 } = {}) {
     pts = +pts || 0; proj = Math.max(0, +proj || 0); rem = Math.max(0, Math.min(1, +rem || 0));
     // a defence's points-allowed tier is scored all at once from kickoff, so it moves from projection to actual instead of adding
-    const live = pos === "DEF" ? rem * proj + (1 - rem) * pts : pts + rem * proj;
+    const live = pos === "DEF" ? rem * proj + (1 - rem) * pts : pts + share(rem) * proj;
     const sd = sdFull(pos, proj) * Math.sqrt(rem);
     return { live, sd, state: rem >= 1 && !pts ? "up" : rem <= 0 ? "done" : "live" };
   }
@@ -4428,14 +4435,41 @@ const FXL = (() => {
     const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-z * z / 2);
     return z >= 0 ? (1 + y) / 2 : (1 - y) / 2;
   }
-  // chance side a beats side b: normal approximation on the difference of the two live projections
+  // Student t CDF with 5 degrees of freedom (exact closed form): fatter tails than the normal, so big swings stay possible
+  const DF = 5;
+  function tcdf(t) {
+    const th = Math.atan(Math.abs(t) / Math.sqrt(DF)), c = Math.cos(th), s = Math.sin(th);
+    const a = (2 / Math.PI) * (th + s * c * (1 + (2 / 3) * c * c));
+    return t >= 0 ? 0.5 + a / 2 : 0.5 - a / 2;
+  }
+  // chance side a beats side b, from team totals only (no correlation): kept for callers that have no game ids
   function winProb(a, b) {
     const d = a.live - b.live, sd = Math.sqrt((a.var || 0) + (b.var || 0));
     if (sd < 1e-6) return d > 0.004 ? 1 : d < -0.004 ? 0 : 0.5;
-    return phi(d / sd);
+    return tcdf(d / sd);
+  }
+  // fan2-1018: the whole matchup. Players in the same game move together: same team RHO_TEAM, the two sides of one game RHO_GAME.
+  // The spread of (my total - their total) carries those covariances, then a t distribution (5 df) gives the chance.
+  const RHO_TEAM = 0.25, RHO_GAME = 0.10;
+  function match(A, B) {
+    const a = team(A), b = team(B), xs = [];
+    for (const [list, sg] of [[A || [], 1], [B || [], -1]]) for (const x of list) { const r = player(x); if (r.sd > 0) xs.push({ sd: r.sd, sg, gid: x.gid, tm: x.tm }); }
+    let v = 0;
+    for (let i = 0; i < xs.length; i++) {
+      v += xs[i].sd * xs[i].sd;
+      for (let j = i + 1; j < xs.length; j++) {
+        const p = xs[i], q = xs[j]; if (!p.gid || p.gid !== q.gid) continue;
+        const rho = p.tm && p.tm === q.tm ? RHO_TEAM : RHO_GAME;
+        v += 2 * rho * p.sg * q.sg * p.sd * q.sd;
+      }
+    }
+    v = Math.max(0, v);
+    const d = a.live - b.live, sd = Math.sqrt(v);
+    const p = sd < 1e-6 ? (d > 0.004 ? 1 : d < -0.004 ? 0 : 0.5) : tcdf(d / sd);
+    return { a, b, sd, p };
   }
   const pct = (p, open) => { const n = Math.round(p * 100); return open && n >= 100 ? ">99%" : open && n <= 0 ? "<1%" : n + "%"; };
-  return { remFrac, sdFull, player, team, phi, winProb, pct };
+  return { remFrac, sdFull, share, player, team, phi, tcdf, winProb, match, pct };
 })();
 /* fan-1018 FXL end */
 // fan-1018: the live view of one lineup, from Sleeper's points and the board's game clocks
@@ -4446,12 +4480,13 @@ function fxSide(m) {
 function fxPlayerIn(pid, pts) {
   const sl = S.sleeper, p = sl.players?.[pid] || [pid, "", ""], g = gameForTeam(p[2]), proj = +(sl.proj?.[pid]) || 0;
   const rem = g ? FXL.remFrac(g) : (!S.events.length && proj > 0 ? 1 : 0);   // no board yet: hold the projection rather than lock it at zero
-  return { pid, pts: +pts || 0, proj, pos: p[1], rem };
+  return { pid, pts: +pts || 0, proj, pos: p[1], rem, gid: g ? g.id : "", tm: p[2] || "" };   // fan2-1018: game and team, for the same-game correlation
 }
 function fxLive() {
   const sl = S.sleeper; if (!sl.mine) return null;
-  const a = FXL.team(fxSide(sl.mine)), b = sl.oppM ? FXL.team(fxSide(sl.oppM)) : null;
-  return { a, b, p: b ? FXL.winProb(a, b) : null, open: (a.sd + (b ? b.sd : 0)) > 1e-6 };
+  if (!sl.oppM) { const a = FXL.team(fxSide(sl.mine)); return { a, b: null, p: null, open: a.sd > 1e-6 }; }
+  const M = FXL.match(fxSide(sl.mine), fxSide(sl.oppM));   // fan2-1018: same-game correlation and fat tails
+  return { a: M.a, b: M.b, p: M.p, open: (M.a.sd + M.b.sd) > 1e-6 };
 }
 const fxWpKey = () => { const sl = S.sleeper; return `lsb-fxwp-${sl.season}-${fxWeek()}-${sl.me?.roster?.roster_id}`; };
 // once per Sleeper refresh: remember the last refresh's numbers for the arrows, and add a point to today's win chance line

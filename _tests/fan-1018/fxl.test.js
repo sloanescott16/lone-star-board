@@ -26,9 +26,9 @@ ok(r.state === "up" && near(r.live, 15) && near(r.sd, FXL.sdFull("RB", 15)), "no
 r = FXL.player({ pts: 22.4, proj: 15, pos: "RB", rem: 0 });
 ok(r.state === "done" && near(r.live, 22.4) && r.sd === 0, "finished locked at actual, no spread");
 r = FXL.player({ pts: 8, proj: 16, pos: "WR", rem: 0.5 });
-ok(r.state === "live" && near(r.live, 16) && near(r.sd, FXL.sdFull("WR", 16) * Math.sqrt(0.5)), "half time: points plus half the projection");
+ok(r.state === "live" && near(r.live, 8 + FXL.share(0.5) * 16) && FXL.share(0.5) < 0.5 && FXL.share(0.5) > 0.4 && near(r.sd, FXL.sdFull("WR", 16) * Math.sqrt(0.5)), "half time: points plus the share still to come (a little under half, fitted to Sleeper)");
 r = FXL.player({ pts: 3, proj: 20, pos: "QB", rem: 0.25 });
-ok(near(r.live, 8), "quarter left: 3 + 5");
+ok(near(r.live, 3 + FXL.share(0.25) * 20) && FXL.share(1) === 1 && FXL.share(0) === 0, "quarter left: 3 + share x 20; share is 1 at kickoff and 0 at the end");
 r = FXL.player({ pts: 10, proj: 7, pos: "DEF", rem: 0.75 });
 ok(near(r.live, 0.75 * 7 + 0.25 * 10), "defence blends projection into actual");
 r = FXL.player({ pts: 0, proj: null, pos: "WR", rem: 1 });
@@ -61,7 +61,7 @@ const pMid = (() => { const A = T([{ pts: 40, proj: 30, pos: "QB", rem: 0.5 }]),
 const pLate = (() => { const A = T([{ pts: 40, proj: 30, pos: "QB", rem: 0.1 }]), B = T([{ pts: 30, proj: 30, pos: "QB", rem: 0.1 }]); return FXL.winProb(A, B); })();
 ok(pMid > 0.5 && pLate > pMid, "10 point lead counts for more late (" + pMid.toFixed(3) + " then " + pLate.toFixed(3) + ")");
 a = T([{ pts: 12, proj: 20, pos: "QB", rem: 0.5 }, { pts: 0, proj: 15, pos: "RB", rem: 1 }, { pts: 18, proj: 12, pos: "WR", rem: 0 }]);
-ok(near(a.live, 12 + 10 + 15 + 18) && near(a.pre, 47), "mid game team sum");
+ok(near(a.live, 12 + FXL.share(0.5) * 20 + 15 + 18) && near(a.pre, 47), "mid game team sum");
 ok(near(a.sd, Math.sqrt(Math.pow(FXL.sdFull("QB", 20), 2) * 0.5 + Math.pow(FXL.sdFull("RB", 15), 2))), "spread shrinks with games finished");
 
 // big lead late
