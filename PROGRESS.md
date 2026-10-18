@@ -26,3 +26,8 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
   phone, run before this last fix): same 9 checks fail as round 3 and no new ones; no jumps in flow1440, flow1280, two1440,
   short1440, short1920; the hover case keeps its known 1 px hop on the pre-loaded plays. phone 3/3. flow1440 after the
   fix: worst time to visible 10.2 s (was 15.1 s), burst 10.2, 19.4, 30.6 s (was 15.1, 27.4, 42.1 s).
+- Option B fix round 1 (checker FAIL on 206e529): reversed / overturned / nullified / no play / defensive two-point read
+  on the whole text first; an interception fumbled back kept whole; TD printed only when the words say touchdown (or the
+  scoring-summary shape "N Yd pass from / Run / Return"); a long passing TD keeps the scorer ("Turner-Bradshaw 3-yd TD
+  catch"); "J. Echeverria Lozano" keeps the whole surname. short.test.js 41/41. Checker's harness over 439 plays: 391
+  shortened, 48 kept whole, an automatic check (yards, names, TD, misses against the full text) flags none wrong.
