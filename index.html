@@ -4474,12 +4474,12 @@ function fxChart(h, L) {
   if (pts.length < 2) return `<div class="fx-wpc empty-c">Win chance line starts here and fills in through the day</div>`;
   const t0 = pts[0].t, t1 = Math.max(pts[pts.length - 1].t, t0 + 60e3), W = 300, H = 56;
   const xy = q => `${((q.t - t0) / (t1 - t0) * W).toFixed(1)},${((1 - q.p) * H).toFixed(1)}`;
-  const line = pts.map(xy).join(" ");
+  const line = pts.map(xy).join(" "), lastX = xy(pts[pts.length - 1]).split(",")[0];
   const tm = t => fmtCT(t, { hour: "numeric", minute: "2-digit" });
   return `<div class="fx-wpc"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Your win chance through the day">
       <line x1="0" y1="${H / 2}" x2="${W}" y2="${H / 2}" class="mid"/>
-      <polygon points="0,${H} ${line} ${W},${H}" class="area"/><polyline points="${line}" class="ln"/></svg>
-    <div class="ax"><span>${esc(tm(t0))}</span><span>50%</span><span>now</span></div></div>`;
+      <polygon points="0,${H} ${line} ${lastX},${H}" class="area"/><polyline points="${line}" class="ln"/></svg>
+    <div class="ax"><span>${esc(tm(t0))}</span><span>dashed line: even</span><span>now</span></div></div>`;
 }
 function fxTally(m) {
   const t = { done: 0, live: 0, up: 0 };
@@ -4501,7 +4501,7 @@ function renderFxHead() {
   if (L && L.p != null) {
     const me = L.p, wr = Math.round(me * 1000) / 10, dp = R && R.p != null ? me - R.p : 0;
     wp = `<div class="fx-wp" data-wp="${me.toFixed(3)}">
-      <div class="wph"><span class="lbl">Win chance</span>${R && R.p != null && Math.abs(dp) >= 0.0005 ? `<span class="fxd ${dp > 0 ? "up" : "dn"}">${dp > 0 ? "&#9650;" : "&#9660;"} ${Math.abs(dp * 100).toFixed(1)} pts</span>` : ""}</div>
+      <div class="wph"><span class="lbl">Win chance</span>${R && R.p != null && Math.abs(dp) >= 0.0005 ? `<span class="fxd ${dp > 0 ? "up" : "dn"}">${dp > 0 ? "&#9650;" : "&#9660;"} ${Math.abs(dp * 100).toFixed(1)}% since last refresh</span>` : ""}</div>
       <div class="wpr"><span class="pc ${me >= 0.5 ? "lead" : ""}">${FXL.pct(me, L.open)}</span>
         <div class="wpbar" role="img" aria-label="${esc(sl.me.name)} ${FXL.pct(me, L.open)}, ${esc(sl.opp?.name || "Opponent")} ${FXL.pct(1 - me, L.open)}"><i class="me" style="width:${wr}%"></i><i class="op" style="width:${(100 - wr).toFixed(1)}%"></i></div>
         <span class="pc op ${me < 0.5 ? "lead" : ""}">${FXL.pct(1 - me, L.open)}</span></div>

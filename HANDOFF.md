@@ -1,3 +1,37 @@
+# Handoff: live fantasy projections and win chance (job 1018-1528-m21, 2026-10-18)
+
+Branch fan-1018 in worktree builds/press-box/lsb-fan1018 (repo sloanescott16/lone-star-board), from the live head
+origin/main 1d4eed5. Not pushed, not merged. Publishing needs the Captain's yes.
+
+## What changed (index.html, search "fan-1018")
+- FXL block (pure maths, between "fan-1018 FXL start" and "end"): remFrac (share of a game left from quarter and clock;
+  1 before kickoff, 0 when final or a bye, overtime counts only its own clock), player (final = actual, not started =
+  pregame projection, in progress = points + projection x share left; a defence blends projection into actual because its
+  points-allowed tier is scored all at once), team (sum, plus spread), winProb (normal approximation), pct.
+- Spread per player: 2 + k x projection for a full game (k: QB .30, RB .45, WR/TE/DEF .50, K .40), times the square root of
+  the share left. Team spreads add as variances. Win chance = Phi((my live proj - their live proj) / sqrt(var sum)).
+  Sleeper's public API has no win probability (the matchups feed carries points, starters, players_points only).
+- renderFxHead: the matchup header, now redrawn on every board refresh (5 s while live) as well as every Sleeper poll
+  (30 s). Shows live projection per side, arrows for the change since the last Sleeper refresh and since kickoff, the
+  win chance in big type with a two-colour bar, and a line of win chance through the day.
+- fxMark (each Sleeper poll): keeps the last refresh's numbers and appends to localStorage "lsb-fxwp-<season>-<week>-<roster>"
+  (a point a minute or on a 1 percent move, last 720 kept). Line starts when the page is first opened that day.
+- Each lineup row: "proj X" before kickoff, live projection with an arrow against pregame while playing, "final · proj was X" after.
+
+## How to test
+- bun _tests/fan-1018/fxl.test.js : unit tests on the real block from index.html.
+- bun _tests/fan-1018/live-check.js : real Sleeper (read only) and ESPN (through curl), 1440 and 390 screenshots into
+  _tests/fan-1018/shots, numbers into live-HHMM.json. Own profile C:\NIGEL-scratch\m21\profile, audio muted, speech stubbed.
+- Sunday ticker regression: _tests/ticker-5wo/v112-copies/test-suntick-mock.js on this file and on the live file.
+
+## Unsure
+- The spread constants are judgement, not fitted to data. The number feels like ESPN's but is not calibrated.
+- Between Sleeper polls the clock keeps running while points wait for the next poll, so projections ease down a little
+  and jump when points land. That is the "fluctuate" look, but it is partly feed lag.
+- Day line lives in each browser's localStorage only, so phone and desktop each draw their own.
+
+---
+
 # Handoff: Saturday "Big plays" ticker jumps (job 1017-1402-5wo, 2026-10-17, round 2 after the checker)
 
 Branch ticker-smooth-5wo in worktree builds/press-box/lsb-tick5wo (repo sloanescott16/lone-star-board), from the live
