@@ -4400,9 +4400,9 @@ const FXL = (() => {
     if (g.state === "post") return 0;
     const p = +g.period || 0;
     if (p < 1) return 1;
-    if (p > 4) return 0;   // overtime: the pregame projection covers regulation only, points still count as they land
     const m = String(g.clock || "").match(/^(\d+):(\d{1,2})(?:\.\d+)?$/);
     const s = m ? Math.min(QSEC, +m[1] * 60 + +m[2]) : QSEC / 2;
+    if (p > 4) return Math.min(600, s) / GSEC;   // overtime: only the overtime clock is left (ten minutes in the regular season)
     const left = (4 - p) * QSEC + s;
     return Math.max(0, Math.min(1, left / GSEC));
   }
@@ -4543,6 +4543,7 @@ function playerRow(pid, slot, pts, bench) {
 function renderFantasy() {
   const sl = S.sleeper; if (!sl.me) return;
   const mine = sl.mine, opp = sl.oppM;
+  const myPts = mine?.points ?? 0, opPts = opp?.points ?? 0;   // the ticker tag below
   renderFxHead();   // fan-1018: the header (scores, live projections, win chance) is its own function so the board refresh can redraw it between Sleeper polls
   if (!mine) { el("#roster").innerHTML = `<tbody><tr><td class="empty">No matchup this week</td></tr></tbody>`; return; }
   const starters = mine.starters || [], pp = mine.players_points || {};

@@ -1,0 +1,111 @@
+{
+ "desktop": {
+  "time": "3:35:36 PM",
+  "me": "Nacua Matata",
+  "opp": "jnemec20",
+  "pts": [
+   62.1,
+   58.3
+  ],
+  "live": [
+   "141.0",
+   "93.7"
+  ],
+  "pre": [
+   "135.5",
+   "105.4"
+  ],
+  "sd": [
+   "21.8",
+   "13.9"
+  ],
+  "p": 0.9666233145174428,
+  "head": "My teamNacua MatatagonzowiththewindWeek 6 · Mickey Mouse Fantasy Football4 done · 3 playing · 2 to play 62.10proj 141.0▲ 5.4since kickoff · was 135.5 VS 58.30proj 93.7▼ 11.7since kickoff · was 105.4 Opponentjnemec20jnemec206 done · 1 playing · 2 to play Win chance 97% 3% 3:34 PM50%now",
+  "rows": 12,
+  "mine": [
+   "Kirk Cousins 0.0/17.7 rem 0.92 -> 16.3",
+   "Bucky Irving 5.6/14.5 rem 0.00 -> 5.6",
+   "Chuba Hubbard 24.1/16.0 rem 0.00 -> 24.1",
+   "Christian Watson 0.0/18.6 rem 1.00 -> 18.6",
+   "George Pickens 0.0/13.6 rem 1.00 -> 13.6",
+   "Trey McBride 7.1/16.4 rem 0.78 -> 19.9",
+   "Puka Nacua 0.0/22.7 rem 0.78 -> 17.7",
+   "Chris Boswell 17.0/7.8 rem 0.00 -> 17.0",
+   "Seattle Seahawks 8.3/8.3 rem 0.00 -> 8.3"
+  ],
+  "theirs": [
+   "Aaron Rodgers 14.8/16.4 rem 0.00 -> 14.8",
+   "Derrick Henry 5.0/17.9 rem 0.00 -> 5.0",
+   "Alvin Kamara 14.9/9.8 rem 0.00 -> 14.9",
+   "Rome Odunze 6.9/9.7 rem 0.00 -> 6.9",
+   "Romeo Doubs 15.2/9.4 rem 0.00 -> 15.2",
+   "Tucker Kraft 0.0/13.2 rem 1.00 -> 13.2",
+   "Matthew Golden 0.0/15.7 rem 1.00 -> 15.7",
+   "Cameron Dicker 0.0/7.0 rem 0.93 -> 6.5",
+   "Houston Texans 1.5/6.3 rem 0.00 -> 1.5"
+  ],
+  "hist": 1,
+  "board": 4,
+  "errors": [
+   "ReferenceError: myPts is not defined"
+  ],
+  "shot": "C:\\NIGEL\\builds\\press-box\\lsb-fan1018\\_tests\\fan-1018\\shots\\fantasy-desktop-1440-1534.png"
+ },
+ "scores": {
+  "tiles": 4,
+  "text": " Live now All FBSConferenceTop 25 14 games · 4 live · 8 final · 2 to come 3:35 PM CT Full screen Steelers3-226OT2:26Buccaneers1-419Bucky Irving 5.6Chris Boswell",
+  "shot": "C:\\NIGEL\\builds\\press-box\\lsb-fan1018\\_tests\\fan-1018\\shots\\scores-desktop-1534.png"
+ },
+ "phone": {
+  "time": "3:35:47 PM",
+  "me": "Nacua Matata",
+  "opp": "jnemec20",
+  "pts": [
+   62.1,
+   58.3
+  ],
+  "live": [
+   "141.0",
+   "93.7"
+  ],
+  "pre": [
+   "135.5",
+   "105.4"
+  ],
+  "sd": [
+   "21.8",
+   "13.9"
+  ],
+  "p": 0.9666233145174428,
+  "head": "My teamNacua MatatagonzowiththewindWeek 6 · Mickey Mouse Fantasy Football4 done · 3 playing · 2 to play 62.10proj 141.0▲ 5.4since kickoff · was 135.5 VS 58.30proj 93.7▼ 11.7since kickoff · was 105.4 Opponentjnemec20jnemec206 done · 1 playing · 2 to play Win chance 97% 3% 3:35 PM50%now",
+  "rows": 12,
+  "mine": [
+   "Kirk Cousins 0.0/17.7 rem 0.92 -> 16.3",
+   "Bucky Irving 5.6/14.5 rem 0.00 -> 5.6",
+   "Chuba Hubbard 24.1/16.0 rem 0.00 -> 24.1",
+   "Christian Watson 0.0/18.6 rem 1.00 -> 18.6",
+   "George Pickens 0.0/13.6 rem 1.00 -> 13.6",
+   "Trey McBride 7.1/16.4 rem 0.78 -> 19.9",
+   "Puka Nacua 0.0/22.7 rem 0.78 -> 17.7",
+   "Chris Boswell 17.0/7.8 rem 0.00 -> 17.0",
+   "Seattle Seahawks 8.3/8.3 rem 0.00 -> 8.3"
+  ],
+  "theirs": [
+   "Aaron Rodgers 14.8/16.4 rem 0.00 -> 14.8",
+   "Derrick Henry 5.0/17.9 rem 0.00 -> 5.0",
+   "Alvin Kamara 14.9/9.8 rem 0.00 -> 14.9",
+   "Rome Odunze 6.9/9.7 rem 0.00 -> 6.9",
+   "Romeo Doubs 15.2/9.4 rem 0.00 -> 15.2",
+   "Tucker Kraft 0.0/13.2 rem 1.00 -> 13.2",
+   "Matthew Golden 0.0/15.7 rem 1.00 -> 15.7",
+   "Cameron Dicker 0.0/7.0 rem 0.93 -> 6.5",
+   "Houston Texans 1.5/6.3 rem 0.00 -> 1.5"
+  ],
+  "hist": 1,
+  "board": 4,
+  "errors": [
+   "ReferenceError: myPts is not defined"
+  ],
+  "shot": "C:\\NIGEL\\builds\\press-box\\lsb-fan1018\\_tests\\fan-1018\\shots\\fantasy-phone-390-1534.png"
+ }
+}
