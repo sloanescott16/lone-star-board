@@ -4456,11 +4456,12 @@ function fxLive() {
 const fxWpKey = () => { const sl = S.sleeper; return `lsb-fxwp-${sl.season}-${fxWeek()}-${sl.me?.roster?.roster_id}`; };
 // once per Sleeper refresh: remember the last refresh's numbers for the arrows, and add a point to today's win chance line
 function fxMark() {
-  const L = fxLive(); if (!L || !S.sleeper.proj || !Object.keys(S.sleeper.proj).length) return;
+  const L = fxLive(); if (!L || !S.events.length || !S.sleeper.proj || !Object.keys(S.sleeper.proj).length) return;   // needs the board clocks and the projections
   S.fxl = S.fxl || {};
   if (S.fxl.wk !== fxWeek()) S.fxl = { wk: fxWeek() };
   S.fxl.ref = S.fxl.poll || null;
   S.fxl.poll = { a: L.a.live, b: L.b ? L.b.live : null, p: L.p, t: Date.now() };
+  S.fxl.trace = (S.fxl.trace || []).concat([{ t: Date.now(), a: +L.a.live.toFixed(1), b: L.b ? +L.b.live.toFixed(1) : null, pa: S.sleeper.mine?.points, pb: S.sleeper.oppM?.points }]).slice(-12);   // the last few refreshes, for checking the arrows
   if (L.p == null || offWeek()) return;
   const k = fxWpKey(), h = store.get(k, []), last = h[h.length - 1], now = Date.now();
   if (!last || now - last.t >= 60e3 || Math.abs(last.p - L.p) >= 0.01) {

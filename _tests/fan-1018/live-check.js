@@ -36,7 +36,7 @@ fs.mkdirSync(path.join(__dirname, "shots"), { recursive: true });
       return { time: new Date().toLocaleTimeString("en-US", { timeZone: "America/Chicago" }), me: sl.me?.name, opp: sl.opp?.name,
         pts: [sl.mine?.points, sl.oppM?.points], live: L && [L.a.live.toFixed(1), L.b.live.toFixed(1)], pre: L && [L.a.pre.toFixed(1), L.b.pre.toFixed(1)],
         sd: L && [L.a.sd.toFixed(1), L.b.sd.toFixed(1)], p: L && L.p, head: t("#fxHead"), rows: document.querySelectorAll("#roster [data-lp]").length,
-        mine: side(sl.mine), theirs: side(sl.oppM), hist: store.get(fxWpKey(), []).length, board: document.querySelectorAll("#board .bg, #board > *").length };
+        mine: side(sl.mine), theirs: side(sl.oppM), hist: store.get(fxWpKey(), []).length, trace: S.fxl && S.fxl.trace, ref: S.fxl && S.fxl.ref, poll: S.fxl && S.fxl.poll, mineAt: Object.fromEntries((sl.mine?.starters||[]).map(p=>[(sl.players?.[p]||[p])[0], sl.mine.players_points?.[p]])), board: document.querySelectorAll("#board .bg, #board > *").length };
     });
     out[nm].errors = errs;
     const shot = path.join(__dirname, "shots", `fantasy-${nm}-${w}-${stamp}.png`);
