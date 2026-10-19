@@ -2642,6 +2642,10 @@ function setMark(node, ab) {
 }
 function logoFail(img, ab) { const s = img.parentNode; if (!s) return; s.classList.remove("lgo"); s.classList.toggle("w4", String(ab).length > 3); s.style.background = T(ab)[2]; s.textContent = ab; }
 const fmtCT = (d, opts) => new Date(d).toLocaleString("en-US", { timeZone:"America/Chicago", ...opts });
+/* v117: whole calendar days between two moments as dated in Central time, whatever the device's own zone and across DST */
+const ctDayNo = d => { const p = {}; for (const x of new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", year: "numeric", month: "numeric", day: "numeric" }).formatToParts(new Date(d))) p[x.type] = +x.value;
+  return Math.round(Date.UTC(p.year, p.month - 1, p.day) / 86400000); };
+const ctDaysUntil = (d, now = Date.now()) => Math.max(0, ctDayNo(d) - ctDayNo(now));
 const store = {
   get(k, d){ try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
   set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
@@ -3423,7 +3427,7 @@ function renderRegroup() {
   let c3body = `<div class="rg-l">Next week's schedule isn't posted yet.</div>`;
   if (nx) {
     const home = nx.home === CFG.fav, opp = home ? nx.away : nx.home;
-    const days = Math.max(0, Math.ceil((nx.date - Date.now()) / 86400000));
+    const days = ctDaysUntil(nx.date);   // v117: Central calendar days, not elapsed hours rounded up
     c3body = `<div class="rg-big">${home ? "vs" : "at"} ${esc(T(opp)[1])}</div>
       <div class="rg-l">${esc(fmtCT(nx.date, { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))} CT${nx.net ? ` · ${esc(nx.net)}` : ""}</div>
       <div class="rg-l">${days === 0 ? "<b>Kickoff today.</b> Straight to it." : `<b>${days}</b> day${days === 1 ? "" : "s"} to redemption.`}</div>`;
