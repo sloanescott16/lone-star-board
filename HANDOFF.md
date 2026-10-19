@@ -99,38 +99,30 @@ head origin/main 8e872e9. Not pushed, not merged. Publishing needs the Captain's
 - No version marker bumped.
 
 # Handoff: v116 Game Center clock (job 1010-1609-a00)
+# Handoff: v117 Next One Up countdown (job 1019-1149-un1)
 
-Branch game-clock in worktree builds/press-box/lsb-clock (repo sloanescott16/lone-star-board), from origin/main fc89a6e.
-The college Game Center is this board (Press Box links to lone-star-board/?lg=cfb#game-<id>), so the fix is here.
-The hub-clock worktree of the Press Box repo was made first and is unused (no commits).
+Branch countdown-fix-1019, worktree C:\NIGEL-scratch\1019-un1\wt, off main ba383c9 (v116). Not merged, pushed or deployed.
 
 ## Cause
-ESPN's college feed stamps a game clock only on plays whose text carries one ("(10:09) Shotgun ..." or "Timeout Oklahoma,
-clock 03:43"). Every other play repeats the last stamp, and the board and summary header clock sit on it too. So in a
-no-huddle drive with no timeout, every play and the header read 10:09. Mid-drive ESPN also files the live drive as
-"N plays, Y yards, 0:00" with start "OU 0" (seen live again at 16:17: "TEX 3 plays, 23 yards, 0:00 from OU 0").
-The page showed those values as they came.
+Home tab, regroup mode, card "Next one up": `days = Math.ceil((nx.date - Date.now()) / 86400000)`. That is elapsed time
+rounded up, so on Mon 19 Oct at 11:49 AM CT the 7 days 7.4 hours to Mon 26 Oct 7:15 PM came out as 8.
 
-## Fix (index.html, all marked v116)
-- ckOf: a play's clock counts only when stamped (in its text, a new value, or a new period). Plays between two stamps
-  share out the time between them; plays after the last stamp each take a typical slice (36 s, 7 s for incompletions,
-  penalties and out of bounds, 6 s for kicks, 0 for timeouts), never more than the real time between the feed's wallclocks.
-- ckLive (called at the end of ofGame): the header and pinned clock move on, marked "~", when ESPN's clock is still on
-  the last stamp and plays have run since. A fresh ESPN clock is left alone.
-- ckPlay: each play row shows its own clock, "~" where worked out.
-- ckDrive: drive time from the play clocks when the drive is live or ESPN says 0:00; ESPN's own figure otherwise.
-- ckFrom: drive start from the first snap's spot when ESPN's start is missing or on the goal line ("OU 0"); also used by
-  the field graphic and the older drive panel.
-- The pinned score bar now runs through ofGame too, so it shows the same clock as the header.
+## Fix (index.html, marked v117)
+- `ctDayNo(d)`: the Central (America/Chicago) calendar date of a moment, via Intl formatToParts, as a day number.
+- `ctDaysUntil(d, now)`: game's Central date minus today's Central date, never below 0. Ignores the device's own zone
+  and DST (the day number comes from the Central Y-M-D, not from hours).
+- The card uses `ctDaysUntil(nx.date)`. Wording unchanged: "N days", "1 day", 0 is "Kickoff today. Straight to it."
 
-## How to run and test
-- bun test _tests/game-clock  (6 tests on the saved feeds, including the Captain's moment rebuilt from the snapshot)
-- bun _tests/game-clock/serve.js  (static server on 8716), then
-  bun _tests/game-clock/live-check.js moment   (feeds as at his report, screenshots 390 and 1440 into shots/)
-  bun _tests/game-clock/live-check.js live     (real ESPN feeds, prints page beside ESPN; ESPN calls go through curl
-  because headless Chrome gets an HTML page from ESPN)
-- Browser profile: _tests/game-clock/edge-profile, reused, git-ignored.
-- Saved feeds: _tests/game-clock/fixtures (summary-*, scoreboard-* about every 90 s, live-summary-* from live runs).
+## Tests
+- `bun test _tests` (all): 24 pass, 0 fail. New file `_tests/countdown/countdown.test.js` (10 tests): 19 Oct any time to
+  26 Oct 7:15 PM = 7, 25 Oct 11:59 PM CT = 1, 26 Oct 00:01 CT = game day, never negative, 1 Nov fall back and 14 Mar
+  spring forward, UTC date vs Central date near midnight, device clock in UTC, Pacific and Tokyo. Also passes with TZ set
+  to UTC, America/Los_Angeles and America/Chicago for the whole run.
+- Browser: `bun _tests/countdown/browser-check.js <shots dir> <profile dir>` serves the worktree on 8791, live ESPN and
+  Sleeper feeds through curl, fakes Date, overrides the device time zone, stubs speech and audio, headless.
+  Results: now 7 (Central and UTC device), 19 Oct 23:59:30 CT 7, 20 Oct 00:00:30 CT 6, 25 Oct 23:59 CT 1 (also Pacific),
+  26 Oct 00:01 CT Kickoff today (also Pacific), 19 Oct 23:30 CT with a UTC device 7. No page errors.
+  Screenshots in C:\NIGEL-scratch\1019-un1\shots.
 
 ## Unsure
 - The worked-out clock is an estimate. At his moment it reads ~4:53 against TV 4:29 (24 s off).
@@ -165,3 +157,6 @@ The page showed those values as they came.
 - Unsure: surnames only, so a two-word surname shows its last word ("Echeverria Lozano" shows "Lozano"); all-caps
   "SURNAME, First" feed text is not shortened (kept whole). Item width is still mostly label, logo, team and time, so
   bursts still take about 9 s per play at 1440.
+- The card only shows after a Cowboys loss (regroup mode), so the browser check relies on the live week 6 loss at Green
+  Bay; on the faked later dates the feed is still today's real one, only the clock is moved.
+- No version marker is visible on the page; versions are marked in code comments and commit messages, as v116 did.
