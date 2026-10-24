@@ -1,3 +1,32 @@
+# Handoff: simplify for a smooth ticker, v120 (job 1024-1750-si2, branch cc-simplify-si2 from ead052d v119). Staged, not published.
+
+What changed (index.html, search "v120"):
+- Live dots on game cards, the game centre and the On air bar are static: no pulse, no glow. The one top-bar live chip dot
+  keeps its pulse (see Unsure). Every dot is still there, so "live" still shows.
+- Confetti is off (confetti() returns at once). Final cards, banners and the final sheet are unchanged. The Tech kickoff
+  tortillas (v109) are kept: a deliberate tradition, a few seconds once a game; the Captain may want them gone too.
+- Clock and "Updated Ns ago" are written only when the text changes, in place on the text node; "Updated" sits in a fixed
+  width contain: strict box.
+- The board replaces only the game cards whose markup changed (patchKids), not the whole board each poll.
+- Home and Schedule panels not on screen draw in idle time (requestIdleCallback, 1.5 s timeout); a view switch draws
+  them first (idleFlush in route()).
+- fitBoard skips its layout read after a redraw when card count, window, body class and head text length are unchanged.
+- Not changed: the reel (5wo lead-in logic, two boxed copies; the 13208 px width only while new plays scroll in, rastered
+  3 times in 20 s), will-change (already reel only), no backdrop-filter or animated gradients found.
+
+How to test (builds\press-box\pc-test\cc-v120, TEMP/TMP C:\NIGEL-scratch\1024-1750-si2):
+- bash runall.sh <label> <page>: steady, refresh (clocks change each poll, no plays) and plays runs, 20 s, GPU on; summ.js
+  prints one line per run. base-summ.log has v118 and v119, v120.log has v120 and the stage-1-only variant.
+- bash tests.sh: tick-smooth 1920, hz-sim, regress (58/66 expected, the 8 known 5wo timing fails).
+- probe.js <page>: the reel runs and is on screen. cmp-names.js <traceA> <traceB>: event count differences.
+
+Unsure: with every pulse gone the GPU trace showed Viz skipping every draw (Draw skipped 3286, renderer DroppedFrame 3287)
+while the reel animation runs (probe.js shows it moving). One pulse back and every frame draws. This may be a headless
+quirk, but it is not explained. When no game is live the chip is hidden, so that case has no pulse at all. Needs a look
+in a visible window (with his OK) or a further trace. Final v120 trace and test runs were started at the cap; the logs
+are final-v120.log and final-tests.log in pc-test\cc-v120, not read by the builder.
+
+---
 ﻿# Handoff: ticker round 3, v119 (job 1024-1509-yxc, branch ticker-smooth-yxc3 from 88e8b17 v118). Staged, not published.
 
 The PC: Windows primary is the Acer XF273 S at 1920x1080 165 Hz; the Dell P2319H to its left is 1920x1080 60 Hz. The
