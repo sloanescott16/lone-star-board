@@ -1,3 +1,23 @@
+# Handoff: simplify, v120 round 2 (job 1024-1750-si2, branch cc-simplify-si2). Staged, not published.
+
+Round 2 (read this first; round 1's "Unsure" below is now answered):
+- Final tests on v120: regress 58/66, the same 8 known 5wo timing fails as v119; tick-smooth 1920 no seen jumps, step miss
+  0; hz-sim no held frames at 60, 120, 144, 165 Hz. Logs: pc-test\cc-v120\final-tests.log, final-tests2.log, regress-v120.log.
+- "Draw skipped" was the test harness, not Chrome stalling. The headless window is smaller than the emulated 1920x1080
+  page, so the ticker at the page foot is outside the display surface and viz clips its damage away. A bare test page with
+  one div on a compositor translate: every draw skipped at the bottom or at top:1000px, every frame drawn at top:200 to
+  800px, and every frame drawn at the bottom once the window is 2000x1400. The pulse only seemed to fix it because its
+  damage was inside the window. Screencast frames (cast.js) show the reel moving at 61 px/s with no held frames with the
+  pulse, without it, and with no game live. On a real window the ticker is inside the window, so this does not arise.
+- No page fix needed. The one change is the comment on the top-bar pulse (index.html line 80): it stays as the live cue,
+  not for the reel. It could go with no harm to the reel if the Captain wants it static too.
+- Final GPU numbers: PROGRESS.md, round 2. Draw skipped 0 in all six runs. Run harness with PW_EXTRA="--window-size=2000,1400"
+  (r2-final.sh) or its numbers are wrong for anything near the page foot. The v118 and v119 baselines in base-summ.log were
+  taken with the small window; their ticker draws were carried by their pulses, so they are still fair for comparison.
+- Unsure: one 50 ms main-thread task in the plays run (round 1 saw 34 ms there), likely the board redraw when the burst
+  lands; not chased. Not seen in a visible window (no screen use allowed).
+
+---
 # Handoff: simplify for a smooth ticker, v120 (job 1024-1750-si2, branch cc-simplify-si2 from ead052d v119). Staged, not published.
 
 What changed (index.html, search "v120"):
