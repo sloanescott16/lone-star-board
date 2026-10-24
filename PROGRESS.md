@@ -1,3 +1,13 @@
+# Ticker smooth, v118 (job 1024-1509-yxc), branch ticker-smooth-yxc from 4fac9d8 (v117)
+
+- Stage 1 (15:4x): harness pc-test/cc-v118/tick-smooth.js and hz-sim.js. At 60 Hz headless v117 is already clean
+  (no step misses, no visible jumps). The cause is the display-locked engine: at 120/144/165 Hz v117 uses steps() and
+  moves 1 px every 2nd or 3rd frame (48 to 60 moves a second, held 60 to 110 frames a second), plus a startTime re-seek
+  every 2 s. v118: one linear translate3d loop at 60 CSS px/s on every display, no measuring, no re-seek, loop sleeps
+  when idle, ticker contained in its own layer. Stage 1 code committed.
+
+---
+
 # Fantasy accuracy against Sleeper (job 1018-1644-bej), branch fan2-1018 from 54f96c1
 
 - 16:5x: league-scored pregame projections, in-game share rem^1.23, wider spread, same-game correlation, t(5). Snapshot test 13/13 (126.79 v 92.42, 88.9 v 11.1; Sleeper 126.67 v 92.09, 89 v 11). Unit tests 30/30.
