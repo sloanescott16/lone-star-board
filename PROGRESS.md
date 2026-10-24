@@ -6,6 +6,7 @@
   every 2 s. v118: one linear translate3d loop at 60 CSS px/s on every display, no measuring, no re-seek, loop sleeps
   when idle, ticker contained in its own layer. Stage 1 code committed.
 - Stage 2 (16:0x): measured. 60 Hz headless both clean; hz-sim v117 at 144 Hz 48 moves/s with 96 held frames a second, v118 144 moves/s, 0 held. 5wo jump suite (regress/) on v118: hover case shows a steady 1 px per-frame miss after the mouse leaves; burst-within-20 s and 3 s checks fail; v117 comparison run in progress at the cap. Not yet resolved.
+- Suite finished after handback: v118 56 ok, v117 44 ok. The burst 20 s and 3 s timing fails are the same on v117 (inherited). Real v118 regressions: (1) hover1440 1 px per-frame miss after the mouse leaves, (2) "reduced motion: no animation on the reel" fails (likely the loop sleeping before tkrStop runs, or the stop path). Fix these two next.
 
 ---
 
