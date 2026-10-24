@@ -4665,10 +4665,14 @@ function renderFantasy() {
   el("#tkTag").innerHTML = `<span class="tn">${esc(sl.me.name)}</span><span class="tsc">${myPts.toFixed(1)} <span class="op">· ${opPts.toFixed(1)}</span></span>`;
 }
 
-function fitBoard() {
+function fitBoard(force) {
   const board = el("#board"), n = board.querySelectorAll(".bg").length;
   // v70: on a phone the board scrolls with normal cards; squeezing every live game into one screen clipped the names and scores
   if (!document.body.classList.contains("v-scores") || !n || S.grouped || window.innerWidth < 700) { board.classList.remove("fill"); board.style.cssText = ""; return; }
+  // v120: same number of cards, same window, same head text: the grid is already right, so no layout read after the redraw
+  const fk = n + "|" + innerWidth + "|" + innerHeight + "|" + document.body.className + "|" + el("#boardSub").textContent.length;
+  if (!force && board._fk === fk && board.classList.contains("fill")) return;
+  board._fk = fk;
   const top = board.getBoundingClientRect().top + window.scrollY;
   const H = Math.max(240, window.innerHeight - top - 56 - 12), W = board.clientWidth;
   let best = { cols: 1, score: 0 };
@@ -4682,7 +4686,7 @@ function fitBoard() {
   board.style.gridTemplateColumns = `repeat(${best.cols}, minmax(0, 1fr))`;
   board.style.gridTemplateRows = `repeat(${best.rows}, minmax(0, 1fr))`;
 }
-window.addEventListener("resize", fitBoard);
+window.addEventListener("resize", () => fitBoard(true));
 
 /* =====================================================================
    LOOPS
