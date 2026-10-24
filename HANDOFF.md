@@ -24,6 +24,22 @@ Not sure of: headless Chrome draws at 60 Hz only, so the fast-display result is 
 softer than v117's whole-pixel stops; I did not judge that by eye. A refresh still costs one 33 ms main-thread frame
 (both versions, from the board redraw); the reel is on the compositor so it should not hitch, but that was not proven on a GPU.
 
+Fix round 2 (page fix in commit 3037714; the PROGRESS line in bc74bf0 is round 1's late note, superseded by this):
+- Hover "jump" was the harness, not the page. regress/sampler.js learns the reel speed from its first 20 frames; the
+  hover case puts the mouse on the reel right after starting the sampler, so all 20 frames were held and it learned
+  0 px/ms (now printed: deltas all 0, reel paused). After the mouse left, every normal 1 px move read as a miss. v117 hid
+  this because its reel only starts after its 1 s frame-rate measure. Sampler fixed (learns only from running frames).
+  v118's resume by play() is fine: no jumps at 0.5 px tolerance after the fix.
+- Timing checks (burst within 20 s, newest within 3 s at 1440) are pre-existing: v117 burst 10.2, 19.4, 30.6 s, worst
+  10.2 s; v118 10.1, 19.3, 30.4 s, worst 10.1 s. Both equal the time the play at the right edge needs to clear (5wo design).
+- One real v118 fault: with reduced motion the reel kept its standing translate3d, so its transform was not "none".
+  The reduced-motion CSS now sets transform none and will-change auto. Reduce and hover cases 6/6 after.
+- Logs in pc-test/cc-v118/regress: run-v118-r2.log (full suite 57/66 before the CSS fix: 8 timing fails plus reduce),
+  run-v118-r2-reduce.log (after), run-v117.log (hover1440, flow1440, hover: 20/24, only the timing checks fail).
+  Frame timings in pc-test/cc-v118/timing-r2.log: v118 60 px/s, step miss 0, seen jump 0, one 33 ms frame on refresh,
+  no compositor failures; hz-sim v118 no held frames at 60 to 165 Hz, v117 holds 60, 96, 110 frames a second at 120/144/165.
+- Not rerun: the full suite after the CSS fix (only the cases it touches).
+
 ---
 
 # Handoff: fantasy accuracy against the Sleeper app (job 1018-1644-bej, branch fan2-1018 from 54f96c1)
