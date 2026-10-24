@@ -83,3 +83,12 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
 - Stage 3 (16:0x): regress 58/66, only the 8 known 5wo timing fails (pc-test/cc-v119/regress-v119.log); tick-smooth at
   1920 no seen jumps, step miss 0, one 33 ms frame on refresh as before; hz-sim no held frames at 60 to 165 Hz
   (smooth-v119.log). Speed 90 to 120 not judged: headless cannot show perceived smoothness; ?tk=N is there for him to try.
+
+# Round 4, simplify (job 1024-1750-si2, branch cc-simplify-si2 from ead052d v119, worktree C:\NIGEL-scratch\1024-1750-si2\wt)
+
+- Stage 0 (17:5x): harness copied to pc-test/cc-v120 (paths moved to C:\NIGEL-scratch\1024-1750-si2). gpu-trace.js gained a
+  REFRESH run (clocks change on every poll, no new plays); summ.js prints one line per run. v118 baseline: steady has 4
+  main-thread tasks of 23 to 34 ms, one per poll, even though the data never changes (the whole page redraws each poll).
+- Stage 1 (18:1x, d5573b2): live dots static (no pulse, no glow), confetti off, clock and "Updated" text written only when
+  it changes, "Updated" in its own fixed contained box; the board replaces only the cards whose markup changed; Home and
+  Schedule panels that are not on screen draw in idle time (a view switch draws them first). Measuring.
