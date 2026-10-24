@@ -1,3 +1,31 @@
+# Handoff: smooth bottom ticker, v118 (job 1024-1509-yxc, branch ticker-smooth-yxc from 4fac9d8 v117). Staged, not published.
+
+What was wrong: the reel was already a Web Animations transform on the compositor, but v111 to v117 locked it to the
+display: it measured the frame rate with requestAnimationFrame and, above 60 Hz, used steps() easing so it moved 1 device
+px every 2nd frame at 120 Hz and every 3rd frame at 144 and 165 Hz (48 and 55 px a second). On a fast monitor the text
+sits still for 2 frames, then hops: stutter. It also re-wrote the animation's startTime every 2 seconds (phase lock),
+and any small error in the measured rate makes the holds uneven. At 60 Hz it was fine, which is why headless checks passed.
+
+What v118 does (index.html, search "v118"): one linear translate3d loop over boxed copies, 60 CSS px a second on every
+display (duration = copy width / speed), nothing measured, no re-seek, no steps. The rAF loop never moves the reel; it
+only builds new content (the 5wo lead-in logic is unchanged, so plays on screen stay put), drops the lead-in, runs the
+phone card, then sleeps. .ticker and .track have contain: layout paint; the reel has will-change: transform and its own
+layer from the start. Reduced motion: unchanged (no animation, the strip scrolls by hand). There is no cache name or
+version label in this file, so the version marker is the "v118" comments and the commit messages, as v117 did.
+
+How to test (from builds\press-box\pc-test\cc-v118, bun, TEMP/TMP set to C:\NIGEL-scratch\1024-1509-yxc):
+- bun tick-smooth.js <page> <label> [w h dpr] : 10 s steady, refresh and added-play runs, frame timings, transform steps,
+  every play's on-screen x per frame, animation writes, trace counts. Results in result-<label>.json.
+- bun hz-sim.js <page> <label> : what the animation draws at 60/120/144/165 Hz.
+- regress\tick-jump.test.js <page> : the 5wo jump suite, run with the profile-keeping shim.
+
+Not sure of: headless Chrome draws at 60 Hz only, so the fast-display result is read from the animation's own timing
+(hz-sim), not seen on a real 144 Hz panel. Sub-pixel motion on the compositor layer is smooth but text may be a touch
+softer than v117's whole-pixel stops; I did not judge that by eye. A refresh still costs one 33 ms main-thread frame
+(both versions, from the board redraw); the reel is on the compositor so it should not hitch, but that was not proven on a GPU.
+
+---
+
 # Handoff: fantasy accuracy against the Sleeper app (job 1018-1644-bej, branch fan2-1018 from 54f96c1)
 
 The Captain at 4:43 PM: ours said 131.7 v 93.5 and 95/5, Sleeper said 126.67 v 92.09 and 89/11.

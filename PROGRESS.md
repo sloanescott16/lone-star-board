@@ -5,6 +5,7 @@
   moves 1 px every 2nd or 3rd frame (48 to 60 moves a second, held 60 to 110 frames a second), plus a startTime re-seek
   every 2 s. v118: one linear translate3d loop at 60 CSS px/s on every display, no measuring, no re-seek, loop sleeps
   when idle, ticker contained in its own layer. Stage 1 code committed.
+- Stage 2 (16:0x): measured. 60 Hz headless both clean; hz-sim v117 at 144 Hz 48 moves/s with 96 held frames a second, v118 144 moves/s, 0 held. 5wo jump suite (regress/) on v118: hover case shows a steady 1 px per-frame miss after the mouse leaves; burst-within-20 s and 3 s checks fail; v117 comparison run in progress at the cap. Not yet resolved.
 
 ---
 
