@@ -1,3 +1,24 @@
+﻿# Handoff: ticker round 3, v119 (job 1024-1509-yxc, branch ticker-smooth-yxc3 from 88e8b17 v118). Staged, not published.
+
+The PC: Windows primary is the Acer XF273 S at 1920x1080 165 Hz; the Dell P2319H to its left is 1920x1080 60 Hz. The
+Helm's Chrome window sits on the Dell. Windows 10 Chrome takes its frame clock from the primary display: even headless it
+drew at 6.06 ms (165 Hz). On the 60 Hz Dell that means each shown frame carries 3, 3, 3 then 2 of Chrome's frames, so the
+reel moves 1.09, 1.09, 1.09, 0.73 px per shown frame at 60 px/s, a 15 Hz wobble no page change can remove
+(pc-test/cc-v119/mixed-sim.js). The fix for that is on the PC (watch on the Acer, or make the Dell primary, or run the
+Acer at 120 Hz so the frames divide evenly); that is the Captain's call, nothing was changed.
+
+What the GPU trace showed on the page itself (pc-test/cc-v119, bun gpu-trace.js <page|url> <label> [secs], PW_GPU=1):
+the reel runs on the compositor, its layer is never re-rastered, no checkerboarding, pulses are composited. But v118's
+rAF loop polled the lead-in every frame while new plays scrolled in (2212 calls in 20 s), forcing a main frame on every
+display frame. v119 sleeps on a timer instead (index.html, "v119"). Also ?tk=N sets the speed (20 to 300 px/s, kept in
+localStorage cc-tkpxs) so he can try 90 or 120 on his own screen; default stays 60.
+
+How to test: gpu-trace.js as above (steady with STEADY=1), trace-dig.js, dig2.js, dig3.js on the saved trace in
+C:\NIGEL-scratch\1024-1509-yxc. tick-smooth.js, hz-sim.js and regress as for v118 (cc-v118).
+Unsure: the 165 Hz frame clock on a window on the Dell is inferred from headless and how Chrome works on Windows 10, not
+seen in a visible window. The live page had no plays on the reel when traced.
+
+---
 # Handoff: smooth bottom ticker, v118 (job 1024-1509-yxc, branch ticker-smooth-yxc from 4fac9d8 v117). Staged, not published.
 
 What was wrong: the reel was already a Web Animations transform on the compositor, but v111 to v117 locked it to the
@@ -80,7 +101,7 @@ origin/main 1d4eed5. Not pushed, not merged. Publishing needs the Captain's yes.
 - fxMark (each Sleeper poll): keeps the last refresh's numbers and appends to localStorage "lsb-fxwp-<season>-<week>-<roster>"
   (a point a minute or on a 1 percent move, last 720 kept). Line starts when the page is first opened that day.
   fxPrune, once per page load at the first refresh: removes lsb-fxwp- keys for any other season or week.
-- Each lineup row: "proj X" before kickoff, live projection with an arrow against pregame while playing, "final · proj was X"
+- Each lineup row: "proj X" before kickoff, live projection with an arrow against pregame while playing, "final Â· proj was X"
   after. A starter on a bye reads "bye", one with no team "no game".
 
 ## How to test
