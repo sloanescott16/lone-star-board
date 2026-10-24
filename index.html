@@ -77,10 +77,10 @@
   }
   .chip.live { color: var(--live); border-color: rgba(255,90,95,.45); background: var(--live-soft); }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-  .chip.live .dot { animation: pulse 1.6s ease-in-out infinite; }
+  .chip.live .dot { animation: none; }   /* v120: the live dot stays lit, no pulse (each pulse was its own composited layer) */
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
   .clock { font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: .04em; color: var(--ink-2); }
-  .updated { font-size: 12px; color: var(--muted); }
+  .updated { font-size: 12px; color: var(--muted); display: inline-block; width: 9.6em; height: 1.4em; line-height: 1.4em; white-space: nowrap; overflow: hidden; contain: strict; }   /* v120: the per-second text lives in its own fixed, contained box, so it never lays out the bar */
 
   /* ---------- featured game ---------- */
   .featured { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; }
@@ -1637,7 +1637,7 @@
   .big.trail { color: var(--ink-2); }
   .status { gap: 6px; }
   .status .q { font-family: var(--cond); font-size: 22px; font-weight: 800; letter-spacing: .12em; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-  .status .q::before { content: ""; width: .42em; height: .42em; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; animation: pulse 1.6s ease-in-out infinite; }
+  .status .q::before { content: ""; width: .42em; height: .42em; border-radius: 50%; background: currentColor; animation: none; }   /* v120: static live dot, no glow or pulse */
   .status .t { font-family: var(--cond); font-weight: 800; font-size: 42px; letter-spacing: .02em; }
   body.lg-cfb .status .t { font-family: var(--display); font-weight: 400; font-size: 38px; }
   /* down and distance reads like the TV box: first-down yellow on the down */
@@ -1684,7 +1684,7 @@
   .g .foot, .g .lm { border-top-color: var(--line); }
   .g .foot { font-family: var(--cond); font-size: 14px; font-weight: 600; letter-spacing: .06em; }
   .g .foot .st { font-family: var(--cond); font-weight: 800; font-size: 15px; letter-spacing: .1em; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
-  .g.live .foot .st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; animation: pulse 1.6s ease-in-out infinite; }
+  .g.live .foot .st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: none; }   /* v120: static live dot, no glow or pulse */
   .g .foot .rz { font-family: var(--cond); font-weight: 800; font-size: 13px; letter-spacing: .1em; color: #fff; background: #c9242b; border-radius: 3px; padding: 1px 6px; }
   .g .lm { font-family: var(--cond); font-size: 13px; letter-spacing: .03em; }
   .g .abbr { border-radius: 6px; }
@@ -1747,7 +1747,7 @@
   .bg .foot { font-family: var(--cond); font-weight: 600; letter-spacing: .04em; }
   .bg .foot .st { font-family: var(--cond); font-weight: 800; letter-spacing: .1em; display: inline-flex; align-items: center; gap: .35em; }
   body.lg-cfb .bg .foot .st { font-family: var(--cond); }
-  .bg.live .foot .st::before { content: ""; width: .38em; height: .38em; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; animation: pulse 1.6s ease-in-out infinite; }
+  .bg.live .foot .st::before { content: ""; width: .38em; height: .38em; border-radius: 50%; background: currentColor; animation: none; }   /* v120: static live dot, no glow or pulse */
   .bg .foot .rz { font-family: var(--cond); font-weight: 800; color: #fff; background: #c9242b; border-radius: 3px; padding: .08em .45em; letter-spacing: .1em; }
   .bg.rz .foot .rz { color: #fff; filter: none; }
   .bg .foot .dd { font-weight: 600; }
@@ -1802,7 +1802,7 @@
   body.lg-cfb .gc-side .n { font-weight: 400; }
   .gc-side .n.dim { color: var(--ink-2); }
   .gc-st .q { font-family: var(--cond); font-weight: 800; font-size: 24px; letter-spacing: .12em; display: inline-flex; align-items: center; gap: 8px; }
-  .gc-st .q.live::before { content: ""; width: .4em; height: .4em; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; animation: pulse 1.6s ease-in-out infinite; }
+  .gc-st .q.live::before { content: ""; width: .4em; height: .4em; border-radius: 50%; background: currentColor; animation: none; }   /* v120: static live dot, no glow or pulse */
   .gc-st .dd { font-family: var(--cond); font-size: 16px; font-weight: 600; letter-spacing: .04em; margin-top: 3px; }
   .gc-st .dd b { color: var(--warn); font-weight: 800; }
   .gc-pin .side i { font-size: 34px; font-weight: 800; background: var(--slot); box-shadow: var(--plate); border-radius: 4px; padding: 2px 8px 0; }
@@ -1972,7 +1972,7 @@
   .showbar { display: flex; gap: 10px; align-items: stretch; margin: 0 0 14px; }
   .showbar[hidden] { display: none; }
   .showbar .sb-k { display: flex; align-items: center; gap: 8px; padding: 0 16px; border-radius: 8px; background: var(--fill, #e8232a); color: #fff; font-family: var(--cond); font-weight: 800; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
-  .showbar .sb-k i { width: 9px; height: 9px; border-radius: 50%; background: #fff; animation: sbPulse 1.4s ease-in-out infinite; }
+  .showbar .sb-k i { width: 9px; height: 9px; border-radius: 50%; background: #fff; }   /* v120: static, no pulse */
   @keyframes sbPulse { 50% { opacity: .25; } }
   .showbar .sb-s { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; border: 2px solid var(--fill, #e8232a); background: #000; color: #fff; text-decoration: none; box-shadow: 0 0 18px color-mix(in srgb, var(--fill, #e8232a) 30%, transparent); }
   .showbar .sb-s b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1.1; }
@@ -3456,6 +3456,7 @@ function celebrate(e) {
   if (big && !matchMedia("(prefers-reduced-motion: reduce)").matches) confetti(tc);
 }
 function confetti(color) {
+  return;   // v120: no confetti. The final card and banners still say who won; the 2.8 s canvas cost a main frame every display frame
   const c = el("#confetti"), ctx = c.getContext("2d"); c.hidden = false;
   c.width = innerWidth; c.height = innerHeight;
   const cols = LG.key === "cfb" ? [color, "#ffffff", "#e8232a", "#2b2427"] : [color, "#ffffff", "#5b9cff", "#ffd166"], N = 160, ps = [];
@@ -4227,6 +4228,20 @@ function renderConfPicker() {
   if (S.conf !== "all" && !ids.includes(S.conf)) S.conf = "all";
   sel.value = S.conf;
 }
+/* v120: replace only the children whose markup changed. parts: one element's HTML each. Returns false when a full
+   rebuild is needed (first draw, count changed, or something else changed the box since our last write). */
+function patchKids(box, parts) {
+  const old = box._parts, kids = box.children;
+  if (!old || old.length !== parts.length || kids.length !== parts.length || box._sig !== box.childElementCount + ":" + (box.firstElementChild && box.firstElementChild.dataset.id)) { box._parts = null; return false; }
+  const tpl = document.createElement("template");
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i] === old[i]) continue;
+    tpl.innerHTML = parts[i]; const n = tpl.content.firstElementChild;
+    if (!n || tpl.content.childElementCount !== 1) { box._parts = null; return false; }
+    box.replaceChild(n, kids[i]);
+  }
+  box._parts = parts; box._sig = box.childElementCount + ":" + (box.firstElementChild && box.firstElementChild.dataset.id); return true;
+}
 function renderBoard() {
   const live = S.events.filter(g=>g.live).length, fin = S.events.filter(g=>g.state==="post").length;
   el("#boardSub").textContent = `${S.events.length} games · ${live} live · ${fin} final · ${S.events.length-live-fin} to come` + (LG.key === "cfb" && S.cf !== "all" ? " · least time left first" : "");
@@ -4252,10 +4267,13 @@ function renderBoard() {
       `<section class="csec"><h3>${esc(confName(id))}<span>${gs.some(g => g.live) ? `${gs.filter(g => g.live).length} live` : `${gs.length} up next`}</span></h3><div class="board-grid">${liveGames.filter(x => gs.includes(x.g)).map(card).join("")}</div></section>`).join("");
   } else {
     board.classList.remove("sections");
-    board.innerHTML = liveGames.map(card).join("")
+    const parts = liveGames.map(card);   // v120: patch only the cards whose markup changed; no whole-board rebuild each refresh
+    if (parts.length && patchKids(board, parts)) { /* patched */ } else board.innerHTML = parts.join("")
       || `<div class="empty">${offWeek() ? `Nothing live in Week ${S.viewWeek}. The Schedule tab has every game` : held.length ? "Nothing live in this filter right now" : `No games in progress${next ? `. Next kickoff: ${esc(dispName(next.away))} at ${esc(dispName(next.home))}, ${fmtCT(next.date,{weekday:"short",hour:"numeric",minute:"2-digit"})} CT` : ""}`}.</div>`;
+    if (!board._parts && parts.length && board.childElementCount === parts.length) { board._parts = parts; board._sig = board.childElementCount + ":" + (board.firstElementChild && board.firstElementChild.dataset.id); }
     fitBoard();
   }
+  if (grouped) board._parts = null;
   el("#liveChip").style.display = live ? "" : "none"; el("#liveCount").textContent = live ? `${live} live` : "Live";
   if (S.view === "game") { renderGCStrip(); if (GC.g) { const fresh = S.events.find(x => x.id === GC.g.id); if (fresh) GC.g = fresh; el("#gcPin").innerHTML = GC.g.state === "pre" ? "" : gcPinHTML(ofGame(GC.g, GC.sum),GC.sum?.drives?.current); } }   // v70: the strip and the pinned score follow every board poll
 }
@@ -4718,8 +4736,21 @@ function holdScroll(fn) {
   }
 }
 function renderAll() { holdScroll(renderAllNow); }
+/* v120: run fn when the page is idle (at most 1.5 s later); one pending call per key, and a view switch runs it at once */
+const IDLE = {};
+function idleDo(k, fn) {
+  IDLE[k] = fn; if (IDLE["_" + k]) return;
+  const go = () => { IDLE["_" + k] = 0; const f = IDLE[k]; IDLE[k] = null; if (f) holdScroll(f); };
+  IDLE["_" + k] = window.requestIdleCallback ? requestIdleCallback(go, { timeout: 1500 }) : setTimeout(go, 200);
+}
+function idleFlush() { for (const k of ["home", "sched"]) { const f = IDLE[k]; if (f) { IDLE[k] = null; f(); } } }
 function renderAllNow() {
-  renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderPre(S.featured); renderSlots(); renderStandings(); renderFeed(); renderBoard(); renderSchedule(); renderRegroup();
+  // v120: the board (and whatever view is open) draws now; Home and Schedule panels that are off screen draw in idle time
+  const home = () => { renderHero(S.featured); renderWP(S.featured); renderDrive(S.featured); renderPre(S.featured); renderSlots(); renderStandings(); renderFeed(); };
+  if (S.view === "home" || S.view === "game") home(); else idleDo("home", home);
+  renderBoard();
+  if (S.view === "schedule") renderSchedule(); else idleDo("sched", renderSchedule);
+  renderRegroup();
   if (LG.key === "cfb") renderSatTicker();   // v100
   if (LG.fantasy && S.view === "fantasy" && S.sleeper.me) renderFxHead();   // fan-1018: live projections and win chance follow the game clocks every board refresh
   if (S.view === "season") renderSeason();
@@ -4892,14 +4923,15 @@ async function watchTick() {
 document.addEventListener("click", e => { if (e.target.closest?.("a.watch")) e.stopPropagation(); }, true);
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.closest?.("a.watch")) e.stopPropagation(); }, true);
 
+function setTxt(n, t) { if (n && n.firstChild && n.firstChild.nodeType === 3 && !n.firstChild.nextSibling) { if (n.firstChild.data !== t) n.firstChild.data = t; } else if (n && n.textContent !== t) n.textContent = t; }   // v120: change the text node in place, no node swap
 function tick() {
   if (document.hidden) return;   // optimise-1011: no second-by-second work in a hidden tab
   renderShowBar();   // v89
   watchTick();       // v90
-  el("#clock").textContent = fmtCT(Date.now(), { hour:"numeric", minute:"2-digit" }) + " CT";
-  el("#fsClock").textContent = el("#clock").textContent;
+  const ck = fmtCT(Date.now(), { hour:"numeric", minute:"2-digit" }) + " CT";   // v120: only touch the page when the text changes (the clock once a minute)
+  setTxt(el("#clock"), ck); setTxt(el("#fsClock"), ck);
   const s = S.lastOk ? Math.round((Date.now() - S.lastOk)/1000) : null;
-  el("#updated").textContent = s == null ? "Loading" : s < 5 ? "Updated just now" : `Updated ${s}s ago`;
+  setTxt(el("#updated"), s == null ? "Loading" : s < 5 ? "Updated just now" : `Updated ${s}s ago`);
 }
 function bodyClass() {
   document.body.className = `v-${S.view} lg-${LG.key}${S.grouped && S.view === "scores" ? " grouped" : ""}${offWeek() ? " past" : ""}${rgActive() ? " regroup" : ""}`;
@@ -4925,7 +4957,7 @@ function route() {
   }
   if (GC.id) { GC.id = null; clearTimeout(GC.timer); }
   const known = ["home","season","schedule","scores","fantasy","ranks"].includes(v) ? v : defaultView();
-  S.view = known;
+  S.view = known; idleFlush();   // v120: panels left for idle time draw before the view shows
   document.querySelectorAll(".view").forEach(m => m.classList.toggle("on", m.id === "view-"+known));
   document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.dataset.v === known));
   bodyClass();
