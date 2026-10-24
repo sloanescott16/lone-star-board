@@ -77,7 +77,7 @@
   }
   .chip.live { color: var(--live); border-color: rgba(255,90,95,.45); background: var(--live-soft); }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-  .chip.live .dot { animation: pulse 1.6s ease-in-out infinite; }   /* v120: the one top-bar live dot keeps its pulse; with no other animation on the page, the GPU headless trace showed Chrome skipping every reel frame (cc-v120, v120p) */
+  .chip.live .dot { animation: pulse 1.6s ease-in-out infinite; }   /* v120: the one top-bar live dot keeps its pulse as the live cue. Not needed for the reel: the reel-only draw skips seen in round 1 were the headless test window being smaller than the 1920x1080 page, so the ticker sat outside it (cc-v120 r2) */
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
   .clock { font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: .04em; color: var(--ink-2); }
   .updated { font-size: 12px; color: var(--muted); display: inline-block; width: 9.6em; height: 1.4em; line-height: 1.4em; white-space: nowrap; overflow: hidden; contain: strict; }   /* v120: the per-second text lives in its own fixed, contained box, so it never lays out the bar */

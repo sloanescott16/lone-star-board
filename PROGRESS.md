@@ -98,3 +98,18 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
   trace (Draw skipped 3286, DroppedFrame 3287) although the animation runs; putting back the one top-bar live dot pulse
   (index.v120p.html, 8 s) made every frame draw again. Kept that one pulse. Cause not understood; at the cap.
   Final runs (runall.sh v120 and tests.sh) started in the background at the cap, logs in pc-test/cc-v120.
+- Round 2 (19:xx, job 1024-1750-si2 r2): final tests on v120: regress 58/66, the same 8 known 5wo timing fails as v119
+  (regress-v120.log); tick-smooth 1920 no seen jumps, step miss 0, no frame over 25 ms; hz-sim no held frames at 60 to
+  165 Hz (final-tests.log, final-tests2.log).
+  Draw skipped explained: a harness artefact. The headless window is smaller than the 1920x1080 emulated page, so the
+  ticker at the foot of the page lies outside the display surface and viz clips its damage away ("Draw skipped." on every
+  frame). Proof (pc-test/cc-v120, r2-exp*.sh, y-*.json): a one-div test page with a plain compositor translate shows every
+  draw skipped with the strip at the bottom or top:1000px, and every frame drawn at top:200, 500 or 800px; the same
+  bottom strip draws every frame once the window is 2000x1400. The pulse "fixed" it only because its damage sat inside
+  the window and viz then drew. Screencast (cast.js) of the reel with no pulse, no live game, and with the pulse: reel
+  moves at 60.9 to 61.1 px/s, no held frames. No page fix needed; the pulse comment now says why it stays (the live cue).
+- Stage 4 (18:1x, after handback): final runs on 9c0a1a8. Regress 58/66, the same 8 known 5wo timing fails, nothing new
+  (pc-test/cc-v120/regress-v120.log). tick-smooth 1920: max frame 16.8 ms in steady, refresh and added, no jumps, no
+  errors (v119 had one 33 ms frame on refresh). hz-sim: 0 held frames at 60 to 165 Hz. GPU (final-v120.log, label v120f):
+  every frame drawn (Draw skipped 0) with the top-bar pulse kept; main tasks over 16 ms 0 / 1 / 3. These GPU numbers overlap
+  another job's traces in the same folder (r2-final.sh, gpu-f-*, summ.js edited), so re-run runall.sh alone for clean ones.
