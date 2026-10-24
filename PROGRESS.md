@@ -92,3 +92,9 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
 - Stage 1 (18:1x, d5573b2): live dots static (no pulse, no glow), confetti off, clock and "Updated" text written only when
   it changes, "Updated" in its own fixed contained box; the board replaces only the cards whose markup changed; Home and
   Schedule panels that are not on screen draw in idle time (a view switch draws them first). Measuring.
+- Stage 3 (18:4x): GPU traces (pc-test/cc-v120, base-summ.log, v120.log). Main-thread tasks over 16 ms in 20 s:
+  v118 4 / 4 / 5 (steady / refresh / plays), v119 4 / 4 / 5, v120 0 / 0 / 1. Layers 23-24 down to 8-10. Paints 67-80 down
+  to 27-34. Raster tasks 115-124 down to 21-35. But with every pulse gone Chrome skipped drawing the reel frames in the GPU
+  trace (Draw skipped 3286, DroppedFrame 3287) although the animation runs; putting back the one top-bar live dot pulse
+  (index.v120p.html, 8 s) made every frame draw again. Kept that one pulse. Cause not understood; at the cap.
+  Final runs (runall.sh v120 and tests.sh) started in the background at the cap, logs in pc-test/cc-v120.
