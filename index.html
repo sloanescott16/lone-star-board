@@ -282,7 +282,7 @@
   .tk .pts { font-family: var(--display); font-weight: 800; font-size: 20px; color: var(--good); }
   .tk .pts.neg { color: var(--live); }
   .tk .tot { font-size: 12px; color: var(--muted); }
-  @media (prefers-reduced-motion: reduce) { .ticker .track { overflow-x: auto; } }
+  @media (prefers-reduced-motion: reduce) { .ticker .track { overflow-x: auto; } .ticker .reel { transform: none; will-change: auto; } }   /* yxc: v118 gave the reel a standing translate3d layer; with reduced motion it has no transform at all, as v117 */
 
   /* ---------- fantasy view ---------- */
   .fx-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 14px; padding: 18px 24px; }
