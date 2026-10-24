@@ -5645,7 +5645,12 @@ function tkrStart() {
      phone's one-at-a-time card, and then stops itself, so a steady reel costs the main thread nothing at all. */
   const step = t => {
     TKR.raf = requestAnimationFrame(step); TKR.last = t;
-    const idle = () => { if (!TKR.dirty && !TKR.pre && TKR.pend == null && !tkFlip()) { cancelAnimationFrame(TKR.raf); TKR.raf = 0; } };
+    const idle = () => { if (!TKR.dirty && TKR.pend == null && !tkFlip()) {
+      if (!TKR.pre) { cancelAnimationFrame(TKR.raf); TKR.raf = 0; }
+      /* v119: v118 checked the lead-in on every frame until it scrolled off (often 20 s or more), so the page ran a main
+         frame on every display frame (110 a second on the GPU trace) and the compositor dropped or half-presented the reel's
+         frames. Now it sleeps on a timer until the lead-in should be off screen, then looks once on a frame. */
+      else if (TKR.anim) { const ms = (TKR.pre + 1 - tkrX()) / TK_PXS * 1000; if (ms > 40) { cancelAnimationFrame(TKR.raf); TKR.raf = 0; clearTimeout(TKR.preT); TKR.preT = setTimeout(() => { TKR.preT = 0; tkrStart(); }, Math.min(ms, 60000) - 20); } } } };
     if (!document.body.classList.contains("v-scores") || document.hidden) { if (TKR.pend != null) { const r = el("#reel"); if (r) tkrWrite(r, TKR.pend); } if (!tkFlip()) { cancelAnimationFrame(TKR.raf); TKR.raf = 0; } return; }   /* 5wo: out of sight, so waiting content goes in now */   // v111: never measure while the ticker is out of sight; v112: either league
     const reel = el("#reel");
     if (tkFlip()) {

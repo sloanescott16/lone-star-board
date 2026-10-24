@@ -61,3 +61,14 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
   scoring-summary shape "N Yd pass from / Run / Return"); a long passing TD keeps the scorer ("Turner-Bradshaw 3-yd TD
   catch"); "J. Echeverria Lozano" keeps the whole surname. short.test.js 41/41. Checker's harness over 439 plays: 391
   shortened, 48 kept whole, an automatic check (yards, names, TD, misses against the full text) flags none wrong.
+
+# Round 3 (job 1024-1509-yxc, branch ticker-smooth-yxc3 from 88e8b17 v118, worktree wt3)
+
+- Stage 1 (15:2x): displays read only. Windows primary is DISPLAY2, Acer XF273 S, 1920x1080 at 165 Hz (pos 0,0).
+  DISPLAY1 is the Dell P2319H, 1920x1080 at 60 Hz, to the left. Mixed refresh. The Helm's Chrome window sits on the Dell.
+  GPU harness pc-test/cc-v119/gpu-trace.js (headless=new, ANGLE d3d11, GPU raster): GPU is the RX 6700 XT, gpu
+  compositing enabled, raster enabled_force; Chrome draws at 6.06 ms (165 Hz) even headless, so it takes vsync from the
+  primary. v118 on the GPU: reel on the compositor, reel layer 13208 x 26, 9 raster tasks in 20 s, no checkerboard;
+  but the ticker rAF loop ran 2212 times in 20 s (it polls the lead-in every frame), so there is a main frame on every
+  display frame; 484 frames presented partial, 4 dropped, 5 missed vsyncs.
+- Stage 2: v119a, the loop sleeps on a timer while the lead-in scrolls off. Measuring.
