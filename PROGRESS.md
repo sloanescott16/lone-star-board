@@ -113,3 +113,4 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
   errors (v119 had one 33 ms frame on refresh). hz-sim: 0 held frames at 60 to 165 Hz. GPU (final-v120.log, label v120f):
   every frame drawn (Draw skipped 0) with the top-bar pulse kept; main tasks over 16 ms 0 / 1 / 3. These GPU numbers overlap
   another job's traces in the same folder (r2-final.sh, gpu-f-*, summ.js edited), so re-run runall.sh alone for clean ones.
+- Note: commit fd85c74 (round 1 builder) also took in round 2's uncommitted edits to index.html (pulse comment) and its PROGRESS lines, by commit -a. Content is unchanged, only the commit author line is mixed.
