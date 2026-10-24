@@ -80,3 +80,6 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
   both: that is the 2.8 s confetti canvas, not the ticker. Hitches of 18 to 25 ms line up with the 25 ms board redraw tasks.
   Live page: no plays on the reel at the time of the run, so nothing to measure there.
   Added ?tk=N (20 to 300 px/s, kept in localStorage cc-tkpxs) so the speed can be tried on the real screen; default 60.
+- Stage 3 (16:0x): regress 58/66, only the 8 known 5wo timing fails (pc-test/cc-v119/regress-v119.log); tick-smooth at
+  1920 no seen jumps, step miss 0, one 33 ms frame on refresh as before; hz-sim no held frames at 60 to 165 Hz
+  (smooth-v119.log). Speed 90 to 120 not judged: headless cannot show perceived smoothness; ?tk=N is there for him to try.
