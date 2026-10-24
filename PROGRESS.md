@@ -72,3 +72,11 @@ Branch ticker-smooth-5wo, worktree builds/press-box/lsb-tick5wo, from origin/mai
   but the ticker rAF loop ran 2212 times in 20 s (it polls the lead-in every frame), so there is a main frame on every
   display frame; 484 frames presented partial, 4 dropped, 5 missed vsyncs.
 - Stage 2: v119a, the loop sleeps on a timer while the lead-in scrolls off. Measuring.
+- Stage 2 (15:5x): GPU traces, 20 s at 1920x1080 DPR 1, 165 Hz (pc-test/cc-v119, gpu-*.json, runs-1.log).
+  Steady (no new plays): v118 and v119 the same, about 22 partial and 2 to 3 dropped frames, loop runs 4 times, pulses
+  composited, reel layer 2550 x 22, 1 paint, no reel re-raster; the root layer repaints once a second (clock, 20 paints).
+  With plays landing: v118 rAF loop 2212 calls, 2235 style recalcs, main animation on 2682 of 3776 frames; v119 loop 4
+  calls, 508 recalcs, main animation 1064 frames (the rest is the final-game confetti). Partial frames stay about 480 in
+  both: that is the 2.8 s confetti canvas, not the ticker. Hitches of 18 to 25 ms line up with the 25 ms board redraw tasks.
+  Live page: no plays on the reel at the time of the run, so nothing to measure there.
+  Added ?tk=N (20 to 300 px/s, kept in localStorage cc-tkpxs) so the speed can be tried on the real screen; default 60.

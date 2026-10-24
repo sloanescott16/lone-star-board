@@ -5558,7 +5558,7 @@ function tkrLoad(html) {
    interval was a hair off the real one the holds came out uneven (2, 3, 4 frames). The phase lock also wrote startTime
    every 2 seconds, which hands the animation back to the compositor and can drop or repeat a frame each time.
    Now nothing measures the display, nothing re-seeks, and the only writes to the animation are when the content changes. */
-const TK_PXS = 60;
+const TK_PXS = (() => { try { const v = +(new URLSearchParams(location.search).get("tk") || localStorage.getItem("cc-tkpxs") || 0); if (v >= 20 && v <= 300) { try { localStorage.setItem("cc-tkpxs", String(v)); } catch (_) {} return v; } } catch (_) {} return 60; })();   // v119: 60 CSS px a second unless ?tk=N (20 to 300) asks for another speed, which is then kept on this browser
 function tkrPick() { return { n: 1, k: 1, v: TK_PXS }; }   // v118: kept for callers; 1 device px granularity for the copy boxes
 // v111: the frame interval, averaged over a clean run of 60 frames; a run with any gap more than 30% off the median is thrown away
 function tkrMeasure(t) {
